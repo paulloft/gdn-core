@@ -73,9 +73,9 @@ class Addons {
     public static function all($addon_key = null, $key = null) {
         if (self::$all === null) {
 
-            if(!self::$all = Gdn::cache('rough')->get('addons-all')) {
+            if(!self::$all = Gdn::cache('system')->get('addons-all')) {
                 self::$all = self::scanAddons();
-                Gdn::cache('rough')->set('addons-all', self::$all);
+                Gdn::cache('system')->set('addons-all', self::$all);
             }
         }
 
@@ -158,7 +158,7 @@ class Addons {
         self::baseDir();
 
         Event::bind('bootstrap', function () {
-            $translations = Gdn::cache('rough')->get('translations');
+            $translations = Gdn::cache('system')->get('translations');
             if ($translations) {
                 Gdn::$translations = $translations;
             }
@@ -168,7 +168,7 @@ class Addons {
             }
 
             if(!$translations) {
-                Gdn::cache('rough')->set('translations', Gdn::$translations);
+                Gdn::cache('system')->set('translations', Gdn::$translations);
             }
 
         });
@@ -240,9 +240,9 @@ class Addons {
                 }
             } else {
                 // Build the enabled array by walking the addons.
-                if(!self::$enabled = Gdn::cache('rough')->get('addons-enabled')) {
+                if(!self::$enabled = Gdn::cache('system')->get('addons-enabled')) {
                     self::$enabled = self::scanAddons(null, self::$enabledKeys);
-                    Gdn::cache('Rough')->set('addons-enabled', self::$enabled);
+                    Gdn::cache('system')->set('addons-enabled', self::$enabled);
                 }
             }
         }
@@ -488,17 +488,17 @@ class Addons {
             return false;
         }
 
-        $rough = Gdn::cache('rough');
+        $sytemCache = Gdn::cache('system');
 
         // load config.
-        if (!$rough->get('config-autoload')) {
+        if (!$sytemCache->get('config-autoload')) {
             if($config_path = val(self::K_CONFIG, $addon)) {
                 Config::load($addon_key, $config_path);
             }
         }
 
         // load translations
-        if (!$rough->get('translations')) {
+        if (!$system->get('translations')) {
             $locale = c('main.locale', 'en_US');
             $locale_path = val('dir', $addon)."/locale/$locale.php";
 

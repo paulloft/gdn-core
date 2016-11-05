@@ -1,7 +1,7 @@
 <?php
 namespace Garden\Cache;
 
-class Rough extends \Garden\Cache
+class System extends \Garden\Cache
 {
     protected $dirty;
 

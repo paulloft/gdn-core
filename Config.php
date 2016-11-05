@@ -156,7 +156,7 @@ class Config {
      * @param string $path
      */
     public static function autoload($path = PATH_CONF) {
-        $cached = Gdn::cache('rough')->get('config-autoload');
+        $cached = Gdn::cache('system')->get('config-autoload');
         if(!$cached) {
             // load default configs from $coreConfig
             if($path !== self::$coreConfig) {
@@ -185,8 +185,8 @@ class Config {
      * caching all configs
      */
     public static function cache() {
-        if(!Gdn::cache('rough')->get('config-autoload')) {
-            Gdn::cache('rough')->set('config-autoload', self::$data);
+        if(!Gdn::cache('system')->get('config-autoload')) {
+            Gdn::cache('system')->set('config-autoload', self::$data);
         }
     }
 }

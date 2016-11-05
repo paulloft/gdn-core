@@ -26,7 +26,7 @@ abstract class Cache
     public static function instance($driver = null)
     {
         self::$clear = NOCACHE;
-        if($driver !== 'rough') {
+        if($driver !== 'system') {
             $options = c('main.cache');
             self::$enabled = val('enabled', $options);
 
