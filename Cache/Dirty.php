@@ -49,7 +49,7 @@ class Dirty extends \Garden\Cache
     }
 
     public function cacheGet($key, callable $cache_cb) {
-        $cache_path = PATH_CACHE."/$key.json";
+        $cache_path = GDN_CACHE."/$key.json";
         if(!$result = $this->get($key)) {
             if (file_exists($cache_path)) {
                 $result = array_load($cache_path);

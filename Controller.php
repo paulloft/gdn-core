@@ -174,8 +174,8 @@ class Controller extends Plugin {
             $config = c('smarty');
             $this->smarty->caching = val('caching', $config, false);
             $this->smarty
-                ->setCompileDir( val('compile_dir', $config, PATH_CACHE.'/smarty/') )
-                ->setCacheDir( val('cache_dir', $config, PATH_CACHE.'/smarty/') )
+                ->setCompileDir( val('compile_dir', $config, GDN_CACHE.'/smarty/') )
+                ->setCacheDir( val('cache_dir', $config, GDN_CACHE.'/smarty/') )
                 ->setPluginsDir( val('plugins_dir', $config, false) );
 
             if (NOCACHE) {

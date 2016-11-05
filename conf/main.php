@@ -9,5 +9,5 @@ return [
     "install" => false,
     "locale" => "en_US",
     "logs" => true,
-    "debug" => false,
+    "debug" => true,
 ];

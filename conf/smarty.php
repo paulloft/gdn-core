@@ -1,8 +1,8 @@
 <?php
 return array(
     'caching'     => false,
-    'compile_dir' => PATH_CACHE.'/smarty/',
-    'cache_dir'   => PATH_CACHE.'/smarty/',
-    'plugins_dir' => PATH_SRC.'/functions/smarty/',
+    'compile_dir' => GDN_CACHE.'/smarty/',
+    'cache_dir'   => GDN_CACHE.'/smarty/',
+    'plugins_dir' => GDN_SRC.'/functions/smarty/',
     'cache_lifetime' => 3600,
 );

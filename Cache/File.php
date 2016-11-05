@@ -21,7 +21,7 @@ class File extends \Garden\Cache
 
         $cacheDir = val('cacheDir', $config);
 
-        $this->cacheDir = $cacheDir ? realpath(PATH_ROOT.'/'.$cacheDir) : PATH_CACHE;
+        $this->cacheDir = $cacheDir ? realpath(PATH_ROOT.'/'.$cacheDir) : GDN_CACHE;
 
         $this->dirty = \Garden\Gdn::dirtyCache();
     }

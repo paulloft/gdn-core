@@ -22,7 +22,7 @@ class System extends \Garden\Cache
         
         if(!self::$clear && !$data = $this->dirty->get($file)) {
 
-            $filePath = PATH_CACHE.'/'.$file;
+            $filePath = GDN_CACHE.'/'.$file;
 
             if(!is_file($filePath)) {
                 return $default;
@@ -42,13 +42,13 @@ class System extends \Garden\Cache
     {
         $cacheData = json_encode($data, JSON_PRETTY_PRINT);
 
-        if(!is_dir(PATH_CACHE)) {
-            mkdir(PATH_CACHE, 0777, true);
+        if(!is_dir(GDN_CACHE)) {
+            mkdir(GDN_CACHE, 0777, true);
         }
 
         $file = $this->getFile($id);
 
-        $filePath = PATH_CACHE.'/'.$file;
+        $filePath = GDN_CACHE.'/'.$file;
 
         $result = file_put_contents($filePath, $cacheData);
         chmod($filePath, 0664);
@@ -60,12 +60,12 @@ class System extends \Garden\Cache
 
     public function deleteAll()
     {
-        $dir = scandir(PATH_CACHE);
+        $dir = scandir(GDN_CACHE);
         $regexp = '/'.$this->getFile('([\w-_]+)').'/';
         foreach ($dir as $filename) {
             // echo $filename.'|';
             if(preg_match($regexp, $filename)) {
-                $file = PATH_CACHE.'/'.$filename;
+                $file = GDN_CACHE.'/'.$filename;
                 if(!is_dir($file)) {
                     unlink($file);
                 }

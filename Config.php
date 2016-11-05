@@ -37,7 +37,7 @@ class Config {
      */
     protected static $defaultPath;
 
-    protected static $coreConfig = PATH_SRC.'/conf';
+    protected static $coreConfig = GDN_SRC.'/conf';
 
     /// Methods ///
 
@@ -51,7 +51,7 @@ class Config {
         if ($value) {
             self::$defaultPath = $value;
         } elseif (!self::$defaultPath) {
-            self::$defaultPath = PATH_CONF.'/config.php';
+            self::$defaultPath = GDN_CONF.'/config.php';
         }
         return self::$defaultPath;
     }
@@ -155,7 +155,7 @@ class Config {
      * Autoad config
      * @param string $path
      */
-    public static function autoload($path = PATH_CONF) {
+    public static function autoload($path = GDN_CONF) {
         $cached = Gdn::cache('system')->get('config-autoload');
         if(!$cached) {
             // load default configs from $coreConfig

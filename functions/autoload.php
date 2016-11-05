@@ -1,8 +1,9 @@
 <?php
+use \Garden\Event;
 
 define('APP_VERSION', '1.0');
+define('GDN_SRC', realpath(__DIR__.'../'));
 
-use \Garden\Event;
 
 // Include the core functions.
 require_once __DIR__.'/core-functions.php';
