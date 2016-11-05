@@ -1,0 +1,42 @@
+{
+	"name": "paulloft/gdn-core",
+	"description": "The garden framework.",
+	"type": "library",
+	"keywords": ["garden", "framework", "php"],
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Todd Burry",
+			"email": "todd@vanillaforums.com",
+			"role": "developer"
+		},
+		{
+			"name": "Tim Gunter",
+			"email": "tim@vanillaforums.com",
+			"role": "developer"
+		},
+		{
+			"name": "Paul Loft",
+			"email": "info@paulloft.ru",
+			"role": "developer"
+		}
+	],
+	"require": {
+		"php": ">=5.4.0",
+		"ext-json": "*",
+		"ext-PDO": "*",
+		"ext-pdo_mysql": "*",
+		"ext-Reflection": "*",
+		"lib-pcre": "*",
+		"smarty/smarty": "~3.1",
+		"kuria/error": "^0.2.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"Garden\\": "",
+		},
+		"files": [
+			"functions/autoload.php"
+		]
+	}
+}
