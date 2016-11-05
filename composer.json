@@ -33,7 +33,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"Garden\\": "",
+			"Garden\\": ""
 		},
 		"files": [
 			"functions/autoload.php"
