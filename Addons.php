@@ -498,7 +498,7 @@ class Addons {
         }
 
         // load translations
-        if (!$system->get('translations')) {
+        if (!$sytemCache->get('translations')) {
             $locale = c('main.locale', 'en_US');
             $locale_path = val('dir', $addon)."/locale/$locale.php";
 
