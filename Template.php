@@ -99,7 +99,7 @@ class Template extends Controller {
      */
     public function render($view = false, $controllerName = false, $addonFolder = false)
     {
-        Event::fire('beforeRender');
+        Event::fire('render_before');
 
         $view = $view ?: $this->callerMethod();
         if ($this->renderType() == Request::RENDER_VIEW) {
@@ -117,7 +117,7 @@ class Template extends Controller {
             echo $this->fetchTemplate($view, $controllerName, $addonFolder);
         }
 
-        Event::fire('afterRender');
+        Event::fire('render_after');
     }
 
     protected function getResourcePath($resource, $src, $addon = null)

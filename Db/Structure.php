@@ -181,7 +181,7 @@ abstract class Structure
     public function set($explicit = false, $drop = false)
     {
         /// Throw an event so that the structure can be overridden.
-        \Garden\Event::fire('beforeSet', $explicit, $drop);
+        \Garden\Event::fire('structure_before_set', $explicit, $drop);
 
         try {
             // Make sure that table and columns have been defined

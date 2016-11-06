@@ -155,6 +155,7 @@ class Application {
         // Try all of the matched routes in turn.
         $dispatched = false;
         $result = null;
+
         try {
             foreach ($routes as $route_args) {
                 list($route, $args) = $route_args;
@@ -162,7 +163,7 @@ class Application {
                 try {
                     // Dispatch the first matched route.
                     ob_start();
-                    Event::fire('dispatch');
+                    Event::fire('dispatch', $request, $args);
                     $response = $route->dispatch($request, $args);
                     $body = ob_get_clean();
 

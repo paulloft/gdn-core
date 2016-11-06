@@ -92,13 +92,13 @@ class Controller extends Plugin {
      */
     public function render($view = false, $controllerName = false, $addonName = false)
     {
-        Event::fire('beforeRender');
+        Event::fire('render_before');
 
         $view = $view ?: $this->callerMethod();
         $view = $this->fetchView($view, $controllerName, $addonName);
         echo $view;
 
-        Event::fire('afterRender');
+        Event::fire('render_after');
     }
 
     /**
