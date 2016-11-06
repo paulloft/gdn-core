@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace Garden\Db\Driver\MySQL;
 /**
  * MySQL database result.   See [Results](/database/results) for usage and examples.
@@ -42,8 +42,7 @@ class Result extends \Garden\Db\Database\Result {
 
     public function current()
     {
-        if ($this->_current_row !== $this->_internal_row AND ! $this->seek($this->_current_row))
-            return NULL;
+        if ($this->_current_row !== $this->_internal_row AND !$this->seek($this->_current_row)) return NULL;
 
         // Increment internal row for optimization assuming rows are fetched in order
         $this->_internal_row++;
@@ -54,7 +53,7 @@ class Result extends \Garden\Db\Database\Result {
         if ($this->_as_object === TRUE) {
             // Return an stdClass
             return mysql_fetch_object($this->_result);
-        } elseif (is_string($this->_as_object))  {
+        } elseif (is_string($this->_as_object)) {
             /* The second and third argument for mysql_fetch_object are optional, but do 
              * not have default values defined.  Passing _object_params with a non-array value results 
              * in undefined behavior that varies by PHP version.  For example, if NULL is supplied on 

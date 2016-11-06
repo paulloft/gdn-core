@@ -2,9 +2,8 @@
 return [
     "cache"  => [
         "enabled" => true,
-        "defaultDriver" => "file"
+        "defaultDriver" => "dirty"
     ],
-    "addons" => [],
     "hashsalt" => false,
     "install" => false,
     "locale" => "en_US",

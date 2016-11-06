@@ -18,8 +18,7 @@ use \Garden\Exception as Exception;
  * @copyright  (c) 2008-2012 Kohana Team
  * @license    http://kohanaphp.com/license
  */
-abstract class Database 
-{
+abstract class Database {
 
     // Query types
     const SELECT =  1;

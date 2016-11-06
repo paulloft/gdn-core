@@ -1,5 +1,7 @@
 <?php
 return [
+    "enabled" => true,
+    "driver" => "dirty",
     "file" => [
         "defaultLifetime" => 3600,
         "cacheDir" => "cache"

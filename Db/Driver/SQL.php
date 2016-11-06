@@ -1,5 +1,6 @@
 <?php
 namespace Garden\Db\Driver;
+
 use \Garden\Exception as Exception;
 use \Garden\Db\Database;
 
@@ -56,20 +57,16 @@ abstract class SQL extends Database {
 
     public function list_tables($like = NULL)
     {
-        if (is_string($like))
-        {
+        if (is_string($like)) {
             // Search for table names
-            $result = $this->query(Database::SELECT, 'SHOW TABLES LIKE '.$this->quote($like), FALSE);
-        }
-        else
-        {
+            $result = $this->query(Database::SELECT, 'SHOW TABLES LIKE ' . $this->quote($like), FALSE);
+        } else {
             // Find all table names
             $result = $this->query(Database::SELECT, 'SHOW TABLES', FALSE);
         }
 
         $tables = array();
-        foreach ($result as $row)
-        {
+        foreach ($result as $row) {
             $tables[] = reset($row);
         }
 
@@ -81,54 +78,46 @@ abstract class SQL extends Database {
         // Quote the table name
         $table = ($add_prefix === TRUE) ? $this->quote_table($table) : $table;
 
-        if (is_string($like))
-        {
+        if (is_string($like)) {
             // Search for column names
-            $result = $this->query(Database::SELECT, 'SHOW FULL COLUMNS FROM '.$table.' LIKE '.$this->quote($like), FALSE);
-        }
-        else
-        {
+            $result = $this->query(Database::SELECT, 'SHOW FULL COLUMNS FROM ' . $table . ' LIKE ' . $this->quote($like), FALSE);
+        } else {
             // Find all column names
-            $result = $this->query(Database::SELECT, 'SHOW FULL COLUMNS FROM '.$table, FALSE);
+            $result = $this->query(Database::SELECT, 'SHOW FULL COLUMNS FROM ' . $table, FALSE);
         }
 
         $count = 0;
         $columns = array();
-        foreach ($result as $row)
-        {
+        foreach ($result as $row) {
             list($type, $length) = $this->_parse_type($row['Type']);
 
             $column = (object)$this->datatype($type);
 
-            $column->name      = $row['Field'];
-            $column->default   = $row['Default'];
-            $column->dataType  = $type;
+            $column->name = $row['Field'];
+            $column->default = $row['Default'];
+            $column->dataType = $type;
             $column->allowNull = ($row['Null'] == 'YES');
-            $column->position  = ++$count;
-            $column->length    = $length;
+            $column->position = ++$count;
+            $column->length = $length;
 
-            switch ($column->type)
-            {
+            switch ($column->type) {
                 case 'float':
-                    if (isset($length))
-                    {
+                    if (isset($length)) {
                         list($column->numPrecision, $column->numScale) = explode(',', $length);
                     }
-                break;
+                    break;
                 case 'int':
-                    if (isset($length))
-                    {
+                    if (isset($length)) {
                         // MySQL attribute
                         $column->length = $length;
                     }
-                break;
+                    break;
                 case 'string':
-                    switch ($column->dataType)
-                    {
+                    switch ($column->dataType) {
                         case 'binary':
                         case 'varbinary':
                             $column->maxLength = $length;
-                        break;
+                            break;
                         case 'char':
                         case 'varchar':
                             $column->maxLength = $length;
@@ -137,21 +126,21 @@ abstract class SQL extends Database {
                         case 'mediumtext':
                         case 'longtext':
                             $column->collation = $row['Collation'];
-                        break;
+                            break;
                         case 'enum':
                         case 'set':
                             $column->collation = $row['Collation'];
                             $column->options = explode('\',\'', substr($length, 1, -1));
-                        break;
+                            break;
                     }
-                break;
+                    break;
             }
 
             // MySQL attributes
-            $column->comment       = $row['Comment'];
+            $column->comment = $row['Comment'];
             $column->autoIncrement = strpos($row['Extra'], 'auto_increment') === FALSE ? FALSE : TRUE;;
-            $column->key           = $row['Key'];
-            $column->privileges    = $row['Privileges'];
+            $column->key = $row['Key'];
+            $column->privileges = $row['Privileges'];
 
             $columns[$row['Field']] = $column;
         }

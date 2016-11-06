@@ -26,14 +26,14 @@ abstract class Cache
     public static function instance($driver = null)
     {
         self::$clear = NOCACHE;
+        $options = c('cache');
         if($driver !== 'system') {
-            $options = c('main.cache');
             self::$enabled = val('enabled', $options);
 
             if(!self::$enabled) {
                 $driver = 'dirty';
             } elseif(!$driver) {
-                $driver = val('defaultDriver', $options, self::$default);
+                $driver = val('driver', $options, self::$default);
             }
         }
 
@@ -46,7 +46,7 @@ abstract class Cache
         if(!class_exists($driverClass)) {
             throw new Exception\Custom("Cache driver \"%s\" not found", array($driver));
         } else {
-            $config = c("cache.$driver");
+            $config = val($driver, $options);
             self::$instances[$driver] = new $driverClass($config);
         }
 

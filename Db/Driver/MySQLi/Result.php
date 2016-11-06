@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace Garden\Db\Driver\MySQLi;
 /**
  * MySQLi database result.   See [Results](/database/results) for usage and examples.
@@ -42,8 +42,7 @@ class Result extends \Garden\Db\Database\Result {
 
     public function current()
     {
-        if ($this->_current_row !== $this->_internal_row AND ! $this->seek($this->_current_row))
-            return NULL;
+        if ($this->_current_row !== $this->_internal_row AND !$this->seek($this->_current_row)) return NULL;
 
         // Increment internal row for optimization assuming rows are fetched in order
         $this->_internal_row++;
@@ -53,7 +52,7 @@ class Result extends \Garden\Db\Database\Result {
             return $this->_result->fetch_object();
         } elseif (is_string($this->_as_object)) {
             // Return an object of given class name
-            return $this->_result->fetch_object($this->_as_object, (array) $this->_object_params);
+            return $this->_result->fetch_object($this->_as_object, (array)$this->_object_params);
         } else {
             // Return an array of the row
             return $this->_result->fetch_assoc();

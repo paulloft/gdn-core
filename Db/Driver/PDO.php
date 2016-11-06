@@ -1,8 +1,9 @@
-<?php 
+<?php
 namespace Garden\Db\Driver;
+
 use \Garden\Exception as Exception;
 use \Garden\Db\Database;
-use \PDO as _PDO;
+
 /**
  * PDO database connection.
  *
@@ -21,44 +22,42 @@ class PDO extends SQL {
     {
         parent::__construct($name, $config);
 
-        if (isset($this->_config['identifier']))
-        {
+        if (isset($this->_config['identifier'])) {
             // Allow the identifier to be overloaded per-connection
-            $this->_identifier = (string) $this->_config['identifier'];
+            $this->_identifier = (string)$this->_config['identifier'];
         }
     }
 
     public function connect()
     {
-        if ($this->_connection)
-            return;
+        if ($this->_connection) return;
 
         // Extract the connection parameters, adding required variabels
-        $host       = val('host', $this->_config, 'localhost');
-        $type       = val('type', $this->_config, 'mysql');
-        $database   = val('database', $this->_config);
-        $username   = val('username', $this->_config, NULL);
-        $password   = val('password', $this->_config, NULL);
+        $host = val('host', $this->_config, 'localhost');
+        $type = val('type', $this->_config, 'mysql');
+        $database = val('database', $this->_config);
+        $username = val('username', $this->_config, NULL);
+        $password = val('password', $this->_config, NULL);
         $persistent = val('persistent', $this->_config);
 
         $dsn = "$type:host=$host;dbname=$database";
 
         // Force PDO to use exceptions for all errors
-        $options[_PDO::ATTR_ERRMODE] = _PDO::ERRMODE_EXCEPTION;
+        $options[\PDO::ATTR_ERRMODE] = \PDO::ERRMODE_EXCEPTION;
 
         if (!empty($persistent)) {
             // Make the connection persistent
-            $options[_PDO::ATTR_PERSISTENT] = TRUE;
+            $options[\PDO::ATTR_PERSISTENT] = TRUE;
         }
 
         try {
             // Create a new PDO connection
-            $this->_connection = new _PDO($dsn, $username, $password, $options);
+            $this->_connection = new \PDO($dsn, $username, $password, $options);
         } catch (PDOException $e) {
             throw new \Exception($e->getMessage(), $e->getCode());
         }
 
-        if ( ! empty($this->_config['charset'])) {
+        if (!empty($this->_config['charset'])) {
             // Set the character set
             $this->set_charset($this->_config['charset']);
         }
@@ -71,10 +70,10 @@ class PDO extends SQL {
      *
      * @link http://php.net/manual/function.pdo-sqlitecreateaggregate
      *
-     * @param   string      $name       Name of the SQL function to be created or redefined
-     * @param   callback    $step       Called for each row of a result set
-     * @param   callback    $final      Called after all rows of a result set have been processed
-     * @param   integer     $arguments  Number of arguments that the SQL function takes
+     * @param   string $name Name of the SQL function to be created or redefined
+     * @param   callback $step Called for each row of a result set
+     * @param   callback $final Called after all rows of a result set have been processed
+     * @param   integer $arguments Number of arguments that the SQL function takes
      *
      * @return  boolean
      */
@@ -82,9 +81,7 @@ class PDO extends SQL {
     {
         $this->_connection or $this->connect();
 
-        return $this->_connection->sqliteCreateAggregate(
-            $name, $step, $final, $arguments
-        );
+        return $this->_connection->sqliteCreateAggregate($name, $step, $final, $arguments);
     }
 
     /**
@@ -94,9 +91,9 @@ class PDO extends SQL {
      *
      * @link http://php.net/manual/function.pdo-sqlitecreatefunction
      *
-     * @param   string      $name       Name of the SQL function to be created or redefined
-     * @param   callback    $callback   Callback which implements the SQL function
-     * @param   integer     $arguments  Number of arguments that the SQL function takes
+     * @param   string $name Name of the SQL function to be created or redefined
+     * @param   callback $callback Callback which implements the SQL function
+     * @param   integer $arguments Number of arguments that the SQL function takes
      *
      * @return  boolean
      */
@@ -104,9 +101,7 @@ class PDO extends SQL {
     {
         $this->_connection or $this->connect();
 
-        return $this->_connection->sqliteCreateFunction(
-            $name, $callback, $arguments
-        );
+        return $this->_connection->sqliteCreateFunction($name, $callback, $arguments);
     }
 
     public function disconnect()
@@ -123,7 +118,7 @@ class PDO extends SQL {
         $this->_connection OR $this->connect();
 
         // This SQL-92 syntax is not supported by all drivers
-        $this->_connection->exec('SET NAMES '.$this->quote($charset));
+        $this->_connection->exec('SET NAMES ' . $this->quote($charset));
     }
 
     public function query($type, $sql, $as_object = FALSE, array $params = NULL)
@@ -131,7 +126,7 @@ class PDO extends SQL {
         // Make sure the database is connected
         $this->_connection or $this->connect();
 
-        try  {
+        try {
             $result = $this->_connection->query($sql);
         } catch (\Exception $e) {
             // Convert the exception in a database exception
@@ -144,27 +139,21 @@ class PDO extends SQL {
         if ($type === Database::SELECT) {
             // Convert the result into an array, as PDOStatement::rowCount is not reliable
             if ($as_object === FALSE) {
-                $result->setFetchMode(_PDO::FETCH_ASSOC);
+                $result->setFetchMode(\PDO::FETCH_ASSOC);
             } elseif (is_string($as_object)) {
-                $result->setFetchMode(_PDO::FETCH_CLASS, $as_object, $params);
+                $result->setFetchMode(\PDO::FETCH_CLASS, $as_object, $params);
             } else {
-                $result->setFetchMode(_PDO::FETCH_CLASS, 'stdClass');
+                $result->setFetchMode(\PDO::FETCH_CLASS, 'stdClass');
             }
 
             $result = $result->fetchAll();
 
             // Return an iterator of results
             return new Database\Result\Cached($result, $sql, $as_object, $params);
-        }
-        elseif ($type === Database::INSERT) {
+        } elseif ($type === Database::INSERT) {
             // Return a list of insert id and rows created
-            return array(
-                $this->_connection->lastInsertId(),
-                $result->rowCount(),
-            );
-        }
-        else
-        {
+            return array($this->_connection->lastInsertId(), $result->rowCount(),);
+        } else {
             // Return the number of rows affected
             return $result->rowCount();
         }
@@ -202,4 +191,4 @@ class PDO extends SQL {
         return $this->_connection->quote($value);
     }
 
-} // End Database_PDO
+}
