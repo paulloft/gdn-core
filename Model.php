@@ -46,8 +46,8 @@ class Model extends Plugin {
     {
         $this->setTable($table);
 
-        if (Gdn::factoryExists('auth')) {
-            $user = Gdn::factory('auth')->user;
+        if (Factory::exists('auth')) {
+            $user = Factory::get('auth')->user;
             $this->userID = val('id', $user);
         }
 

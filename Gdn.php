@@ -5,7 +5,7 @@ namespace Garden;
  * Framework superobject
  *
  */
-class Gdn extends Plugin {
+class Gdn {
 
     /**
      * @param string $name
@@ -27,11 +27,19 @@ class Gdn extends Plugin {
     }
 
     /**
+     * @return Tasks
+     */
+    public static function tasks()
+    {
+        return Factory::get('Garden\\Tasks');
+    }
+
+    /**
      * @return Application
      */
     public static function app()
     {
-        return self::factory('Garden\\Application');
+        return Factory::get('Garden\\Application');
     }
 
     /**

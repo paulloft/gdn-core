@@ -155,7 +155,7 @@ class Application {
         // Try all of the matched routes in turn.
         $dispatched = false;
         $result = null;
-
+        Event::fire('dispatch_before');
         try {
             foreach ($routes as $route_args) {
                 list($route, $args) = $route_args;
@@ -193,6 +193,7 @@ class Application {
             $result = $ex;
         }
 
+        Event::fire('dispatch_before');
         $result = $this->finalize($result);
         Request::current($requestBak);
 
