@@ -28,11 +28,14 @@ class System extends \Garden\Cache
                 return $default;
             }
 
-            $result = file_get_contents($filePath);
-            $data = json_decode($result, true);
+            try {
+                $result = file_get_contents($filePath);
+                $data = json_decode($result, true);
 
-            //save to temporary cache
-            $this->dirty->add($file, $data);
+                //save to temporary cache
+                $this->dirty->add($file, $data);
+            } catch (\Exception $exception) {
+            }
         }
 
         return $data ?: $default;
@@ -50,8 +53,12 @@ class System extends \Garden\Cache
 
         $filePath = GDN_CACHE.'/'.$file;
 
-        $result = file_put_contents($filePath, $cacheData);
-        chmod($filePath, 0664);
+        try {
+            $result = file_put_contents($filePath, $cacheData);
+            chmod($filePath, 0664);
+        } catch (\Exception $exception) {
+            $result = false;
+        }
 
         $this->dirty->set($file, $data);
 

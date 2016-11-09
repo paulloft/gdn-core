@@ -74,7 +74,7 @@ class Template extends Controller {
         $view = $view ?: $this->callerMethod();
         $view = $this->fetchView($view, $controllerName, $addonFolder);
 
-        $this->smarty()->assign('gdn', array(
+        $data = array(
             'content'  => $view,
             'meta'     => $this->meta,
             'js'       => $this->_js,
@@ -83,9 +83,11 @@ class Template extends Controller {
             'action'     => strtolower($this->callerMethod()),
             'addon'      => strtolower($this->controllerInfo('addon')),
             'controller' => strtolower($this->controllerInfo('controller')),
-        ));
+        );
 
-        $this->smarty()->assign('sitename', c('main.sitename'));
+        $this->setData('gdn', $data);
+        $this->setData('sitename', c('main.sitename'));
+
         $template = $this->fetchView($this->template, '/', $addonFolder?: $this->templateAddon);
 
         return $template;

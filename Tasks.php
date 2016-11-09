@@ -12,6 +12,7 @@ class Tasks extends Plugin {
     private $matches = array(
         'minutes' => 'i',
         'hours' => 'H',
+        'dayname' => 'l',
         'day' => 'j',
         'month' => 'n'
     );
@@ -22,17 +23,19 @@ class Tasks extends Plugin {
     {
         $config = c('tasks');
 
-        ini_set('memory_limit', val('memorylimit', $this->config, '256M'));
-        $this->lockfile = val('lockfile', $this->config, GDN_CACHE."/.tasklock");
+        ini_set('memory_limit', val('memorylimit', $config, '256M'));
+        $this->lockfile = val('lockfile', $config, GDN_CACHE."/.tasklock");
     }
 
     public function run()
     {
+        var_dump($GLOBALS);
         if ($this->locked()) return false;
 
         $this->lock();
 
         $this->startMatches();
+        $this->startTicks();
 
         $this->unlock();
     }
@@ -41,19 +44,54 @@ class Tasks extends Plugin {
     {
         $string = '';
         foreach ($this->matches as $name => $token) {
-            $string = $string . '_' . date($token) . '_' . $name;
-            $event = 'task_match' . $string;
+            if ($name == 'dayname') {
+                $event = 'task_match' . $string . '_' . strtolower(date($token));
+            } else {
+                $string = $string . '_' . date($token) . '_' . $name;
+                $event = 'task_match' . $string;
+            }
 
-//            if (Event::getHandlers($event)) {
-                $this->log('Task: ' . $event);
+            $this->log('Task: ' . $event);
+
+            try {
                 Event::fire($event);
-//            }
+            } catch (\Exception $exception) {
+
+            }
         }
+    }
+
+    function Flatten($Array) {
+        $Result = array();
+        foreach (new \RecursiveIteratorIterator(new \RecursiveArrayIterator($Array)) as $Value)
+            $Result[] = $Value;
+        return $Result;
     }
 
     public function startTicks()
     {
+        $range = array_merge(
+            range(1, 99, 1),
+            range(100, 999, 5)
+        );
 
+        $yearSeconds = (int)((time() - strtotime('1 Jan'))/60) * 60;
+
+        foreach ($range as $i) {
+            foreach ($this->ticks as $second => $name) {
+                $suffix = ($i == 1) ? '' : 's';
+                if ($yearSeconds % $second == 0 && ($yearSeconds / $second) % $i == 0) {
+                    $event = 'task_every_'.$i.'_'.$name.$suffix;
+                    $this->log('Task: ' . $event);
+
+                    try {
+                        Event::fire($event);
+                    } catch(\Exception $exception) {
+
+                    }
+                }
+            }
+        }
     }
 
     public function locked()
