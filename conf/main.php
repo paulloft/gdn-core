@@ -1,9 +1,6 @@
 <?php
 return [
-    "cache"  => [
-        "enabled" => true,
-        "defaultDriver" => "dirty"
-    ],
+    "sitename" => null,
     "hashsalt" => false,
     "install" => false,
     "locale" => "en_US",

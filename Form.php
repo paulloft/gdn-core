@@ -255,7 +255,7 @@ class Form
         return $result;
     }
 
-    public function getSecureKey(array $post)
+    public function getSecureKey($post)
     {
         $keys = array_keys($post);
         return md5(implode($keys) . c('main.hashsalt'));

@@ -178,6 +178,13 @@ function array_load($path) {
     return $loaded;
 }
 
+function array_export(array $array) {
+    $string = json_encode($array, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
+    $string = str_replace(['{', '}', '": '], ['[', ']', '" => '], $string);
+
+    return $string;
+}
+
 /**
  * Save an array of data to a specified path.
  *
@@ -208,7 +215,8 @@ function array_save($data, $path, $php_var = 'config') {
             $result = file_put_contents_safe($path, $json);
             break;
         case '.php':
-            $php = "<?php\n".php_encode($data, $php_var)."\n";
+//            $php = "<?php\n".php_encode($data, $php_var)."\n";
+            $php = "<?php\nreturn ".array_export($data, $php_var).";";
             $result = file_put_contents_safe($path, $php);
             break;
         case '.ser':
