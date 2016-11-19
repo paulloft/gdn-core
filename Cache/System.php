@@ -23,7 +23,7 @@ class System extends \Garden\Cache
     {
         $file = $this->getFile($id);
         $data = false;
-        
+
         if(!self::$clear && !$data = $this->dirty->get($file)) {
 
             $filePath = GDN_CACHE.'/'.$file;

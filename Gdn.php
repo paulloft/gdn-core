@@ -96,4 +96,28 @@ class Gdn {
         }
     }
 
+    /**
+     * @return \Addons\Dashboard\Models\Permission
+     */
+    public static function permission()
+    {
+        return Factory::get('\\Addons\\Dashboard\\Models\\Permission');
+    }
+
+    /**
+     * @return \Addons\Dashboard\Models\Auth
+     */
+    public static function auth()
+    {
+        return Factory::get('\\Addons\\Dashboard\\Models\\Auth');
+    }
+
+    /**
+     * @return \Addons\Dashboard\Models\Users
+     */
+    public static function users()
+    {
+        return Factory::get('\\Addons\\Dashboard\\Models\\Users');
+    }
+
 }

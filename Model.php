@@ -38,6 +38,8 @@ class Model extends Plugin {
 
     private $_b_table;
 
+    protected $validation;
+
     /**
      * Class constructor. Defines the related database table name.
      * @param string $table table name
@@ -47,7 +49,7 @@ class Model extends Plugin {
         $this->setTable($table);
 
         if (Factory::exists('auth')) {
-            $user = Factory::get('auth')->user;
+            $user = Gdn::auth()->user;
             $this->userID = val('id', $user);
         }
 
@@ -92,7 +94,7 @@ class Model extends Plugin {
      * @param int $offset
      * @return Db\Database\Result
      */
-    public function get(array $order = [], int $limit = 0, int $offset = 0)
+    public function get(array $order = [], $limit = 0, $offset = 0)
     {
         return $this->getWhere([], $order, $limit, $offset);
     }
@@ -106,7 +108,7 @@ class Model extends Plugin {
      * @param int $offset
      * @return Db\Database\Result
      */
-    public function getWhere(array $where = [], array $order = [], int $limit = 0, int $offset = 0)
+    public function getWhere(array $where = [], array $order = [], $limit = 0, $offset = 0)
     {
         $this->_query = DB::select('*')->from($this->table);
 
@@ -211,6 +213,27 @@ class Model extends Plugin {
     }
 
     /**
+     * Insert or update record
+     * @param int $id update fields
+     * @return int id record
+     */
+    public function insertOrUpdate($id, array $fields)
+    {
+        $result = $this->getID($id);
+
+        if ($result) {
+            $id = val($this->primaryKey, $result);
+            $this->update($id, $fields);
+        } else {
+            $fields['id'] = $id;
+            $id = $this->insert($fields);
+        }
+
+        return $id;
+    }
+
+
+    /**
      * Кemoves fields are not part of the table
      *
      * @param array $post
@@ -233,10 +256,10 @@ class Model extends Plugin {
         $result = Gdn::cache()->get($cacheKey);
 
         if (!$result) {
-            $columns = Database::instance()->list_columns($this->table);
+            $structure = $this->getStructure();
 
             $result = [];
-            foreach ($columns as $col) {
+            foreach ($structure as $col) {
                 $result[] = val('name', $col);
             }
 
@@ -366,7 +389,7 @@ class Model extends Plugin {
             $insert = DB::insert($table, $columns)->values($fields)->compile();
             $update = str_replace('  SET', '', DB::update()->set($fields)->compile());
 
-            $sql .= $insert . " ON DUPLICATE KEY $update;\n";
+            $sql .= "$insert ON DUPLICATE KEY $update;\n";
         }
 
         foreach ($this->_deleteFields as $delete) {
@@ -422,12 +445,32 @@ class Model extends Plugin {
     }
 
     /**
+     * @return Validation
+     */
+    public function validation()
+    {
+        if (!$this->validation) {
+            $this->validation = new Validation($this);
+        }
+
+        return $this->validation;
+    }
+
+    /**
      * Get table columns
      * @return array
      */
     public function getStructure()
     {
-        return Gdn::database()->list_columns($this->table);
+        $cacheKey = 'table_structure_' . $this->table;
+        $result = Gdn::cache()->get($cacheKey);
+
+        if (!$result) {
+            $result = Gdn::database()->list_columns($this->table);
+            Gdn::cache()->set($cacheKey, $result);
+        }
+
+        return $result;
     }
 
 

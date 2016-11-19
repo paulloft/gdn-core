@@ -90,6 +90,10 @@ class Form
      */
     public function validation()
     {
+        if ($this->model && $this->model instanceof Model) {
+            return $this->model->validation();
+        }
+
         if (!$this->validation) {
             $this->validation = new Validation($this->model);
         }
@@ -197,6 +201,7 @@ class Form
      */
     public function setFormValue($name, $value)
     {
+        $this->getFormValues();
         $this->formValues[$name] = trim($value);
     }
 
@@ -227,8 +232,8 @@ class Form
         if (empty($errors) && empty($this->errors)) return false;
 
         $html = array();
-        foreach ($errors as $field => $errors) {
-            foreach ($errors as $error) {
+        foreach ($errors as $field => $fieldErrors) {
+            foreach ($fieldErrors as $error) {
                 if (is_array($error)) {
                     $errField = val(0, $error);
                     $error = val(1, $error);
@@ -265,8 +270,8 @@ class Form
         if ($this->valid()) {
             $post = $this->getFormValues();
 
-            if ($this->model) {
-                $id = val($this->primaryKey(), $post);
+            if ($this->model && $this->model instanceof Model) {
+                $id = array_extract($this->model->primaryKey, $post);
                 $post = $this->fixPostData($post);
                 $result = $this->model->save($post, $id);
             } else {
@@ -406,8 +411,9 @@ class Form
     public function checkbox($name, array $attributes = [])
     {
         array_touch('value', $attributes, 1);
+        $defaultValue = array_extract('defaultValue', $attributes, null);
 
-        $html = '<input type="hidden" name="' . $name . '" value="" />';
+        $html = '<input type="hidden" name="' . $name . '" value="'.$defaultValue.'" />';
         $html .= $this->input($name, 'checkbox', $attributes);
 
         return $html;
@@ -503,8 +509,6 @@ class Form
     protected function fixPostData($post)
     {
         if ($this->model instanceof Model) {
-            unset($post[$this->model->primaryKey]);
-
             $structure = $this->validation()->getStructure();
             foreach ($post as $field => $value) {
                 // if (empty($value)) $value = null;

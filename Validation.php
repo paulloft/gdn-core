@@ -47,6 +47,15 @@ class Validation
     }
 
     /**
+     * get data from validation
+     * @param array $data
+     */
+    public function getData($key = false)
+    {
+        return $key ? val($key, $this->data) : $this->data;
+    }
+
+    /**
      * set user error for $field
      * @param string $field
      * @param string $error
@@ -226,6 +235,8 @@ class Validation
                     $ruleFunc =  'validate_' . $type;
                 }
 
+                $params = $this->replaceParams($params, $this->data);
+
                 if(!$this->isEmpty($value) || $type === 'not_empty') {
                     if (!call_user_func($ruleFunc, $value, $params)) {
                         if (is_array($message)) {
@@ -239,6 +250,20 @@ class Validation
                     }
                 }
             }
+        }
+    }
+
+    protected function replaceParams($params, $data) {
+        if (!$params) return false;
+
+        if (is_array($params)) {
+            foreach ($params as $k => $param) {
+                $params[$k] = $this->replaceParams($params, $data);
+            }
+            return $params;
+        } elseif (str_begins($params, ':')) {
+            $key = ltrim_substr($params, ':');
+            return val($key, $data);
         }
     }
 }

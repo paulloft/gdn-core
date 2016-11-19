@@ -178,7 +178,7 @@ class Controller extends Plugin {
                 ->setCacheDir( val('cache_dir', $config, GDN_CACHE.'/smarty/') )
                 ->setPluginsDir( val('plugins_dir', $config, false) );
 
-            if (NOCACHE) {
+            if (Cache::$clear) {
                 $this->smarty->clearAllCache();
             }
         }

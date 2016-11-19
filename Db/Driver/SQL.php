@@ -137,8 +137,7 @@ abstract class SQL extends Database {
             }
 
             // MySQL attributes
-            $column->comment = $row['Comment'];
-            $column->autoIncrement = (bool)strpos($row['Extra'], 'auto_increment');
+            $column->autoIncrement = strpos($row['Extra'], 'auto_increment') !== FALSE;
             $column->key = $row['Key'];
             $column->privileges = $row['Privileges'];
 

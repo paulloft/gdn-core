@@ -252,7 +252,9 @@ abstract class Structure {
             } else {
                 $result = false;
             }
-            if ($tablename == $this->tableName()) $this->_tableExists = $result;
+            if ($tablename == $this->tableName()) {
+                $this->_tableExists = $result;
+            }
             return $result;
         }
         return $this->_tableExists;

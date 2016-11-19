@@ -8,7 +8,7 @@ return [
     "password" => "",
     "charset" => "utf8",
     "tablePrefix" => "",
-    "identifier" => '`',
+    "identifier" => "`",
     "storageEngine" => "innodb",
     "persistent" => false,
     "options" => [],

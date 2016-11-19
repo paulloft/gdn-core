@@ -13,8 +13,9 @@ abstract class Cache
      */
     public static $default = 'dirty';
     public static $instances = array();
+    public static $clear = false;
 
-    protected static $clear = false;
+    private static $clearFile = GDN_CACHE.'/.clear_cache';
 
     /**
      * get singletone cache class
@@ -24,8 +25,14 @@ abstract class Cache
      */
     public static function instance($driver = null, $config = false)
     {
-        self::$clear = NOCACHE;
         $options = c('cache');
+
+        if (@$_GET['nocache'] || file_exists(self::$clearFile)) {
+            if (!self::$clear) {
+                @unlink(self::$clearFile);
+            }
+            self::$clear = true;
+        }
 
         if(!$driver) {
             $driver = val('driver', $options, self::$default);
@@ -47,6 +54,11 @@ abstract class Cache
         return self::$instances[$driver];
     }
 
+    public static function clear()
+    {
+        self::$clear = true;
+        touch(self::$clearFile);
+    }
 
     /**
      * Retrieve a cached value entry by id.

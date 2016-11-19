@@ -31,12 +31,12 @@ function validate_not_value($value, array $params)
 
 function validate_min_length($value, $params)
 {
-    return (mb_strlen($value) > $params);
+    return (mb_strlen($value) >= $params);
 }
 
 function validate_max_length($value, $params)
 {
-    return (mb_strlen($value) < $params);
+    return (mb_strlen($value) <= $params);
 }
 
 function validate_length($value, $params)
