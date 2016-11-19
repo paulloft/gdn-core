@@ -35,7 +35,7 @@ class Expression {
      * @param   array   $parameters unquoted parameter values
      * @return  void
      */
-    public function __construct($value, $parameters = array())
+    public function __construct($value, array $parameters = array())
     {
         // Set the expression string
         $this->_value = $value;
@@ -78,7 +78,7 @@ class Expression {
      */
     public function parameters(array $params)
     {
-        $this->_parameters = $params + $this->_parameters;
+        $this->_parameters = array_merge($params, $this->_parameters);
 
         return $this;
     }

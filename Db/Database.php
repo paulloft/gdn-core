@@ -1,6 +1,6 @@
 <?php 
 namespace Garden\Db;
-use \Garden\Exception as Exception;
+use \Garden\Exception;
 /**
  * Database connection wrapper/helper.
  *
@@ -145,7 +145,7 @@ abstract class Database {
      */
     public function __toString()
     {
-        return $this->_instance;
+        return (string)$this->_instance;
     }
 
     /**

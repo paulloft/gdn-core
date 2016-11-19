@@ -11,11 +11,6 @@ class Template extends Controller {
     protected $_css = array();
     protected $meta = array();
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     /**
      * Add js library to template
      * @param string $src path to js file
@@ -126,9 +121,9 @@ class Template extends Controller {
     {
         $addon = $addon !== null ? $addon : strtolower($this->getAddonName());
         $local = is_local_url($src);
-        if ($local && $addon && file_exists(PATH_ADDONS.'/'.ucfirst($addon).'/assets/'.$resource.'/'.$src)) {
+        if ($local && $addon && file_exists(GDN_ADDONS.'/'.ucfirst($addon).'/assets/'.$resource.'/'.$src)) {
             return "/assets/$addon/$resource/$src";
-        } elseif (!$local OR file_exists(PATH_PUBLIC.'/'.$src)) {
+        } elseif (!$local || file_exists(PATH_PUBLIC.'/'.$src)) {
             return $src;
         } else {
             return false;

@@ -55,8 +55,7 @@ function format_duration($seconds) {
         $sx = 'd';
     }
 
-    $result = rtrim($n, '0.').$sx;
-    return $result;
+    return rtrim($n, '0.').$sx;
 }
 
 /**
@@ -75,8 +74,7 @@ function format_filesize($bytes, $precision = 1) {
 
     $bytes /= pow(1024, $pow);
 
-    $result = round($bytes, $precision).$units[$pow];
-    return $result;
+    return round($bytes, $precision).$units[$pow];
 }
 
 /**
@@ -89,12 +87,11 @@ function unformat_filesize($str) {
     $units = array('B' => 1, 'K' => 1 << 10, 'M' => 1 << 20, 'G' => 1 << 30, 'T' => 1 << 40);
 
     if (preg_match('/([0-9.]+)\s*([A-Z]*)/i', $str, $matches)) {
-        $number = floatval($matches[1]);
+        $number = (float)$matches[1];
         $unit = strtoupper(substr($matches[2], 0, 1));
         $mult = val($unit, $units, 1);
 
-        $result = round($number * $mult, 0);
-        return $result;
+        return round($number * $mult, 0);
     } else {
         return null;
     }
@@ -134,13 +131,7 @@ function format_declension($num, $exp)
     $num = (($num < 0) ? $num-$num*2 : $num)%100;
     $dig = ($num > 20) ? $num%10 : $num;
 
-    return trim((($dig == 1) ? $exp[1] : (($dig > 4 || $dig < 1) ? $exp[0] : $exp[2])));
-}
-
-function format_getFIO($object, $short = false)
-{
-    $fio = val('surname', $object).' '.val('firstname', $object).' '.val('patronymic', $object);
-    return $short ? format_shortFIO($fio) : $fio;
+    return trim((($dig === 1) ? $exp[1] : (($dig > 4 || $dig < 1) ? $exp[0] : $exp[2])));
 }
 
 function format_shortFIO($fio)
@@ -160,24 +151,12 @@ function format_shortFIO($fio)
     return $result;
 }
 
-function format_carnum($number)
-{
-    $str1 = preg_split('/(?<!^)(?!$)/u', 'авекмнорстух');
-    $str2 = str_split('abekmhopctyx ');
-
-    $number = mb_strtolower($number);
-    $number = str_replace($str2, $str1, $number);
-
-    return $number;
-}
-
 function format_substr($string, $limit = 120)
 {
     $string = strip_tags($string);
     $string = substr($string, 0, $limit);
-    $string = rtrim($string, "!,.-");
+    $string = rtrim($string, '!,.-');
     $string = substr($string, 0, strrpos($string, ' '));
-    $string = $string."… ";
 
-    return $string;
+    return $string.'… ';
 }

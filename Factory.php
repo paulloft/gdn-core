@@ -106,13 +106,13 @@ class Factory {
      * @param array $args The arguments to pass to the constructor.
      * Note: This function currently only supports a maximum of 8 arguments.
      */
-    protected static function _instantiateObject($className, $args = array())
+    protected static function _instantiateObject($className, array $args = array())
     {
         $result = NULL;
 
         // Instantiate the object with the correct arguments.
         // This odd looking case statement is purely for speed optimization.
-        switch(count($args)) {
+        if(class_exists($className)) switch(count($args)) {
             case 0:
                 $result = new $className; break;
             case 1:
@@ -138,7 +138,7 @@ class Factory {
         return $result;
     }
 
-    protected static function hash($alias, $args = array())
+    protected static function hash($alias, array $args = array())
     {
         $alias = trim(strtolower($alias), "\\");
         return empty($args) ? $alias : md5($alias.implode($args));

@@ -1,9 +1,6 @@
 <?php
 namespace Garden;
 
-/**
- * @todo Доделать множественные инпуты с именами вида name="field[]"
- */
 class Form
 {
     /**
@@ -26,12 +23,13 @@ class Form
 
     private $hiddenInputs = [];
     private $inputs;
+    private $errors = [];
 
     /**
      * Form constructor.
      * @param string $tablename table name for form model
      */
-    function __construct($tablename = false)
+    public function __construct($tablename = false)
     {
         if ($tablename) {
             $model = new Model($tablename);
@@ -49,7 +47,16 @@ class Form
         $this->model = $model;
 
         if ($dataset !== false)
-            $this->setdata($dataset);
+            $this->setData($dataset);
+    }
+
+    /**
+     * return model primary key
+     * @return bool|mixed
+     */
+    public function primaryKey()
+    {
+        return $this->model ? val('primaryKey', $this->model) : false;
     }
 
     /**
@@ -68,9 +75,11 @@ class Form
             $this->data = $data;
         }
 
-        if ($this->model) {
-            $id = val($this->model->primaryKey, $this->data, null);
-            $this->addHidden($this->model->primaryKey, $id, true);
+        $primaryKey = $this->primaryKey();
+
+        if ($primaryKey) {
+            $id = val($primaryKey, $this->data, null);
+            $this->addHidden($primaryKey, $id, true);
         }
 
     }
@@ -89,26 +98,31 @@ class Form
     }
 
     /**
-     * check the form is submitted
+     * Check the form submission
      * @return bool
      */
     public function submitted()
     {
         $method = strtoupper($this->method);
-        switch ($method) {
-            case Request::METHOD_GET:
-                return count(Gdn::request()->getQuery()) > 0 || (is_array($this->getFormValues()) && count($this->getFormValues()) > 0) ? true : false;
-            default:
-                return Gdn::request()->isPost();
+
+        if ($method === Request::METHOD_GET) {
+            return count(Gdn::request()->getQuery()) > 0 || (is_array($this->getFormValues()) && count($this->getFormValues()) > 0);
+
+        } else {
+            return Gdn::request()->isPost();
         }
     }
 
+    /**
+     * Check the form submission and data integrity
+     * @return bool
+     */
     public function submittedValid()
     {
         if ($this->submitted()) {
             $post = $this->getFormValues();
-            $secureKey = array_extract('secureKey', $post);
-            if ($secureKey == $this->getSecureKey($post)) {
+            $secureKey = $this->getSecureKey();
+            if ($secureKey === $this->generateSecureKey($post)) {
                 return true;
             }
         }
@@ -124,7 +138,7 @@ class Form
      */
     public function getFormValue($name, $default = '')
     {
-        return val($name, $this->getFormValues(), $default);
+        return valr($name, $this->getFormValues(), $default);
     }
 
     private $magicQuotes;
@@ -138,8 +152,9 @@ class Form
         if (!is_array($this->formValues)) {
             $this->magicQuotes = get_magic_quotes_gpc();
 
-            $this->formValues = array();
-            $formData = $this->method == 'get' ? $_GET : $_POST;
+            $this->formValues = [];
+            $var = '_'.strtoupper($this->method);
+            $formData = val($var, $GLOBALS, []);
 
             $this->formValues = $this->clearFormData($formData);
         }
@@ -158,7 +173,7 @@ class Form
         if ($this->submitted()) {
             return $this->getFormValue($name, $default);
         } else {
-            return val($name, $this->data, $default);
+            return valr($name, $this->data, $default);
         }
     }
 
@@ -196,6 +211,11 @@ class Form
         return $this->validation()->validate($data);
     }
 
+    public function addError($error)
+    {
+        $this->errors[] = $error;
+    }
+
     /**
      * get form errors
      * @param bool $text if true return errors in text else in html
@@ -204,7 +224,7 @@ class Form
     public function errors($text = false)
     {
         $errors = $this->validation()->errors();
-        if (empty($errors)) return false;
+        if (empty($errors) && empty($this->errors)) return false;
 
         $html = array();
         foreach ($errors as $field => $errors) {
@@ -213,7 +233,7 @@ class Form
                     $errField = val(0, $error);
                     $error = val(1, $error);
                 } else {
-                    $errField = t($this->model ? $this->model->table : 'form' . '.' . $field, $field);
+                    $errField = t($this->model ? val('table', $this->model, 'form') : 'form' . '.' . $field, $field);
                 }
                 if ($text) {
                     $html[] = $errField . ' ' . $error;
@@ -221,6 +241,10 @@ class Form
                     $html[] = '<strong>' . $errField . ':</strong> ' . $error;
                 }
             }
+        }
+
+        foreach ($this->errors as $error) {
+            $html[] = $error;
         }
 
         if ($text) {
@@ -242,7 +266,7 @@ class Form
             $post = $this->getFormValues();
 
             if ($this->model) {
-                $id = val($this->model->primaryKey, $post);
+                $id = val($this->primaryKey(), $post);
                 $post = $this->fixPostData($post);
                 $result = $this->model->save($post, $id);
             } else {
@@ -255,10 +279,27 @@ class Form
         return $result;
     }
 
-    public function getSecureKey($post)
+    /**
+     * generate form secure key from your $data
+     * @param array $post
+     * @return string md5 hash
+     */
+    public function generateSecureKey($data)
     {
-        $keys = array_keys($post);
+        $keys = array_keys($data);
         return md5(implode($keys) . c('main.hashsalt'));
+    }
+
+    /**
+     * return posted form secure key
+     * @return string
+     */
+    public function getSecureKey()
+    {
+        $var = '_'.strtoupper($this->method);
+        $formData = val($var, $GLOBALS, []);
+
+        return val('secureKey', $formData);
     }
 
     /**
@@ -266,7 +307,7 @@ class Form
      * @param array $attributes form attributes
      * @return string
      */
-    public function open($attributes = [])
+    public function open(array $attributes = [])
     {
         $return = '<form ';
         $currentPath = Gdn::request()->getPath();
@@ -291,7 +332,7 @@ class Form
             $return .= $this->input($name, 'hidden', ['value' => $value]);
         }
 
-        $return .= $this->input('secureKey', 'hidden', ['value' => $this->getSecureKey($this->inputs)]);
+        $return .= $this->input('secureKey', 'hidden', ['value' => $this->generateSecureKey($this->inputs)]);
         $this->inputs = [];
 
         $return .= '</form>';
@@ -306,7 +347,7 @@ class Form
      * @param array $attributes input attributes
      * @return string
      */
-    public function input($name, $type = 'text', $attributes = [])
+    public function input($name, $type = 'text', array $attributes = [])
     {
         if ($type !== 'radio' && $type !== 'checkbox' && $type !== 'hidden') {
             array_touch('class', $attributes, $this->inputClass);
@@ -314,17 +355,19 @@ class Form
 
         $value = val('value', $attributes);
 
-        if ($type == 'radio' OR $type == 'checkbox') {
+        if ($type == 'radio' || $type == 'checkbox') {
             if ($value !== false && $this->getValue($name) == $value) {
                 array_touch('checked', $attributes, 'checked');
             }
         }
 
+        $correctName = $this->correctName($name);
+
         $attributes['name'] = $name;
         $attributes['type'] = $type;
-        $attributes['value'] = $this->_value($name, $value);
+        $attributes['value'] = $this->_value($correctName, $value);
 
-        $this->inputs[$name] = $name;
+        $this->addInput($correctName);
 
         return '<input ' . $this->attrToString($attributes) . ' />';
     }
@@ -335,7 +378,7 @@ class Form
      * @param array $attributes textarea attributes
      * @return string
      */
-    public function textarea($name, $attributes = [])
+    public function textarea($name, array $attributes = [])
     {
         array_touch('class', $attributes, $this->inputClass);
         array_touch('rows', $attributes, '5');
@@ -344,10 +387,12 @@ class Form
         $value = val('value', $attributes);
         unset($attributes['type'], $attributes['value']);
 
-        $this->inputs[$name] = $name;
+        $correctName = $this->correctName($name);
+
+        $this->addInput($correctName);
 
         $html = '<textarea ' . $this->attrToString($attributes) . '>';
-        $html .= $this->_value($name, $value);
+        $html .= $this->_value($correctName, $value);
         $html .= '</textarea>';
         return $html;
     }
@@ -358,7 +403,7 @@ class Form
      * @param array $attributes checkbox attributes
      * @return string
      */
-    public function checkbox($name, $attributes = [])
+    public function checkbox($name, array $attributes = [])
     {
         array_touch('value', $attributes, 1);
 
@@ -374,7 +419,7 @@ class Form
      * @param array $attributes radio attributes
      * @return string
      */
-    public function radio($name, $attributes = [])
+    public function radio($name, array $attributes = [])
     {
         return $this->input($name, 'radio', $attributes);
     }
@@ -386,7 +431,7 @@ class Form
      * @param array $attributes
      * @return string
      */
-    public function select($name, $options = [], $attributes = [])
+    public function select($name, array $options = [], array $attributes = [])
     {
         array_touch('class', $attributes, $this->inputClass);
         $attributes['name'] = $name;
@@ -402,16 +447,17 @@ class Form
             $html .= '<option value="' . $defaultValue . '">' . $defaultName . '</option>';
         }
 
-        $this->inputs[$name] = $name;
-        $fieldValue = $this->getValue($name);
+        $correctName = $this->correctName($name);
+        $this->addInput($correctName);
+        $fieldValue = $this->getValue($correctName);
 
         foreach ($options as $key => $option) {
-            $value = $keyName && $keyValue ? val($keyValue, $option) : $key;
-            $name = $keyName && $keyValue ? val($keyName, $option) : $option;
+            $optionValue = $keyName && $keyValue ? val($keyValue, $option) : $key;
+            $optionName = $keyName && $keyValue ? val($keyName, $option) : $option;
 
-            $selected = is_array($fieldValue) ? in_array($value, $fieldValue) : $value == $fieldValue;
+            $selected = is_array($fieldValue) ? in_array($optionValue, $fieldValue) : $optionValue == $fieldValue;
 
-            $html .= '<option value="' . $value . '"' . ($selected ? ' selected' : '') . '>' . $name . '</option>';
+            $html .= '<option value="' . $optionValue . '"' . ($selected ? ' selected' : '') . '>' . $optionName . '</option>';
         }
 
         $html .= '</select>';
@@ -427,15 +473,16 @@ class Form
      */
     public function addHidden($name, $value = null, $forceValue = false)
     {
-        if ($this->submitted() && $forceValue === false)
+        if ($this->submitted() && $forceValue === false) {
             $value = $this->getFormValue($name, $value);
+        }
 
         $this->hiddenInputs[$name] = $value;
     }
 
     protected function _value($name, $value = false)
     {
-        return format_form($value == false ? $this->getValue($name) : $value);
+        return format_form($value === false ? $this->getValue($name) : $value);
     }
 
     /**
@@ -455,7 +502,7 @@ class Form
      */
     protected function fixPostData($post)
     {
-        if ($this->model) {
+        if ($this->model instanceof Model) {
             unset($post[$this->model->primaryKey]);
 
             $structure = $this->validation()->getStructure();
@@ -488,6 +535,8 @@ class Form
      */
     protected function clearFormData($formData)
     {
+        unset($formData['secureKey']);
+
         foreach ($formData as $name => $value) {
             if (is_array($value)) {
                 $formData[$name] = $this->clearFormData($value);
@@ -501,5 +550,17 @@ class Form
         }
 
         return $formData;
+    }
+
+    protected function correctName($name)
+    {
+        return str_replace(['[]','[', ']'], ['', '.', ''], $name);
+    }
+
+    protected function addInput($name)
+    {
+        $pos = strpos($name, '.');
+        $arrName = $pos ? substr($name, 0, $pos) : $name;
+        $this->inputs[$arrName] = $name;
     }
 }

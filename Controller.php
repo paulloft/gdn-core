@@ -1,6 +1,6 @@
 <?php
 namespace Garden;
-use \Garden\Exception as Exception;
+use \Garden\Exception;
 
 class Controller extends Plugin {
 
@@ -165,7 +165,7 @@ class Controller extends Plugin {
      */
     public function smarty()
     {
-        if (is_null($this->smarty)) {
+        if ($this->smarty === null) {
             if (!class_exists('\Smarty')) {
                 throw new Exception\Client('Smarty class does not exists');
             }

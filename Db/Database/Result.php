@@ -26,7 +26,7 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
     protected $_as_object;
 
     // Parameters for __construct when using object results
-    protected $_object_params = NULL;
+    protected $_object_params;
 
     /**
      * Sets the total number of rows and stores the result locally.

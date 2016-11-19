@@ -1,117 +1,71 @@
 <?php
 function validate_email($value, $params)
 {
-    if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
-        return false;
-    }
-    return true;
+    return !(filter_var($value, FILTER_VALIDATE_EMAIL) === false);
 }
 
 function validate_ip($value, $params)
 {
-    if (filter_var($value, FILTER_VALIDATE_IP) === false) {
-        return false;
-    }
-    return true;
+    return !(filter_var($value, FILTER_VALIDATE_IP) === false) ;
 }
 
 function validate_url($value, $params)
 {
-    if (filter_var($value, FILTER_VALIDATE_URL) === false) {
-        return false;
-    }
-    return true;
+    return !(filter_var($value, FILTER_VALIDATE_URL) === false);
 }
 
 function validate_mac($value, $params)
 {
-    if (filter_var($value, FILTER_VALIDATE_MAC) === false) {
-        return false;
-    }
-    return true;
+    return !(filter_var($value, FILTER_VALIDATE_MAC) === false);
 }
 
 function validate_not_empty($value, $params)
 {
-    if (in_array($value, array(NULL, FALSE, '', array()), TRUE)) {
-        return false;
-    }
-    return true;
+    return !in_array($value, array(NULL, FALSE, '', array()), TRUE);
 }
 
-function validate_not_value($value, $params)
+function validate_not_value($value, array $params)
 {
-    if (!is_array($params)) {
-        return false;
-    }
-
-    if (in_array($value, $params)) {
-        return false;
-    }
-    return true;
+    return !in_array($value, $params);
 }
 
 function validate_min_length($value, $params)
 {
-    if (mb_strlen($value) < $params) {
-        return false;
-    }
-    return true;
+    return (mb_strlen($value) > $params);
 }
 
 function validate_max_length($value, $params)
 {
-    if (mb_strlen($value) > $params) {
-        return false;
-    }
-    return true;
+    return (mb_strlen($value) < $params);
 }
 
 function validate_length($value, $params)
 {
-    if (mb_strlen($value) <> $params) {
-        return false;
-    }
-    return true;
+    return mb_strlen($value) === $params;
 }
 
 function validate_int($value, $params)
 {
-    if (!is_int($value)) {
-        return false;
-    }
-    return true;
+    return is_int($value);
 }
 
 function validate_numeric($value, $params)
 {
-    if (!is_numeric($value)) {
-        return false;
-    }
-    return true;
+    return is_numeric($value);
 }
 
 function validate_regexp($value, $params)
 {
-    if (!preg_match($params, (string)$value)) {
-        return false;
-    }
-    return true;
+    return preg_match($params, (string)$value);
 }
 
 function validate_sql_date($value)
 {
-    if (preg_match("/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/", $value, $matches)) {
-        if (checkdate($matches[2], $matches[3], $matches[1])) {
-            return true;
-        }
-    }
+    $date = "/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/";
+    $datetime = "/^(\d{4})-(\d{2})-(\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/";
 
-    if (preg_match("/^(\d{4})-(\d{2})-(\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/", $value, $matches)) {
-        if (checkdate($matches[2], $matches[3], $matches[1])) {
-            return true;
-        }
-    }
-
-    return false;
+    return preg_match($date, $value, $matches)
+        && checkdate($matches[2], $matches[3], $matches[1])
+        && preg_match($datetime, $value, $matches)
+        && checkdate($matches[2], $matches[3], $matches[1]);
 }

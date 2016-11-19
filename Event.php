@@ -60,7 +60,7 @@ class Event {
      * @param array $args The arguments to be passed to the callback, as an indexed array.
      * @return mixed Returns the return value of the callback.
      */
-    public static function callUserFuncArray($callback, $args = []) {
+    public static function callUserFuncArray($callback, array $args = []) {
         // Figure out the event name from the callback.
         $event_name = static::getEventname($callback);
         if (!$event_name) {
@@ -219,7 +219,7 @@ class Event {
      * @param array $args The arguments for the event handlers.
      * @return mixed Returns the result of the last event handler.
      */
-    public static function fireArray($event, $args = []) {
+    public static function fireArray($event, array $args = []) {
         $handlers = self::getHandlers($event);
         if (!$handlers) {
             return null;

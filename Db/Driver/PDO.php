@@ -1,7 +1,7 @@
 <?php
 namespace Garden\Db\Driver;
 
-use \Garden\Exception as Exception;
+use \Garden\Exception;
 use \Garden\Db\Database;
 
 /**
@@ -39,6 +39,7 @@ class PDO extends SQL {
         $username = val('username', $this->_config, NULL);
         $password = val('password', $this->_config, NULL);
         $persistent = val('persistent', $this->_config);
+        $options = val('options', $this->_config, []);
 
         $dsn = "$type:host=$host;dbname=$database";
 

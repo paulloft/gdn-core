@@ -32,7 +32,7 @@ class Update extends Where {
         }
 
         // Start the query with no SQL
-        return parent::__construct(Database::UPDATE, '');
+        parent::__construct(Database::UPDATE, '');
     }
 
     /**

@@ -147,8 +147,7 @@ class Config {
 
         ksort($config, SORT_NATURAL | SORT_FLAG_CASE);
 
-        $result = array_save($config, $path, $php_var);
-        return $result;
+        return array_save($config, $path, $php_var);
     }
 
     /**
@@ -165,7 +164,7 @@ class Config {
 
             $dir = scandir($path);
             foreach ($dir as $filename) {
-                if($filename == '.' OR $filename == '..') {
+                if($filename == '.' || $filename == '..') {
                     continue;
                 }
                 $file = $path.'/'.$filename;

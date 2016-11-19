@@ -213,7 +213,7 @@ class Response implements JsonSerializable {
         } else {
             $response->status(422);
             $response->data([
-                'exception' => "Unknown result type for response.",
+                'exception' => 'Unknown result type for response.',
                 'code' => $response->status()
             ]);
         }
@@ -486,7 +486,7 @@ class Response implements JsonSerializable {
             }
             return $result;
         }
-        throw new \InvalidArgumentException("Argument #1 to splitHeaders() was not valid.", 422);
+        throw new \InvalidArgumentException('Argument #1 to splitHeaders() was not valid.', 422);
     }
 
     /**

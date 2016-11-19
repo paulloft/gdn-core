@@ -279,7 +279,7 @@ function array_select(array $keys, array $array, $default = null) {
  * @param mixed $default The default value to set if key does not exist.
  * @category Array Functions
  */
-function array_touch($key, &$array, $default) {
+function array_touch($key, array &$array, $default) {
     if (!array_key_exists($key, $array)) {
         $array[$key] = $default;
     }
@@ -294,7 +294,7 @@ function array_touch($key, &$array, $default) {
  *
  * @category Array Functions
  */
-function array_translate($array, $mappings) {
+function array_translate($array, array $mappings) {
     $array = (array)$array;
     $result = array();
     foreach ($mappings as $index => $value) {
@@ -325,7 +325,7 @@ function array_translate($array, $mappings) {
  * @category Array Functions
  * @category String Functions
  */
-function implode_assoc($elemglue, $keyglue, $pieces) {
+function implode_assoc($elemglue, $keyglue, array $pieces) {
     $result = '';
 
     foreach ($pieces as $key => $value) {
@@ -344,7 +344,7 @@ function implode_assoc($elemglue, $keyglue, $pieces) {
  * @param string $key
  * @return array
  */
-function array_valuekey($array, $key)
+function array_valuekey(array $array, $key)
 {
     $result = array();
 
@@ -363,12 +363,12 @@ function array_valuekey($array, $key)
  * @param array $keys
  * @return array
  */
-function array_map_recursive($callbacks, $array, $keys = NULL)
+function array_map_recursive($callbacks, array $array, $keys = NULL)
 {
     foreach ($array as $key => $val) {
         if (is_array($val)) {
             $array[$key] = array_map_recursive($callbacks, $array[$key]);
-        } elseif ( ! is_array($keys) OR in_array($key, $keys)) {
+        } elseif ( ! is_array($keys) || in_array($key, $keys)) {
             if (is_array($callbacks)) {
                 foreach ($callbacks as $cb) {
                     $array[$key] = call_user_func($cb, $array[$key]);
@@ -389,7 +389,7 @@ function array_map_recursive($callbacks, $array, $keys = NULL)
  * @param mixed $default
  * @return mixed
  */
-function array_extract($key, &$array, $default = false)
+function array_extract($key, array &$array, $default = false)
 {
     $result = val($key, $array, $default);
     unset($array[$key]);
@@ -404,7 +404,7 @@ function array_extract($key, &$array, $default = false)
  * @param bool $dafult
  * @return mixed
  */
-function array_get($array, $key, $dafult = false)
+function array_get(array $array, $key, $dafult = false)
 {
     return val($key, $array, $dafult);
 }

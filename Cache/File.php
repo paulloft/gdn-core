@@ -13,7 +13,7 @@ class File extends \Garden\Cache
 
     protected $dirty;
 
-    function __construct($config)
+    public function __construct($config)
     {
         $this->lifetime       = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
         $this->packFunction   = val('packFunction', $config, $this->packFunction);
@@ -22,6 +22,10 @@ class File extends \Garden\Cache
         $cacheDir = val('cacheDir', $config);
 
         $this->cacheDir = $cacheDir ? realpath(PATH_ROOT.'/'.$cacheDir) : GDN_CACHE;
+
+        if (!is_dir($this->cacheDir)) {
+            @mkdir($this->cacheDir, 0777, true);
+        }
 
         $this->dirty = \Garden\Gdn::dirtyCache();
     }
@@ -59,7 +63,7 @@ class File extends \Garden\Cache
 
         if(!self::$clear && !$data = $this->dirty->get($fileName)) {
 
-            $file = $this->cacheDir."/".$fileName;
+            $file = $this->cacheDir.'/'.$fileName;
 
             if(!is_file($file)) {
                 return $default;
@@ -72,7 +76,7 @@ class File extends \Garden\Cache
             $expire = val('expire', $result, 0);
             $data   = val('data', $result, false);
 
-            if($expire !== false && mktime() > $expire) {
+            if($expire !== false && time() > $expire) {
                 $this->delete($id);
                 return $default;
             }
@@ -86,7 +90,7 @@ class File extends \Garden\Cache
 
     public function exists($id)
     {
-        $file = $this->cacheDir."/".$this->getFileName($id);
+        $file = $this->cacheDir.'/'.$this->getFileName($id);
 
         return (!self::$clear && is_file($file));
     }
@@ -101,21 +105,19 @@ class File extends \Garden\Cache
      */
     public function set($id, $data, $lifetime = null)
     {
-        if(is_null($lifetime)) $lifetime = $this->lifetime;
+        if ($lifetime === null) {
+            $lifetime = $this->lifetime;
+        }
 
         $cacheData = array(
-            'expire' => $lifetime === false ? false : (mktime() + intval($lifetime)),
+            'expire' => $lifetime === false ? false : (time() + (int)$lifetime),
             'data' => $data
         );
         $packFunction = $this->packFunction;
         $cacheData = $packFunction($cacheData);
 
-        if(!is_dir($this->cacheDir)) {
-            mkdir($this->cacheDir, 0777, true);
-        }
-
         $fileName = $this->getFileName($id);
-        $cachePath = $this->cacheDir."/".$fileName;
+        $cachePath = $this->cacheDir.'/'.$fileName;
 
         $result = file_put_contents($cachePath, $cacheData);
         chmod($cachePath, 0664);
@@ -142,7 +144,7 @@ class File extends \Garden\Cache
      */
     public function delete($id)
     {
-        unlink($this->cacheDir."/".$this->getFileName($id));
+        unlink($this->cacheDir.'/'.$this->getFileName($id));
     }
 
     /**

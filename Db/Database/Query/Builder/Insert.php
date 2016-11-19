@@ -41,7 +41,7 @@ class Insert extends Database\Query\Builder {
         }
 
         // Start the query with no SQL
-        return parent::__construct(Database::INSERT, '');
+        parent::__construct(Database::INSERT, '');
     }
 
     /**

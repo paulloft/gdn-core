@@ -20,7 +20,7 @@ class Query {
     protected $_force_execute = FALSE;
 
     // Cache lifetime
-    protected $_lifetime = NULL;
+    protected $_lifetime;
 
     // SQL statement
     protected $_sql;
@@ -58,7 +58,7 @@ class Query {
             // Return the SQL string
             return $this->compile(Database::instance());
         } catch (\Exception $e) {
-            return \Exception::text($e);
+            return (string)\Exception::text($e);
         }
     }
 
@@ -165,7 +165,7 @@ class Query {
     public function parameters(array $params)
     {
         // Merge the new parameters in
-        $this->_parameters = $params + $this->_parameters;
+        $this->_parameters = array_merge($params, $this->_parameters);
 
         return $this;
     }

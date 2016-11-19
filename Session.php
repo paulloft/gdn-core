@@ -18,7 +18,7 @@ class Session extends Plugin
 
     protected $model;
 
-    function __construct()
+    public function __construct()
     {
         $this->model = new Model('session');
         $this->model->primaryKey = 'sessionID';

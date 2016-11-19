@@ -3,6 +3,9 @@ namespace Garden;
 
 class Validation
 {
+    /**
+     * @var Model
+     */
     protected $model;
     protected $data;
 
@@ -11,7 +14,7 @@ class Validation
 
     public $validated = false;
 
-    function __construct($model = false)
+    public function __construct($model = false)
     {
         $this->model = $model;
     }
@@ -65,11 +68,15 @@ class Validation
      * set custom validation errors of array
      * @param array $errors
      */
-    public function addValidationResult($errors)
+    public function addValidationResult(array $errors)
     {
-        foreach ($errors as $field => $errors) {
-            foreach ($errors as  $error) {
-                $this->addError($field, $error);
+        foreach ($errors as $field => $error) {
+            if (is_array($error)) {
+                foreach ($error as $inerror) {
+                    $this->addError($field, $inerror);
+                }
+            } else {
+                $this->addError($field, $errors);
             }
         }
     }
@@ -127,7 +134,7 @@ class Validation
      */
     protected function isEmpty($value)
     {
-        return is_null($value) OR $value === '';
+        return $value === null || $value === '';
     }
 
     protected function checkStructure()
@@ -145,7 +152,7 @@ class Validation
             $value = trim($value);
 
 
-            $length = intval($opt->length);
+            $length = (int)$opt->length;
             if (!empty($length)) {
                 $len = mb_strlen($value);
                 if ($len > $length) {
@@ -154,45 +161,45 @@ class Validation
                 }
             }
 
-            if (!$opt->autoIncrement && is_null($opt->default) && !$opt->allowNull && $this->isEmpty($value)) {
+            if (!$opt->autoIncrement && $opt->default === NULL && !$opt->allowNull && $this->isEmpty($value)) {
                 $this->errors[$field][] = t('validate_not_empty');
                 continue;
             }
 
             switch ($opt->dataType) {
-                case "int":
-                case "bigint":
+                case 'int':
+                case 'bigint':
                     if (!$this->isEmpty($value) && !ctype_digit($value)) {
                         $this->errors[$field][] = t('validate_int');
-                        continue;
+                        continue 2;
                     }
                     break;
 
-                case"double":
-                    if (!$this->isEmpty($value) && !is_double($value)) {
+                case 'double':
+                    if (!$this->isEmpty($value) && !is_float($value)) {
                         $this->errors[$field][] = t('validate_double');
-                        continue;
+                        continue 2;
                     }
                     break;
 
-                case"float":
+                case 'float':
                     if (!$this->isEmpty($value) && !is_numeric($value)) {
                         $this->errors[$field][] = t('validate_float');
-                        continue;
+                        continue 2;
                     }
                     break;
 
-                case"date":
-                case"datetime":
-                case"timestamp":
+                case 'date':
+                case 'datetime':
+                case 'timestamp':
                     if (!$this->isEmpty($value) && !validate_sql_date($value)) {
                         $this->errors[$field][] = t('validate_sql_date');
-                        continue;
+                        continue 2;
                     }
                     break;
 
                 default:
-                    continue;
+                    continue 2;
                     break;
 
             }
@@ -219,7 +226,7 @@ class Validation
                     $ruleFunc =  'validate_' . $type;
                 }
 
-                if(!$this->isEmpty($value) OR $type === 'not_empty') {
+                if(!$this->isEmpty($value) || $type === 'not_empty') {
                     if (!call_user_func($ruleFunc, $value, $params)) {
                         if (is_array($message)) {
                             $field = val(0, $message);

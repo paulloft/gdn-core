@@ -85,7 +85,7 @@ class Gdn {
      */
     public static function translate($code, $default = null)
     {
-        if (substr($code, 0, 1) === '@') {
+        if (strpos($code, '@') === 0) {
             return substr($code, 1);
         } elseif (isset(self::$translations[$code])) {
             return self::$translations[$code];

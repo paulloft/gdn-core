@@ -1,18 +1,15 @@
 <?php
 namespace Garden\Cache;
-use \Garden\Exception as Exception;
-/**
-* 
-*/
-class Memcached extends Memcache
-{
-    function __construct($config = false){
-        parent::__construct($config);
-    }
 
+use \Garden\Exception;
+
+/**
+ *
+ */
+class Memcached extends Memcache {
     protected function connect()
     {
-        if(!class_exists('Memcached')) {
+        if (!class_exists('Memcached')) {
             throw new Exception\Custom('Memcached extention not found');
         }
 
@@ -22,19 +19,25 @@ class Memcached extends Memcache
 
     public function set($id, $data, $lifetime = null)
     {
-        if(is_null($lifetime)) $lifetime = $this->lifetime;
+        if ($lifetime === null) {
+            $lifetime = $this->lifetime;
+        }
+
         $id = $this->fixID($id);
         $this->dirty->set($id, $data);
 
-        return $this->cache->set($id, $data, intval($lifetime));
+        return $this->cache->set($id, $data, (int)$lifetime);
     }
 
     public function add($id, $data, $lifetime = null)
     {
-        if(is_null($lifetime)) $lifetime = $this->lifetime;
+        if ($lifetime === null) {
+            $lifetime = $this->lifetime;
+        }
+
         $id = $this->fixID($id);
 
-        return $this->cache->add($id, $data, intval($lifetime));
+        return $this->cache->add($id, $data, (int)$lifetime);
     }
 
     public function getMessage()
@@ -42,7 +45,7 @@ class Memcached extends Memcache
         return $this->cache->getResultMessage();
     }
 
-    function __destruct()
+    public function __destruct()
     {
         $this->cache->quit();
     }

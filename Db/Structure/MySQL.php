@@ -1,7 +1,7 @@
 <?php
 namespace Garden\Db\Structure;
 
-use \Garden\Exception as Exception;
+use \Garden\Exception;
 use \Garden\Db\Database;
 
 /**
@@ -18,11 +18,6 @@ use \Garden\Db\Database;
  */
 class MySQL extends \Garden\Db\Structure
 {
-
-    public function __construct($database = null)
-    {
-        parent::__construct($database);
-    }
 
     public function dropTable()
     {
@@ -393,7 +388,6 @@ class MySQL extends \Garden\Db\Structure
     protected function indexSql($columns, $keyType = false)
     {
         $result = array();
-        $keys = array();
         $prefixes = array('key' => 'FK_', 'index' => 'IX_', 'unique' => 'UX_', 'fulltext' => 'TX_');
         $indexes = array();
 
@@ -529,8 +523,8 @@ class MySQL extends \Garden\Db\Structure
         if (!$column->allowNull)
             $return .= ' not null';
 
-        if (!(is_null($column->default) || $column->default === '') && strcasecmp($column->type, 'timestamp') != 0)
-            $return .= " default " . self::quotevalue($column->default);
+        if (!($column->default === null || $column->default === '') && strcasecmp($column->type, 'timestamp') !== 0)
+            $return .= ' default ' . self::quoteValue($column->default);
 
         if ($column->autoIncrement)
             $return .= ' auto_increment primary key';
@@ -551,6 +545,6 @@ class MySQL extends \Garden\Db\Structure
 
     protected function supportsFulltext()
     {
-        return strcasecmp($this->_engine, 'myisam') == 0;
+        return strcasecmp($this->_engine, 'myisam') === 0;
     }
 }

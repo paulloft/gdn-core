@@ -1,19 +1,19 @@
-<?php 
+<?php
 namespace Garden;
+
 use Garden\Db\Database;
 
 /**
  * Model base class
- * 
+ *
  *
  * @author PaulLoft <info@paulloft.ru>
  * @copyright 2014 Paulloft
  * @license http://www.opensource.org/licenses/gpl-2.0.php GPL
  * @package Garden
  */
-
 class Model extends Plugin {
-    
+
     public $table;
     public $primaryKey = 'id';
     public $allowedFields = [];
@@ -21,7 +21,7 @@ class Model extends Plugin {
     /**
      * @var int current user id
      */
-    public $userID = null;
+    public $userID;
 
     /**
      * @var bool if true getWhere() returns data with object
@@ -65,8 +65,10 @@ class Model extends Plugin {
 
     public function switchTable($table = false)
     {
-        if (!$this->_b_table) $this->_b_table = $this->table;
-        $this->table = $table ?: $this->_b_table;            
+        if (!$this->_b_table) {
+            $this->_b_table = $this->table;
+        }
+        $this->table = $table ?: $this->_b_table;
     }
 
     /**
@@ -77,23 +79,20 @@ class Model extends Plugin {
      */
     public function getID($id)
     {
-        $query = DB::select('*')
-            ->from($this->table)
-            ->where($this->primaryKey, '=', $id)
-            ->limit(1);
+        $query = DB::select('*')->from($this->table)->where($this->primaryKey, '=', $id)->limit(1);
 
-        return $query->execute(null, $this->resultObject)->current(); 
+        return $query->execute(null, $this->resultObject)->current();
     }
 
     /**
      * Get a dataset for the table.
      *
      * @param array $order Array('order' => 'direction')
-     * @param int $limit 
+     * @param int $limit
      * @param int $offset
      * @return Db\Database\Result
      */
-    public function get($order = [], $limit = false, $offset = 0)
+    public function get(array $order = [], int $limit = 0, int $offset = 0)
     {
         return $this->getWhere([], $order, $limit, $offset);
     }
@@ -103,11 +102,11 @@ class Model extends Plugin {
      *
      * @param array $where Array('field' => 'value') .
      * @param array $order Array('order' => 'direction')
-     * @param int $limit 
+     * @param int $limit
      * @param int $offset
      * @return Db\Database\Result
      */
-    public function getWhere($where = [], $order = [], $limit = false, $offset = 0)
+    public function getWhere(array $where = [], array $order = [], int $limit = 0, int $offset = 0)
     {
         $this->_query = DB::select('*')->from($this->table);
 
@@ -117,7 +116,7 @@ class Model extends Plugin {
             $this->_query->order_by($field, $direction);
         }
 
-        if ($limit !== false) {
+        if ($limit) {
             $this->_query->limit($limit);
             $this->_query->offset($offset);
         }
@@ -132,11 +131,10 @@ class Model extends Plugin {
      * @return int
      */
 
-    public function getCount($where = [])
+    public function getCount(array $where = [])
     {
         $count = DB::expr("COUNT({$this->primaryKey})");
-        $this->_query = DB::select($count, 'count')
-            ->from($this->table);
+        $this->_query = DB::select($count, 'count')->from($this->table);
 
         $this->_where($where);
 
@@ -148,7 +146,7 @@ class Model extends Plugin {
      *
      * @param array $fields fields array
      */
-    public function setFields($fields)
+    public function setFields(array $fields)
     {
         $this->_allowedFields[$this->table] = $fields;
     }
@@ -164,20 +162,18 @@ class Model extends Plugin {
     }
 
     /**
-     * Added to the datebase POST data 
+     * Added to the datebase POST data
      *
      * @param array $data inserted fields
      * @return int Record ID
      */
-    public function insert($data)
+    public function insert(array $data)
     {
         $data = $this->insertDefaultFields($data);
         $data = $this->fixPostData($data);
         $columns = array_keys($data);
 
-        $query = DB::insert($this->table, $columns)
-            ->values($data)
-            ->execute();
+        $query = DB::insert($this->table, $columns)->values($data)->execute();
 
         return val(0, $query, false);
     }
@@ -188,15 +184,12 @@ class Model extends Plugin {
      * @param int $id Element ID
      * @param array $data POST data
      */
-    public function update($id, $data)
+    public function update($id, array $data)
     {
         $data = $this->updateDefaultFields($data);
         $data = $this->fixPostData($data);
 
-        DB::update($this->table)
-            ->set($data)
-            ->where($this->primaryKey, '=', $id)
-            ->execute();
+        DB::update($this->table)->set($data)->where($this->primaryKey, '=', $id)->execute();
     }
 
     /**
@@ -205,13 +198,12 @@ class Model extends Plugin {
      * @param array $where Array('field' => 'value')
      * @param array $data POST data
      */
-    public function updateWhere($where, $data)
+    public function updateWhere(array $where, array $data)
     {
         $data = $this->updateDefaultFields($data);
         $data = $this->fixPostData($data);
 
-        $this->_query = DB::update($this->table)
-            ->set($data);
+        $this->_query = DB::update($this->table)->set($data);
 
         $this->_where($where);
 
@@ -224,7 +216,7 @@ class Model extends Plugin {
      * @param array $post
      * @return array
      */
-    public function fixPostData($post)
+    public function fixPostData(array $post)
     {
         $fields = $this->getFields() ?: $this->getTableFields();
         return $this->checkArray($post, $fields);
@@ -237,18 +229,15 @@ class Model extends Plugin {
      */
     public function getTableFields()
     {
-        $cacheKey = 'table_columns_'.$this->table;
+        $cacheKey = 'table_columns_' . $this->table;
         $result = Gdn::cache()->get($cacheKey);
 
         if (!$result) {
-            $columns = DB::query(Database::SELECT, 'SHOW COLUMNS FROM `'.$this->table.'`')
-                ->execute()
-                ->as_array();
-
+            $columns = Database::instance()->list_columns($this->table);
 
             $result = [];
             foreach ($columns as $col) {
-                $result[] = $col['Field'];
+                $result[] = val('name', $col);
             }
 
             Gdn::cache()->set($cacheKey, $result);
@@ -264,7 +253,7 @@ class Model extends Plugin {
      * @param int $id record ID
      * @return int inserted or updated record ID
      */
-    public function save($post, $id = false)
+    public function save(array $post, $id = false)
     {
         if ($id) {
             $this->update($id, $post);
@@ -279,7 +268,7 @@ class Model extends Plugin {
      * removes records of the $where condition
      * @param array $where
      */
-    public function delete($where = [])
+    public function delete(array $where = [])
     {
         $this->_query = DB::delete($this->table);
         $this->_where($where);
@@ -301,7 +290,7 @@ class Model extends Plugin {
      * enqueues addition data
      * @param array $fields array fields
      */
-    public function insert_queue($fields = [])
+    public function insert_queue(array $fields = [])
     {
         $fields = $this->insertDefaultFields($fields);
         $fields = $this->fixPostData($fields);
@@ -315,7 +304,7 @@ class Model extends Plugin {
      * @param array $fields
      * @param array $where
      */
-    public function update_queue($fields, $where = [])
+    public function update_queue(array $fields, array $where = [])
     {
         $fields = $this->updateDefaultFields($fields);
         $fields = $this->fixPostData($fields);
@@ -329,7 +318,7 @@ class Model extends Plugin {
      * @param array $fields
      * @param array $where
      */
-    public function insupd_queue($fields)
+    public function insupd_queue(array $fields)
     {
         $fields = $this->updateDefaultFields($fields);
         $fields = $this->fixPostData($fields);
@@ -342,7 +331,7 @@ class Model extends Plugin {
      * enqueues delete data
      * @param array $where
      */
-    public function delete_queue($where)
+    public function delete_queue(array $where)
     {
         if (!empty($where)) {
             $this->_deleteFields[] = $where;
@@ -356,38 +345,37 @@ class Model extends Plugin {
      */
     public function start_queue($table = false)
     {
-        $sql = "";
+        $sql = '';
         $table = $table ?: $this->table;
 
-        foreach($this->_updateFields as $update) {
+        foreach ($this->_updateFields as $update) {
             $fields = val('fields', $update);
-            $where  = val('where', $update);
+            $where = val('where', $update);
             $this->_query = DB::update($table)->set($fields);
             $this->_where($where);
-            $sql .= $this->_query->compile().";\n";
-        }
-        
-        foreach($this->_insertFields as $fields) {
-            $columns = array_keys($fields);
-            $sql .= DB::insert($table, $columns)->values($fields)->compile().";\n";
+            $sql .= $this->_query->compile() . ";\n";
         }
 
-        foreach($this->_insupdFields as $fields) {
+        foreach ($this->_insertFields as $fields) {
+            $columns = array_keys($fields);
+            $sql .= DB::insert($table, $columns)->values($fields)->compile() . ";\n";
+        }
+
+        foreach ($this->_insupdFields as $fields) {
             $columns = array_keys($fields);
             $insert = DB::insert($table, $columns)->values($fields)->compile();
             $update = str_replace('  SET', '', DB::update()->set($fields)->compile());
 
-            $sql .= $insert." ON DUPLICATE KEY ".$update.";\n";
+            $sql .= $insert . " ON DUPLICATE KEY $update;\n";
         }
 
-        foreach($this->_deleteFields as $delete) {
+        foreach ($this->_deleteFields as $delete) {
             $this->_query = DB::delete($table);
             $this->_where($delete);
-            $sql .= $this->_query->compile().";\n";
+            $sql .= $this->_query->compile() . ";\n";
         }
 
-        if (empty($sql)) 
-            return;
+        if (empty($sql)) return;
 
         DB::query(null, $sql)->execute();
 
@@ -400,7 +388,7 @@ class Model extends Plugin {
      * @param $where
      * @return bool
      */
-    public function unique($where)
+    public function unique(array $where)
     {
         $query = DB::select(array('COUNT("*")', 'total_count'))->from($this->table);
 
@@ -417,13 +405,11 @@ class Model extends Plugin {
      * @param array $fields
      * @return array converted post data
      */
-    public function convertPostDate($post, $fields)
+    public function convertPostDate($post, array $fields)
     {
-        if (!is_array($fields)) {
-            $fields = array($fields);
-        }
+        $fields = (array)$fields;
 
-        foreach ($fields as $field)  {
+        foreach ($fields as $field) {
             $value = val($field, $post);
 
             if ($value !== false) {
@@ -445,7 +431,7 @@ class Model extends Plugin {
     }
 
 
-    protected function insertDefaultFields($data)
+    protected function insertDefaultFields(array $data)
     {
         if (!val('dateInserted', $data)) {
             $data['dateInserted'] = DB::expr('now()');
@@ -458,7 +444,7 @@ class Model extends Plugin {
         return $data;
     }
 
-    protected function updateDefaultFields($data)
+    protected function updateDefaultFields(array $data)
     {
         if (!val('dateUpdated', $data)) {
             $data['dateUpdated'] = DB::expr('now()');
@@ -471,14 +457,16 @@ class Model extends Plugin {
         return $data;
     }
 
-    protected function _where($field, $value = null) 
+    protected function _where($field, $value = null)
     {
-        if (!is_array($field))
+        if (!is_array($field)) {
             $field = array($field => $value);
+        }
 
         foreach ($field as $subField => $subValue) {
-            if (is_array($subValue) && empty($subValue)) 
+            if (is_array($subValue) && empty($subValue)) {
                 continue;
+            }
 
             $expr = $this->conditionExpr($subField, $subValue);
             $this->_query->where($expr[0], $expr[1], $expr[2]);
@@ -493,12 +481,13 @@ class Model extends Plugin {
      * @param array $fields POST data
      * @return fixed array
      */
-    protected function checkArray($array, $fields)
+    protected function checkArray(array $array, $fields)
     {
         $result = [];
         foreach ($array as $key => $value) {
-            if (in_array($key, $fields))
+            if (in_array($key, $fields)) {
                 $result[$key] = $value;
+            }
         }
 
         return $result;
@@ -506,7 +495,6 @@ class Model extends Plugin {
 
     protected function conditionExpr($field, $value)
     {
-        $expr = ''; // final expression which is built up
         $op = ''; // logical operator
 
         // Try and split an operator out of $Field.
@@ -522,13 +510,13 @@ class Model extends Plugin {
             $op = '=';
         }
 
-        if ($op == '=' && is_null($value)) {
+        if ($op == '=' && $value === null) {
             // this is a special case where the value sql is checking for an is null operation.
             $op = 'is';
             $value = null;
         }
 
-        if ($op != 'not in' AND is_array($value)) {
+        if ($op != 'not in' && is_array($value)) {
             $op = 'in';
         }
 

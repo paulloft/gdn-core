@@ -1,7 +1,7 @@
 <?php
 namespace Garden\Db;
 
-use \Garden\Exception as Exception;
+use \Garden\Exception;
 use \Garden\Db\Database;
 use \Garden\Gdn;
 
@@ -16,8 +16,7 @@ use \Garden\Gdn;
  * @package Garden
  * @since 2.0
  */
-abstract class Structure
-{
+abstract class Structure {
 
     public $database;
     public $capture = false;
@@ -26,7 +25,7 @@ abstract class Structure
     protected $_prefix = '';
     protected $_encoding;
     protected $_columns;
-    protected $_existingColumns = null;
+    protected $_existingColumns;
     protected $_table;
     protected $_tableExists;
     protected $_engine;
@@ -61,14 +60,8 @@ abstract class Structure
      */
     public function __construct($database = null)
     {
-        if (is_null($database)) {
-            $this->database = Gdn::database();
-        } else {
-            $this->database = $database;
-        }
-
+        $this->database = $database === null ? Gdn::database() : $database;
         $this->prefix($this->database->tablePrefix());
-
         $this->reset();
     }
 
@@ -131,7 +124,7 @@ abstract class Structure
      */
     public function column($name, $type, $nullDefault = false, $keyType = false)
     {
-        if (is_null($nullDefault) || $nullDefault === true) {
+        if ($nullDefault === null || $nullDefault === true) {
             $null = true;
             $default = null;
         } elseif ($nullDefault === false) {
@@ -151,8 +144,9 @@ abstract class Structure
         foreach ($keyTypes as $keyType1) {
             $parts = explode('.', $keyType1, 2);
 
-            if (in_array($parts[0], array('primary', 'key', 'index', 'unique', 'fulltext', false)))
+            if (in_array($parts[0], array('primary', 'key', 'index', 'unique', 'fulltext', false))) {
                 $keyTypes1[] = $keyType1;
+            }
         }
         if (count($keyTypes1) == 0) {
             $keyType = false;
@@ -258,8 +252,7 @@ abstract class Structure
             } else {
                 $result = false;
             }
-            if ($tablename == $this->tableName())
-                $this->_tableExists = $result;
+            if ($tablename == $this->tableName()) $this->_tableExists = $result;
             return $result;
         }
         return $this->_tableExists;
@@ -318,8 +311,7 @@ abstract class Structure
                 return $this->_columns[$name];
             } else {
                 foreach ($this->_columns as $colname => $def) {
-                    if (strcasecmp($name, $colname) == 0)
-                        return $def;
+                    if (strcasecmp($name, $colname) == 0) return $def;
                 }
                 return null;
             }
@@ -351,8 +343,7 @@ abstract class Structure
      */
     public function columnType($column)
     {
-        if (is_string($column))
-            $column = $this->_columns[$column];
+        if (is_string($column)) $column = $this->_columns[$column];
 
         $type = val('type', $column);
         $length = val('length', $column);
@@ -456,7 +447,7 @@ abstract class Structure
         $precision = '';
 
         // Check to see if the type starts with a 'u' for unsigned.
-        if (is_string($type) && strncasecmp($type, 'u', 1) == 0) {
+        if (is_string($type) && stripos($type, 'u') === 0) {
             $type = substr($type, 1);
             $unsigned = true;
         } else {
@@ -467,8 +458,9 @@ abstract class Structure
         if (is_string($type) && preg_match('/(\w+)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/', $type, $matches)) {
             $type = $matches[1];
             $length = $matches[2];
-            if (count($matches) >= 4)
+            if (count($matches) >= 4) {
                 $precision = $matches[3];
+            }
         }
 
         $column = new \stdClass();
@@ -527,11 +519,7 @@ abstract class Structure
 
         $result = array();
         foreach ($columns as $name => $column) {
-            if (is_string($column->type) && strncasecmp($column->type, 'u', 1) == 0) {
-                $unsigned = true;
-            } else {
-                $unsigned = false;
-            }
+            $unsigned = is_string($column->type) && stripos($column->type, 'u') === 0;
 
             $obj = new \stdClass();
             $obj->name = $column->name;

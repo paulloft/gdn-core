@@ -45,8 +45,7 @@ class Callback extends \Garden\Route {
         $callback = $args['callback'];
         $callback_args = reflect_args($callback, $args['args']);
 
-        $result = call_user_func_array($callback, $callback_args);
-        return $result;
+        return call_user_func_array($callback, $callback_args);
     }
 
     /**

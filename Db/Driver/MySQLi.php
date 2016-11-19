@@ -1,7 +1,7 @@
 <?php
 namespace Garden\Db\Driver;
 
-use \Garden\Exception as Exception;
+use \Garden\Exception;
 use \Garden\Db\Database;
 
 /**

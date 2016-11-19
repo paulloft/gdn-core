@@ -115,7 +115,7 @@ class Resource extends \Garden\Route {
         $request->setEnv('ACTION', $action);
         $request->setEnv('CONTROLLER', $args['controller']);
 
-        $response = \Garden\Response::create();
+        \Garden\Response::create();
 
         if ($initialize) {
             $initArgs = array_merge(['action' => $action], $actionArgs);
@@ -227,13 +227,13 @@ class Resource extends \Garden\Route {
 
         $regex = $this->getPatternRegex($this->pattern());
 
-        $controller = $action = false;
+        $action = false;
         $printArgs = array();
 
         if (preg_match($regex, $path, $matches)) {
             $args = [];
             foreach ($matches as $key => $value) {
-                if ($key === 'controller' OR $key === 'action') {
+                if ($key === 'controller' || $key === 'action') {
                     $$key = $value;
                     $printArgs[] = ucfirst($value);
                 } elseif (!is_numeric($key)) {

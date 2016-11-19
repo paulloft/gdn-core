@@ -7,33 +7,35 @@ function date_sql($date = false)
         $date = strtotime($date);
     }
 
-    return date("Y-m-d H:i:s", $date);
+    return date('Y-m-d H:i:s', $date);
 }
 
 function date_convert($date, $format = 'indatetime')
 {
-    if (empty($date)) return false;
+    if (empty($date)) {
+        return false;
+    }
 
-    $month = array("Января", "Февраля", "Марта", "Апреля", "Мая", "Июня", "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря");
-    $days = array("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье");
+    $month = array('Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря');
+    $days = array('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье');
 
     if (is_string($date)) {
         $date = strtotime($date);
     }
 
     switch ($format) {
-        case ("fullDate")       : $date = date("j", $date)." ".$month[date("m", $date)-1]." ".date("Y", $date); break;
-        case ("fullDateTime")   : $date = date("j", $date)." ".$month[date("m", $date)-1]." ".date("Y в H:i", $date); break;
-        case ("shortDateTime")  : $date = date("j", $date)." ".$month[date("m", $date)-1]." ".date(" в H:i", $date); break;
-        case ("date")           : $date = date("d.m.Y", $date); break;
-        case ("time")           : $date = date("H:i:s", $date); break;
-        case ("datetime")       : $date = date("d.m.Y H:i", $date); break;
-        case ("datefulltime")   : $date = date("d.m.Y H:i:s", $date); break;
+        case ('fullDate')       : $date = date('j', $date).' '.$month[date('m', $date)-1].' '.date('Y', $date); break;
+        case ('fullDateTime')   : $date = date('j', $date).' '.$month[date('m', $date)-1].' '.date('Y в H:i', $date); break;
+        case ('shortDateTime')  : $date = date('j', $date).' '.$month[date('m', $date)-1].' '.date(' в H:i', $date); break;
+        case ('date')           : $date = date('d.m.Y', $date); break;
+        case ('time')           : $date = date('H:i:s', $date); break;
+        case ('datetime')       : $date = date('d.m.Y H:i', $date); break;
+        case ('datefulltime')   : $date = date('d.m.Y H:i:s', $date); break;
 
-        case ("indatetime")     : $date = date("d.m.Y в H:i", $date); break;
-        case ("indatefulltime") : $date = date("d.m.Y в H:i:s", $date); break;
+        case ('indatetime')     : $date = date('d.m.Y в H:i', $date); break;
+        case ('indatefulltime') : $date = date('d.m.Y в H:i:s', $date); break;
 
-        case ("sql")            : $date = date("Y-m-d H:i:s", $date); break;
+        case ('sql')            : $date = date('Y-m-d H:i:s', $date); break;
         default                 : $date = date($format, $date); break;
     }
 
@@ -83,32 +85,32 @@ function date_passed($date)
     $diff =  time() - $date;
     switch ($diff) {
         case ($diff < 10):
-            $txt = "только что";
+            $txt = 'только что';
             return $txt;
             break;
         case ($diff < 60):
-            $txt = "менее минуты назад";
+            $txt = 'менее минуты назад';
             return $txt;
             break;
 
         case ($diff < 3600):
             $tm = ceil($diff / 60);
-            $forms = array("минут", "минута", "минуты");
-            $txt = $tm . " " . format_declension($tm, $forms) . " назад";
+            $forms = array('минут', 'минута', 'минуты');
+            $txt = $tm . ' ' . format_declension($tm, $forms) . ' назад';
             return $txt;
             break;
 
         case ($diff < 86400):
             $tm = ceil($diff / 3600);
-            $forms = array("часов", "час", "часа");
-            $txt = $tm . " " . format_declension($tm, $forms) . " назад";
+            $forms = array('часов', 'час', 'часа');
+            $txt = $tm . ' ' . format_declension($tm, $forms) . ' назад';
             return $txt;
             break;
 
         case ($diff < 604800):
             $tm = round($diff / 86400);
-            $forms = array("дней", "день", "дня");
-            $txt = $tm . " " . format_declension($tm, $forms) . " назад";
+            $forms = array('дней', 'день', 'дня');
+            $txt = $tm . ' ' . format_declension($tm, $forms) . ' назад';
             return $txt;
             break;
 

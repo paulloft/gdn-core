@@ -300,12 +300,10 @@ abstract class Route {
             }
 
             $param_pattern = val($param, $this->conditions, val($param, self::$globalConditions, '[^/]+?'));
-            $result = "(?<$param>$before{$param_pattern}$after)";
 
-            return $result;
+            return "(?<$param>$before{$param_pattern}$after)";;
         }, $pattern);
 
-        $result = '`^'.$result.'$`i';
-        return $result;
+        return '`^'.$result.'$`i';
     }
 }

@@ -1,11 +1,12 @@
 <?php
 namespace Garden\Cache;
-use \Garden\Exception as Exception;
+
+use \Garden\Exception;
+
 /**
-* 
-*/
-class Memcache extends \Garden\Cache
-{
+ *
+ */
+class Memcache extends \Garden\Cache {
     protected $lifetime;
 
     protected $host = 'localhost';
@@ -16,9 +17,13 @@ class Memcache extends \Garden\Cache
     protected $salt;
     protected $dirty;
 
+    /**
+     * @var \Memcache
+     */
     public $cache;
 
-    function __construct($config = false){
+    public function __construct($config = false)
+    {
         $this->lifetime = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
         $this->persistent = val('persistent', $config, $this->persistent);
 
@@ -35,7 +40,7 @@ class Memcache extends \Garden\Cache
 
     protected function connect()
     {
-        if(!class_exists('memcache')) {
+        if (!class_exists('memcache')) {
             throw new Exception\Custom('memcache extention not found');
         }
 
@@ -45,37 +50,43 @@ class Memcache extends \Garden\Cache
 
     protected function fixID($id)
     {
-        return $this->prefix.md5($id.$this->salt);
+        return $this->prefix . md5($id . $this->salt);
     }
 
     public function get($id, $default = false)
     {
         $id = $this->fixID($id);
         $result = false;
-        
-        if(!self::$clear && !$result = $this->dirty->get($id)) {
+
+        if (!self::$clear && !$result = $this->dirty->get($id)) {
             $result = $this->cache->get($id);
             //save to temporary cache
             $this->dirty->add($id, $result);
         }
         return $result ?: $default;
     }
-    
+
     public function set($id, $data, $lifetime = null)
     {
-        if(is_null($lifetime)) $lifetime = $this->lifetime;
+        if ($lifetime === null) {
+            $lifetime = $this->lifetime;
+        }
+
         $id = $this->fixID($id);
         $this->dirty->set($id, $data);
 
-        return $this->cache->set($id, $data, MEMCACHE_COMPRESSED, intval($lifetime));
+        return $this->cache->set($id, $data, MEMCACHE_COMPRESSED, (int)$lifetime);
     }
 
     public function add($id, $data, $lifetime = null)
     {
-        if(is_null($lifetime)) $lifetime = $this->lifetime;
+        if ($lifetime === null) {
+            $lifetime = $this->lifetime;
+        }
+
         $id = $this->fixID($id);
 
-        return $this->cache->add($id, $data, MEMCACHE_COMPRESSED, intval($lifetime));
+        return $this->cache->add($id, $data, MEMCACHE_COMPRESSED, (int)$lifetime);
     }
 
     public function exists($id)
@@ -96,8 +107,7 @@ class Memcache extends \Garden\Cache
     }
 
 
-
-    function __destruct()
+    public function __destruct()
     {
         $this->cache->close();
     }

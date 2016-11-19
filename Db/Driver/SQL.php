@@ -1,7 +1,7 @@
 <?php
 namespace Garden\Db\Driver;
 
-use \Garden\Exception as Exception;
+use \Garden\Exception;
 use \Garden\Db\Database;
 
 
@@ -138,7 +138,7 @@ abstract class SQL extends Database {
 
             // MySQL attributes
             $column->comment = $row['Comment'];
-            $column->autoIncrement = strpos($row['Extra'], 'auto_increment') === FALSE ? FALSE : TRUE;;
+            $column->autoIncrement = (bool)strpos($row['Extra'], 'auto_increment');
             $column->key = $row['Key'];
             $column->privileges = $row['Privileges'];
 

@@ -59,7 +59,7 @@ function is_url($str) {
     if (!$str) {
         return false;
     }
-    if (substr($str, 0, 2) == '//') {
+    if (strpos($str, '//') === 0) {
         return true;
     }
     if (strpos($str, '://', 1) !== false) {

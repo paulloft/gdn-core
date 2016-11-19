@@ -3,13 +3,13 @@ namespace Garden;
 
 class Tasks extends Plugin {
 
-    private $ticks = array(
+    const ticks = array(
         60 => 'minute',
         3600 => 'hour',
         86400 => 'day'
     );
 
-    private $matches = array(
+    const matches = array(
         'minutes' => 'i',
         'hours' => 'H',
         'dayname' => 'l',
@@ -29,7 +29,6 @@ class Tasks extends Plugin {
 
     public function run()
     {
-        var_dump($GLOBALS);
         if ($this->locked()) return false;
 
         $this->lock();
@@ -43,7 +42,7 @@ class Tasks extends Plugin {
     public function startMatches()
     {
         $string = '';
-        foreach ($this->matches as $name => $token) {
+        foreach (self::matches as $name => $token) {
             if ($name == 'dayname') {
                 $event = 'task_match' . $string . '_' . strtolower(date($token));
             } else {
@@ -61,7 +60,7 @@ class Tasks extends Plugin {
         }
     }
 
-    function Flatten($Array) {
+    public function flatten($Array) {
         $Result = array();
         foreach (new \RecursiveIteratorIterator(new \RecursiveArrayIterator($Array)) as $Value)
             $Result[] = $Value;
@@ -78,7 +77,7 @@ class Tasks extends Plugin {
         $yearSeconds = (int)((time() - strtotime('1 Jan'))/60) * 60;
 
         foreach ($range as $i) {
-            foreach ($this->ticks as $second => $name) {
+            foreach (self::ticks as $second => $name) {
                 $suffix = ($i == 1) ? '' : 's';
                 if ($yearSeconds % $second == 0 && ($yearSeconds / $second) % $i == 0) {
                     $event = 'task_every_'.$i.'_'.$name.$suffix;

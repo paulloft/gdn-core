@@ -134,7 +134,7 @@ class DB {
      * @param   array   parameters
      * @return  Db\Database\Expression
      */
-    public static function expr($string, $parameters = array())
+    public static function expr($string, array $parameters = array())
     {
         return new Db\Database\Expression($string, $parameters);
     }

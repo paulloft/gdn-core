@@ -31,7 +31,7 @@ class Select extends Where {
     protected $_having = array();
 
     // OFFSET ...
-    protected $_offset = NULL;
+    protected $_offset;
 
     // UNION ...
     protected $_union = array();

@@ -29,7 +29,7 @@ class Delete extends Where {
         }
 
         // Start the query with no SQL
-        return parent::__construct(Database::DELETE, '');
+        parent::__construct(Database::DELETE, '');
     }
 
     /**

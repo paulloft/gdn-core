@@ -1,6 +1,6 @@
 <?php
 namespace Garden;
-use \Garden\Exception as Exception;
+use \Garden\Exception;
 /**
 * 
 */
@@ -11,9 +11,8 @@ abstract class Cache
     /**
      * @var   string     default driver to use
      */
-    public static $default = 'file';
+    public static $default = 'dirty';
     public static $instances = array();
-    public static $enabled = true;
 
     protected static $clear = false;
 
@@ -23,18 +22,13 @@ abstract class Cache
      * @return self
      * @throws Exception\Custom
      */
-    public static function instance($driver = null)
+    public static function instance($driver = null, $config = false)
     {
         self::$clear = NOCACHE;
         $options = c('cache');
-        if($driver !== 'system') {
-            self::$enabled = val('enabled', $options);
 
-            if(!self::$enabled) {
-                $driver = 'dirty';
-            } elseif(!$driver) {
-                $driver = val('driver', $options, self::$default);
-            }
+        if(!$driver) {
+            $driver = val('driver', $options, self::$default);
         }
 
         if (isset(self::$instances[$driver])) {
@@ -46,7 +40,7 @@ abstract class Cache
         if(!class_exists($driverClass)) {
             throw new Exception\Custom("Cache driver \"%s\" not found", array($driver));
         } else {
-            $config = val($driver, $options);
+            $config = $config ?: val($driver, $options);
             self::$instances[$driver] = new $driverClass($config);
         }
 

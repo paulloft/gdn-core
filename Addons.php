@@ -116,7 +116,7 @@ class Addons {
         if ($value !== null) {
             self::$baseDir = rtrim($value, '/');
         } elseif (self::$baseDir === null) {
-            self::$baseDir = PATH_ADDONS;
+            self::$baseDir = GDN_ADDONS;
         }
 
         return self::$baseDir;
@@ -233,7 +233,8 @@ class Addons {
             if (self::$all !== null || self::$sharedEnvironment) {
                 // Build the enabled array by filtering the all array.
                 self::$enabled = array();
-                foreach (self::all() as $key => $row) {
+                $allAddons = self::all();
+                foreach ($allAddons as $row) {
                     if (isset($key, self::$enabledKeys)) {
                         self::$enabled[$key] = $row;
                     }

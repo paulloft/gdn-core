@@ -15,7 +15,8 @@
  * @see base64_urldecode()
  * @see base64_encode()
  */
-function base64url_encode($str) {
+function base64url_encode($str)
+{
     return trim(strtr(base64_encode($str), '+/', '-_'), '=');
 }
 
@@ -28,7 +29,8 @@ function base64url_encode($str) {
  * @see base64_urldecode()
  * @see base64_decode()
  */
-function base64url_decode($str) {
+function base64url_decode($str)
+{
     return base64_decode(strtr($str, '-_', '+/'));
 }
 
@@ -40,7 +42,8 @@ function base64url_decode($str) {
  * @return string The config value.
  * @see config()
  */
-function c($key = false, $default = null) {
+function c($key = false, $default = null)
+{
     $data = Garden\Config::data();
     return valr($key, $data, $default);
 }
@@ -52,7 +55,8 @@ function c($key = false, $default = null) {
  * @param mixed $default The default value if the config setting isn't available.
  * @return mixed The config value.
  */
-function config($group, $key = false, $default = null) {
+function config($group, $key = false, $default = null)
+{
     return Garden\Config::get($group, $key, $default);
 }
 
@@ -69,8 +73,9 @@ function config($group, $key = false, $default = null) {
  * @param string $name The name of the deprecated function.
  * @param string $newname The name of the new function that should be used instead.
  */
-function deprecated($name, $newname = '') {
-    $msg = $name.' is deprecated.';
+function deprecated($name, $newname = '')
+{
+    $msg = $name . ' is deprecated.';
     if ($newname) {
         $msg .= " Use $newname instead.";
     }
@@ -88,12 +93,13 @@ function deprecated($name, $newname = '') {
  * @category Filesystem Functions
  * @see http://php.net/file_put_contents
  */
-function file_put_contents_safe($filename, $data, $mode = 0644) {
+function file_put_contents_safe($filename, $data, $mode = 0644)
+{
     $temp = tempnam(dirname($filename), 'atomic');
 
     if (!($fp = @fopen($temp, 'wb'))) {
-        $temp = dirname($filename).DIRECTORY_SEPARATOR.uniqid('atomic');
-        if (!($fp = @fopen($temp, 'wb'))) {
+        $temp = dirname($filename) . DIRECTORY_SEPARATOR . uniqid('atomic', true);
+        if (!$fp = @fopen($temp, 'wb')) {
             trigger_error("file_put_contents_safe() : error writing temporary file '$temp'", E_USER_WARNING);
             return false;
         }
@@ -118,7 +124,8 @@ function file_put_contents_safe($filename, $data, $mode = 0644) {
  * @return boolean Returns the boolean value of {@link $value}.
  * @category Type Functions
  */
-function force_bool($value) {
+function force_bool($value)
+{
     if (is_string($value)) {
         switch (strtolower($value)) {
             case 'disabled':
@@ -139,7 +146,8 @@ function force_bool($value) {
  * @param string $ip The ip string to look at.
  * @return string|null The ipv4 address or null if {@link $ip} is empty.
  */
-function force_ipv4($ip) {
+function force_ipv4($ip)
+{
     if (!$ip) {
         return null;
     }
@@ -166,7 +174,8 @@ function force_ipv4($ip) {
  * @return int Returns the integer value of {@link $value}.
  * @category Type Functions
  */
-function force_int($value) {
+function force_int($value)
+{
     if (is_string($value)) {
         switch (strtolower($value)) {
             case 'disabled':
@@ -182,10 +191,11 @@ function force_int($value) {
                 return 1;
         }
     }
-    return intval($value);
+    return (int)$value;
 }
 
-function garden_error_handler($number, $message, $file, $line, $args) {
+function garden_error_handler($number, $message, $file, $line, $args)
+{
     $error_reporting = error_reporting();
     // Ignore errors that are below the current error reporting level.
     if (($error_reporting & $number) != $number) {
@@ -198,7 +208,6 @@ function garden_error_handler($number, $message, $file, $line, $args) {
 }
 
 
-
 /**
  * Strip a substring from the beginning of a string.
  *
@@ -208,7 +217,8 @@ function garden_error_handler($number, $message, $file, $line, $args) {
  *
  * @category String Functions
  */
-function ltrim_substr($mainstr, $substr) {
+function ltrim_substr($mainstr, $substr)
+{
     if (strncasecmp($mainstr, $substr, strlen($substr)) === 0) {
         return substr($mainstr, strlen($substr));
     }
@@ -224,12 +234,13 @@ function ltrim_substr($mainstr, $substr) {
  * @category Internet Functions
  * @category String Functions
  */
-function mime2ext($mime, $ext = null) {
+function mime2ext($mime, $ext = null)
+{
     static $known = array('text/plain' => '.txt', 'image/jpeg' => '.jpg', 'application/rss+xml' => '.rss');
     $mime = strtolower($mime);
 
     if ($ext !== null) {
-        $known[$mime] = '.'.ltrim($ext, '.');
+        $known[$mime] = '.' . ltrim($ext, '.');
     }
 
     if (array_key_exists($mime, $known)) {
@@ -239,11 +250,11 @@ function mime2ext($mime, $ext = null) {
     // We don't know the mime type so we need to just return the second part as the extension.
     $result = trim(strrchr($mime, '/'), '/');
 
-    if (substr($result, 0, 2) === 'x-') {
+    if (strpos($result, 'x-') === 0) {
         $result = substr($result, 2);
     }
 
-    return '.'.$result;
+    return '.' . $result;
 }
 
 /**
@@ -255,7 +266,8 @@ function mime2ext($mime, $ext = null) {
  *
  * @category Array Functions
  */
-function php_encode($data, $php_var = 'config') {
+function php_encode($data, $php_var = 'config')
+{
     if (is_array($data)) {
         $result = '';
         $lastHeading = '';
@@ -272,15 +284,15 @@ function php_encode($data, $php_var = 'config') {
                     // Don't emit single letter headings, but space them out.
                     $result .= "\n";
                 } else {
-                    $result .= "\n// ".$heading."\n";
+                    $result .= "\n// " . $heading . "\n";
                 }
                 $lastHeading = $heading;
             }
 
-            $result .= '$'.$php_var.'['.var_export($key, true).'] = '.var_export($value, true).";\n";
+            $result .= '$' . $php_var . '[' . var_export($key, true) . '] = ' . var_export($value, true) . ";\n";
         }
     } else {
-        $result = "\$$php_var = ".var_export($data, true).";\n";
+        $result = "\$$php_var = " . var_export($data, true) . ";\n";
     }
     return $result;
 }
@@ -295,7 +307,8 @@ function php_encode($data, $php_var = 'config') {
  * @throws Exception Throws an exception when {@link callback} isn't a valid callback.
  * @category Type Functions
  */
-function reflect_args(callable $callback, $args, $get = null) {
+function reflect_args(callable $callback, $args, $get = null)
+{
     if (is_array($get)) {
         $args = array_merge($get, $args);
     }
@@ -307,9 +320,9 @@ function reflect_args(callable $callback, $args, $get = null) {
     } else {
         $meth = new ReflectionMethod($callback[0], $callback[1]);
         if (is_string($callback[0])) {
-            $meth_name = $callback[0].'::'.$meth->getName();
+            $meth_name = $callback[0] . '::' . $meth->getName();
         } else {
-            $meth_name = get_class($callback[0]).'->'.$meth->getName();
+            $meth_name = get_class($callback[0]) . '->' . $meth->getName();
         }
     }
 
@@ -331,7 +344,7 @@ function reflect_args(callable $callback, $args, $get = null) {
             $param_value = $meth_param->getDefaultValue();
         } else {
             $param_value = null;
-            $missing_args[] = '$'.$param_name;
+            $missing_args[] = '$' . $param_name;
         }
 
         $call_args[$param_name] = $param_value;
@@ -343,7 +356,7 @@ function reflect_args(callable $callback, $args, $get = null) {
     }
 
     if (count($missing_args) > 0) {
-        trigger_error("$meth_name() expects the following parameters: ".implode(', ', $missing_args).'.', E_USER_NOTICE);
+        trigger_error("$meth_name() expects the following parameters: " . implode(', ', $missing_args) . '.', E_USER_NOTICE);
     }
 
     return $call_args;
@@ -357,7 +370,8 @@ function reflect_args(callable $callback, $args, $get = null) {
  * @return string Returns the trimmed string or {@link $mainstr} if {@link $substr} was not found.
  * @category String Functions
  */
-function rtrim_substr($mainstr, $substr) {
+function rtrim_substr($mainstr, $substr)
+{
     if (strcasecmp(substr($mainstr, -strlen($substr)), $substr) === 0) {
         return substr($mainstr, 0, -strlen($substr));
     }
@@ -374,7 +388,8 @@ function rtrim_substr($mainstr, $substr) {
  * @return bool Whether or not `$string` begins with `$with`.
  * @category String Functions
  */
-function str_begins($haystack, $needle) {
+function str_begins($haystack, $needle)
+{
     return strncasecmp($haystack, $needle, strlen($needle)) === 0;
 }
 
@@ -388,7 +403,8 @@ function str_begins($haystack, $needle) {
  * @return bool Whether or not `$string` ends with `$with`.
  * @category String Functions
  */
-function str_ends($haystack, $needle) {
+function str_ends($haystack, $needle)
+{
     return strcasecmp(substr($haystack, -strlen($needle)), $needle) === 0;
 }
 
@@ -402,7 +418,8 @@ function str_ends($haystack, $needle) {
  * @category String Functions
  * @category Localization Functions
  */
-function t($code, $default = null) {
+function t($code, $default = null)
+{
     return \Garden\Gdn::translate($code, $default);
 }
 
@@ -413,7 +430,8 @@ function t($code, $default = null) {
  * @param mixed $arg1 The arguments to pass to {@link sprintf()}.
  * @return string The translated string.
  */
-function t_sprintf($formatCode, $arg1 = null) {
+function t_sprintf($formatCode, $arg1 = null)
+{
     $args = func_get_args();
     $args[0] = t($formatCode);
     return call_user_func_array('sprintf', $args);
@@ -427,7 +445,8 @@ function t_sprintf($formatCode, $arg1 = null) {
  * @throws Exception Throws an exception when {@link $dir} is a file.
  * @category Filesystem Functions
  */
-function touchdir($dir, $mode = 0777) {
+function touchdir($dir, $mode = 0777)
+{
     if (!file_exists($dir)) {
         mkdir($dir, $mode, true);
     } elseif (!is_dir($dir)) {
@@ -451,7 +470,8 @@ function touchdir($dir, $mode = 0777) {
  * @return mixed The item from the array or `$default` if the array key doesn't exist.
  * @category Array Functions
  */
-function val($key, $array, $default = false) {
+function val($key, $array, $default = false)
+{
     if (is_array($array)) {
         // isset() is a micro-optimization - it is fast but fails for null values.
         if (isset($array[$key])) {
@@ -486,13 +506,15 @@ function val($key, $array, $default = false) {
  * @return mixed The value from the array or object.
  * @category Array Functions
  */
-function valr($keys, $array, $default = false) {
+function valr($keys, $array, $default = false)
+{
     if (is_string($keys)) {
         $keys = explode('.', $keys);
     }
 
     $value = $array;
-    for ($i = 0; $i < count($keys); ++$i) {
+    $count = count($keys);
+    for ($i = 0; $i < $count; ++$i) {
         $SubKey = $keys[$i];
 
         if (is_array($value) && isset($value[$SubKey])) {
@@ -515,20 +537,21 @@ function valr($keys, $array, $default = false) {
  */
 function setval($Key, &$Collection, $Value)
 {
-    if(is_array($Collection))
+    if (is_array($Collection)) {
         $Collection[$Key] = $Value;
-    elseif(is_object($Collection))
+    } elseif (is_object($Collection)) {
         $Collection->$Key = $Value;
+    }
 }
 
-function getInclude($path, $data = array())
+function getInclude($path, array $data = array())
 {
     ob_start();
-    extract($data);
-    
+    extract($data, EXTR_OVERWRITE);
+
     include $path;
 
-    $result = ob_get_contents(); 
+    $result = ob_get_contents();
     ob_end_clean();
 
     return $result;
@@ -539,7 +562,7 @@ function redirect($url, $code = 302)
     $host = Garden\Request::current()->getHost();
     $scheme = Garden\Request::current()->getScheme();
 
-    $url = is_url($url) ? $url : $scheme.'://'.$host.$url;
+    $url = is_url($url) ? $url : $scheme . '://' . $host . $url;
 
     header("Location: $url");
 
