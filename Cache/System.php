@@ -22,9 +22,9 @@ class System extends \Garden\Cache
     public function get($id, $default = false)
     {
         $file = $this->getFile($id);
-        $data = false;
+        $data = $this->dirty->get($file);
 
-        if(!self::$clear && !$data = $this->dirty->get($file)) {
+        if(!self::$clear && !$data) {
 
             $filePath = GDN_CACHE.'/'.$file;
 

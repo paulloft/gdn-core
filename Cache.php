@@ -27,11 +27,12 @@ abstract class Cache
     {
         $options = c('cache');
 
-        if (@$_GET['nocache'] || file_exists(self::$clearFile)) {
+        if (isset($_GET['nocache']) || file_exists(self::$clearFile)) {
             if (!self::$clear) {
                 @unlink(self::$clearFile);
             }
             self::$clear = true;
+            opcache_reset();
         }
 
         if(!$driver) {

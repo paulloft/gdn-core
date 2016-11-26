@@ -196,7 +196,7 @@ function array_export(array $array) {
  *
  * @category Array Functions
  */
-function array_save($data, $path, $php_var = 'config') {
+function array_save($data, $path) {
     if (!is_array($data)) {
         throw new \InvalidArgumentException('Config::saveArray(): Argument #1 is not an array.', 500);
     }
@@ -212,22 +212,21 @@ function array_save($data, $path, $php_var = 'config') {
             } else {
                 $json = json_encode($data);
             }
-            $result = file_put_contents_safe($path, $json);
+            $result = file_put_contents($path, $json, LOCK_EX);
             break;
         case '.php':
-//            $php = "<?php\n".php_encode($data, $php_var)."\n";
-            $php = "<?php\nreturn ".array_export($data, $php_var).";";
-            $result = file_put_contents_safe($path, $php);
+            $php = "<?php\nreturn ".array_export($data).";";
+            $result = file_put_contents($path, $php, LOCK_EX);
             break;
         case '.ser':
         case '.ser.php':
             $ser = serialize($data);
-            $result = file_put_contents_safe($path, $ser);
+            $result = file_put_contents($path, $ser, LOCK_EX);
             break;
         case '.yml':
         case '.yml.php':
             $yml = yaml_emit($data, YAML_UTF8_ENCODING, YAML_LN_BREAK);
-            $result = file_put_contents_safe($path, $yml);
+            $result = file_put_contents($path, $yml, LOCK_EX);
             break;
         default:
             throw new \InvalidArgumentException("Invalid config extension $ext on $path.", 500);

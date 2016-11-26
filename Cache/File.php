@@ -119,7 +119,7 @@ class File extends \Garden\Cache
         $fileName = $this->getFileName($id);
         $cachePath = $this->cacheDir.'/'.$fileName;
 
-        $result = file_put_contents($cachePath, $cacheData);
+        $result = file_put_contents($cachePath, $cacheData, LOCK_EX);
         chmod($cachePath, 0664);
 
         $this->dirty->set($fileName, $data);

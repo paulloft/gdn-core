@@ -31,6 +31,7 @@ class Config {
     protected static $data = [];
 
     public static $cached = false;
+    public static $defaultExtension = 'php';
 
     /**
      * @var string The default path to load/save to.
@@ -68,6 +69,7 @@ class Config {
     /**
      * Get a setting from the config.
      *
+     * @param string $group Name of configuration group
      * @param string $key The config key.
      * @param mixed $default The default value if the config file doesn't exist.
      * @return mixed The value at {@link $key} or {@link $default} if the key isn't found.
@@ -92,6 +94,7 @@ class Config {
     /**
      * Load configuration data from a file.
      *
+     * @param string $group Name of configuration group
      * @param string $path An optional path to load the file from.
      * @param string $path If true the config will be put under the current config, not over it.
      */
@@ -118,40 +121,37 @@ class Config {
         self::$data[$group] = $data;
     }
 
+
     /**
      * Save data to the config file.
-     *
      * @param array $data The config data to save.
-     * @param string $path An optional path to save the data to.
-     * @param string $php_var The name of the php variable to load from if using the php file type.
-     * @return bool Returns true if the save was successful or false otherwise.
-     * @throws \InvalidArgumentException Throws an exception when the saved data isn't an array.
+     * @param string $name Config name
+     * @param bool $extension php|json|ser|yml Config file extention
+     * @param bool $rewrite Replace all data on the $data
+     * @return bool
      */
-    public static function save($data, $path = null, $php_var = 'config') {
-        if (!is_array($data)) {
-            throw new \InvalidArgumentException('Config::save(): Argument #1 is not an array.', 400);
+    public static function save(array $data, $name, $extension = false, $rewrite = false)
+    {
+        $extension = $extension ?: self::$defaultExtension;
+        $path = GDN_CONF . "/$name.{$extension}";
+
+        if (!$rewrite) {
+            $config = self::get($name, false, []);
+            $config = array_replace($config, $data);
+        } else {
+            $config = $data;
         }
 
-        if (!$path) {
-            $path = static::defaultPath();
-        }
-
-        // Load the current config information so we know what to replace.
-        $config = array_load($path, $php_var);
-        // Merge the new config into the current config.
-        $config = array_replace($config, $data);
         // Remove null config values.
         $config = array_filter($config, function ($value) {
             return $value !== null;
         });
 
-        ksort($config, SORT_NATURAL | SORT_FLAG_CASE);
-
-        return array_save($config, $path, $php_var);
+        return array_save($config, $path);
     }
 
     /**
-     * Autoad config
+     * Autoad all config files from $path
      * @param string $path
      */
     public static function autoload($path = GDN_CONF) {
@@ -181,7 +181,7 @@ class Config {
     }
 
     /**
-     * caching all configs
+     * caching all configs data
      */
     public static function cache() {
         if(!Gdn::cache('system')->get('config-autoload')) {
