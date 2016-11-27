@@ -82,7 +82,7 @@ class System extends \Garden\Cache
 
     public function delete($id)
     {
-        $file = $this->getFile($id);
+        $file = GDN_CACHE.'/'.$this->getFile($id);
         if(!is_dir($file)) {
             @unlink($file);
         }
