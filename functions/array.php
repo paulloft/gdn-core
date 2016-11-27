@@ -162,7 +162,7 @@ function array_load($path) {
             $loaded = json_decode(file_get_contents($path), true);
             break;
         case '.php':
-            $loaded = require $path;
+            $loaded = include $path;
             break;
         case '.ser':
         case '.ser.php':

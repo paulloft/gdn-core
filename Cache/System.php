@@ -73,16 +73,22 @@ class System extends \Garden\Cache
             if(preg_match($regexp, $filename)) {
                 $file = GDN_CACHE.'/'.$filename;
                 if(!is_dir($file)) {
-                    unlink($file);
+                    @unlink($file);
                 }
             }
 
         }
     }
 
+    public function delete($id)
+    {
+        $file = $this->getFile($id);
+        if(!is_dir($file)) {
+            @unlink($file);
+        }
+    }
+
     public function add($id, $data, $lifetime = null){}
 
     public function exists($id){}
-
-    public function delete($id){}
 }

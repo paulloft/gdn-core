@@ -23,7 +23,7 @@ class ErrorHandler {
 
         if ( c('main.logs', true) ) {
             $handler->on('fatal', function ($exception, $debug) {
-                $logFilePath = GDN_LOGS.'/'.($debug ? 'debug' : 'prod').'/'.date('Y').'/'.date('m').'/';
+                $logFilePath = GDN_LOGS.'/'.date('Y').'/'.date('m').'/';
                 $old_umask = umask(0);
                 @mkdir($logFilePath, 0775, true);
                 umask($old_umask);

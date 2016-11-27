@@ -2,45 +2,21 @@
 
 namespace Garden;
 
-/**
- * Application configuration management.
- *
- * This class provides access to the application configuration information through one or more config files.
- * You can load/save config files in several formats. The file extension of the file determines what format will the file will use.
- * The following file formats are supported.
- *
- * - javascript object notation (json): .json or .json.php
- * - php source code: .php
- * - php serialized arrays: .ser or .ser.php
- * - yaml: .yml or .yml.php
- *
- * When using config files we recommend always using the .*.php extension so that the file cannot be read through its url.
- *
- * @author Todd Burry <todd@vanillaforums.com>
- * @copyright 2009 Vanilla Forums Inc.
- * @license LGPL-2.1
- * @package Vanilla
- * @since 1.0
- */
 class Config {
-    /// Properties ///
+
+    public static $cached = false;
+    public static $defaultExtension = 'php';
 
     /**
      * @var array The config data.
      */
     protected static $data = [];
 
-    public static $cached = false;
-    public static $defaultExtension = 'php';
-
     /**
      * @var string The default path to load/save to.
      */
     protected static $defaultPath;
-
     protected static $coreConfig = GDN_SRC.'/conf';
-
-    /// Methods ///
 
     /**
      * Get or set the default path.
@@ -147,7 +123,11 @@ class Config {
             return $value !== null;
         });
 
-        return array_save($config, $path);
+        $result = array_save($config, $path);
+
+        Gdn::cache('system')->delete('config-autoload');
+
+        return $result;
     }
 
     /**
