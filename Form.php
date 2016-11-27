@@ -124,10 +124,10 @@ class Form
     public function submittedValid()
     {
         if ($this->submitted()) {
-            $post = $this->getFormValues();
-            $secureKey = $this->getSecureKey();
-            if ($secureKey === $this->generateSecureKey($post)) {
+            if ($this->checkValidData()) {
                 return true;
+            } else {
+                $this->addError(t('The data obtained from these different form'));
             }
         }
 
@@ -292,7 +292,8 @@ class Form
     public function generateSecureKey($data)
     {
         $keys = array_keys($data);
-        return md5(implode($keys) . c('main.hashsalt'));
+//        return md5(implode($keys) . c('main.hashsalt'));
+        return SecureString::instance()->encode($keys, ['aes256' => c('main.hashsalt')]);
     }
 
     /**
@@ -305,6 +306,27 @@ class Form
         $formData = val($var, $GLOBALS, []);
 
         return val('secureKey', $formData);
+    }
+
+    public function checkValidData($post = false, $secureKey = false)
+    {
+        if (!$post) {
+            $post = $this->getFormValues();
+        }
+        if (!$secureKey) {
+            $secureKey = $this->getSecureKey();
+        }
+
+        if (!$post || !$secureKey) {
+            return false;
+        }
+
+        $postFields = array_keys($post);
+        $fields = SecureString::instance()->decode($secureKey, ['aes256' => c('main.hashsalt')]);
+
+        $result = array_diff($postFields, $fields);
+
+        return empty($result);
     }
 
     /**
@@ -358,19 +380,21 @@ class Form
             array_touch('class', $attributes, $this->inputClass);
         }
 
-        $value = val('value', $attributes);
-
-        if ($type == 'radio' || $type == 'checkbox') {
-            if ($value !== false && $this->getValue($name) == $value) {
-                array_touch('checked', $attributes, 'checked');
-            }
-        }
-
+        $inputValue = val('value', $attributes);
         $correctName = $this->correctName($name);
 
         $attributes['name'] = $name;
         $attributes['type'] = $type;
-        $attributes['value'] = $this->_value($correctName, $value);
+
+        if ($type == 'radio' || $type == 'checkbox') {
+            $value = $this->getValue($correctName);
+            $checked = is_array($value) ? in_array($inputValue, $value) : $inputValue == $value;
+            if ($inputValue !== false && $checked) {
+                array_touch('checked', $attributes, 'checked');
+            }
+        } else {
+            $attributes['value'] = $this->_value($correctName, $inputValue);
+        }
 
         $this->addInput($correctName);
 

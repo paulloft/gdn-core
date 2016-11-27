@@ -208,7 +208,7 @@ class Controller extends Plugin {
      * @param bool $tablename
      * @return Form
      */
-    public function initForm($model = false, $data = false)
+    public function form($model = false, $data = false)
     {
         $tablename = is_string($model) ? $model : false;
         $this->form = new Form($tablename);

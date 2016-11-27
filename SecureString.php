@@ -11,7 +11,7 @@ namespace Garden;
 /**
  * A class that provides functionality for encrypting and signing strings and then decoding those secure strings.
  */
-class SecureString {
+class SecureString extends Plugin {
     const SEP = '.';
     const EOS = '-';
     const STRICT = 'strict';
