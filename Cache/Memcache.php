@@ -30,6 +30,7 @@ class Memcache extends \Garden\Cache {
         $this->host = val('host', $config, $this->host);
         $this->port = val('port', $config, $this->port);
         $this->prefix = val('keyPrefix', $config, $this->prefix);
+        $this->cache = val('connection', $config, null);
 
         $this->salt = c('main.hashsalt', 'gdn');
 
@@ -40,12 +41,14 @@ class Memcache extends \Garden\Cache {
 
     protected function connect()
     {
-        if (!class_exists('memcache')) {
-            throw new Exception\Custom('memcache extention not found');
-        }
+        if (!$this->cache) {
+            if (!class_exists('memcache')) {
+                throw new Exception\Custom('memcache extention not found');
+            }
 
-        $this->cache = new \Memcache();
-        $this->cache->addServer($this->host, $this->port, $this->persistent);
+            $this->cache = new \Memcache();
+            $this->cache->addServer($this->host, $this->port, $this->persistent);
+        }
     }
 
     protected function fixID($id)

@@ -114,6 +114,7 @@ abstract class Database {
 
         // Store the config locally
         $this->_config = $config;
+        $this->_connection = val('connection', $config, null);
 
         if (empty($this->_config['tablePrefix'])) {
             $this->_config['tablePrefix'] = '';

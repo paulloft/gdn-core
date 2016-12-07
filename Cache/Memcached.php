@@ -9,12 +9,14 @@ use \Garden\Exception;
 class Memcached extends Memcache {
     protected function connect()
     {
-        if (!class_exists('Memcached')) {
-            throw new Exception\Custom('Memcached extention not found');
-        }
+        if (!$this->cache) {
+            if (!class_exists('Memcached')) {
+                throw new Exception\Custom('Memcached extention not found');
+            }
 
-        $this->cache = new \Memcached($this->persistent);
-        $this->cache->addServer($this->host, $this->port);
+            $this->cache = new \Memcached($this->persistent);
+            $this->cache->addServer($this->host, $this->port);
+        }
     }
 
     public function set($id, $data, $lifetime = null)
