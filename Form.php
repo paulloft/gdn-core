@@ -216,6 +216,10 @@ class Form
         return $this->validation()->validate($data);
     }
 
+    /**
+     * Add custom error in validiation results
+     * @param string $error
+     */
     public function addError($error)
     {
         $this->errors[] = $error;
@@ -292,7 +296,6 @@ class Form
     public function generateSecureKey($data)
     {
         $keys = array_keys($data);
-//        return md5(implode($keys) . c('main.hashsalt'));
         return SecureString::instance()->encode($keys, ['aes256' => c('main.hashsalt')]);
     }
 
@@ -308,6 +311,12 @@ class Form
         return val('secureKey', $formData);
     }
 
+    /**
+     * Сhecks the integrity of the data came
+     * @param array $post
+     * @param array $secureKey
+     * @return bool
+     */
     public function checkValidData($post = false, $secureKey = false)
     {
         if (!$post) {
