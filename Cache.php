@@ -27,13 +27,7 @@ abstract class Cache
     {
         $options = c('cache');
 
-        if (isset($_GET['nocache']) || file_exists(self::$clearFile)) {
-            if (!self::$clear) {
-                @unlink(self::$clearFile);
-            }
-            self::$clear = true;
-            opcache_reset();
-        }
+        self::flush();
 
         if(!$driver) {
             $driver = val('driver', $options, self::$default);
@@ -59,6 +53,20 @@ abstract class Cache
     {
         self::$clear = true;
         touch(self::$clearFile);
+    }
+
+    protected static function flush()
+    {
+        if (isset($_GET['nocache']) || file_exists(self::$clearFile)) {
+            if (!self::$clear) {
+                @unlink(self::$clearFile);
+            }
+            self::$clear = true;
+
+            if (extension_loaded('opcache')) {
+                opcache_reset();
+            }
+        }
     }
 
     /**

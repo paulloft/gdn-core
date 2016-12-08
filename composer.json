@@ -28,7 +28,6 @@
 		"ext-pdo_mysql": "*",
 		"ext-Reflection": "*",
 		"lib-pcre": "*",
-		"smarty/smarty": "~3.1",
 		"kuria/error": "^0.2.0"
 	},
 	"autoload": {
