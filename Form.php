@@ -108,12 +108,12 @@ class Form
     public function submitted()
     {
         $method = strtoupper($this->method);
+        $postValues = is_array($this->getFormValues()) && count($this->getFormValues()) > 0;
 
         if ($method === Request::METHOD_GET) {
-            return count(Gdn::request()->getQuery()) > 0 || (is_array($this->getFormValues()) && count($this->getFormValues()) > 0);
-
+            return count(Gdn::request()->getQuery()) > 0 || $postValues;
         } else {
-            return Gdn::request()->isPost();
+            return Gdn::request()->isPost() && $postValues;
         }
     }
 
