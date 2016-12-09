@@ -74,6 +74,10 @@ class Gdn {
 
     public static function request()
     {
+        if (!Request::current()) {
+            $request = new Request();
+            Request::current($request);
+        }
         return Request::current();
     }
 

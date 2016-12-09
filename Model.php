@@ -46,7 +46,9 @@ class Model extends Plugin {
      */
     public function __construct($table = null)
     {
-        $this->setTable($table);
+        if ($table !== null) {
+            $this->setTable($table);
+        }
 
         if (Factory::exists('auth')) {
             $user = Gdn::auth()->user;
