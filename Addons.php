@@ -158,19 +158,10 @@ class Addons {
         self::baseDir();
 
         Event::bind('bootstrap', function () {
-            $translations = Gdn::cache('system')->get('translations');
-            if ($translations) {
-                Gdn::$translations = $translations;
-            }
             // Start each of the enabled addons.
             foreach (self::enabled() as $key => $value) {
                 static::startAddon($key);
             }
-
-            if(!$translations) {
-                Gdn::cache('system')->set('translations', Gdn::$translations);
-            }
-
         });
     }
 
@@ -489,24 +480,19 @@ class Addons {
             return false;
         }
 
-        $sytemCache = Gdn::cache('system');
-
+        $cache = Gdn::cache('system');
         // load config.
-        if (!$sytemCache->get('config-autoload')) {
+        if (!$cache->get('config-autoload')) {
             if($config_path = val(self::K_CONFIG, $addon)) {
                 Config::load($addon_key, $config_path);
             }
         }
 
         // load translations
-        if (!$sytemCache->get('translations')) {
+        if (!$cache->get('translations')) {
             $locale = c('main.locale', 'en_US');
-            $locale_path = val('dir', $addon)."/locale/$locale.php";
-
-            if (file_exists($locale_path)) {
-                $translations = include $locale_path;
-                Gdn::$translations = array_merge(Gdn::$translations, $translations);
-            }
+            $locale_path = val('dir', $addon);
+            Translate::load("$locale_path/locales/$locale.".Translate::$defaultExtension);
         }
 
         // Run the class' bootstrap.

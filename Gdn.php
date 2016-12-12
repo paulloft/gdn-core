@@ -81,25 +81,6 @@ class Gdn {
         return Request::current();
     }
 
-    public static $translations = [];
-    /**
-     * @param string $code
-     * @param string $default
-     * @return string
-     */
-    public static function translate($code, $default = null)
-    {
-        if (strpos($code, '@') === 0) {
-            return substr($code, 1);
-        } elseif (isset(self::$translations[$code])) {
-            return self::$translations[$code];
-        } elseif ($default !== null) {
-            return $default;
-        } else {
-            return $code;
-        }
-    }
-
     /**
      * @return \Addons\Dashboard\Models\Permission
      */

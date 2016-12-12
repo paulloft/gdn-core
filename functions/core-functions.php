@@ -420,7 +420,7 @@ function str_ends($haystack, $needle)
  */
 function t($code, $default = null)
 {
-    return \Garden\Gdn::translate($code, $default);
+    return \Garden\Translate::get($code, $default);
 }
 
 /**

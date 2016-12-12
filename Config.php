@@ -125,9 +125,22 @@ class Config {
 
         $result = array_save($config, $path);
 
-        Gdn::cache('system')->delete('config-autoload');
+        Cache::instance('system')->delete('config-autoload');
 
         return $result;
+    }
+
+    public static function loadDir($path)
+    {
+        $files = glob($path.'*.'.self::$defaultExtension);
+        foreach ($files as $file) {
+            $info = pathinfo($filename);
+            $group = val('filename', $info);
+
+            if($group) {
+                self::load($group, $file);
+            }
+        }
     }
 
     /**
@@ -164,8 +177,8 @@ class Config {
      * caching all configs data
      */
     public static function cache() {
-        if(!Gdn::cache('system')->get('config-autoload')) {
-            Gdn::cache('system')->set('config-autoload', self::$data);
+        if(!Cache::instance('system')->get('config-autoload')) {
+            Cache::instance('system')->set('config-autoload', self::$data);
         }
     }
 }
