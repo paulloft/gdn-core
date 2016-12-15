@@ -559,8 +559,8 @@ function getInclude($path, array $data = array())
 
 function redirect($url, $code = 302)
 {
-    $host = Garden\Request::current()->getHost();
-    $scheme = Garden\Request::current()->getScheme();
+    $host = Garden\Gdn::request()->getHost();
+    $scheme = Garden\Gdn::request()->getScheme();
 
     $url = is_url($url) ? $url : $scheme . '://' . $host . $url;
 

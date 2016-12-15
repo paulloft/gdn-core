@@ -206,6 +206,16 @@ class Form
     }
 
     /**
+     * unset form field value
+     * @param string $name field value
+     */
+    public function unsetFormValue($name)
+    {
+        $this->getFormValues();
+        unset($this->formValues[$name]);
+    }
+
+    /**
      * check data to valid
      * @return bool|void
      */

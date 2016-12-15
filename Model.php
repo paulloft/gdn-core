@@ -40,6 +40,11 @@ class Model extends Plugin {
 
     protected $validation;
 
+    public $fieldDateInserted = 'dateInserted';
+    public $fieldDateUpdated = 'dateUpdated';
+    public $fieldUserUpdated = 'userUpdated';
+    public $fieldUserInserted = 'userInserted';
+
     /**
      * Class constructor. Defines the related database table name.
      * @param string $table table name
@@ -478,12 +483,12 @@ class Model extends Plugin {
 
     protected function insertDefaultFields(array $data)
     {
-        if (!val('dateInserted', $data)) {
-            $data['dateInserted'] = DB::expr('now()');
+        if (!val($this->fieldDateInserted, $data)) {
+            $data[$this->fieldDateInserted] = DB::expr('now()');
         }
 
-        if (!val('userInserted', $data)) {
-            $data['userInserted'] = $this->userID;
+        if (!val($this->fieldUserInserted, $data)) {
+            $data[$this->fieldUserInserted] = $this->userID;
         }
 
         return $data;
@@ -491,12 +496,12 @@ class Model extends Plugin {
 
     protected function updateDefaultFields(array $data)
     {
-        if (!val('dateUpdated', $data)) {
-            $data['dateUpdated'] = DB::expr('now()');
+        if (!val($this->fieldDateUpdated, $data)) {
+            $data[$this->fieldDateUpdated] = DB::expr('now()');
         }
 
-        if (!val('userUpdated', $data)) {
-            $data['userUpdated'] = $this->userID;
+        if (!val($this->fieldUserUpdated, $data)) {
+            $data[$this->fieldUserUpdated] = $this->userID;
         }
 
         return $data;

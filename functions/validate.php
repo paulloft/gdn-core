@@ -62,10 +62,10 @@ function validate_regexp($value, $params)
 function validate_sql_date($value)
 {
     $date = "/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/";
-    $datetime = "/^(\d{4})-(\d{2})-(\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/";
+    $datetime = "/^(\\d{4})-(\\d{2})-(\\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/";
 
     return preg_match($date, $value, $matches)
         && checkdate($matches[2], $matches[3], $matches[1])
-        && preg_match($datetime, $value, $matches)
+        || preg_match($datetime, $value, $matches)
         && checkdate($matches[2], $matches[3], $matches[1]);
 }
