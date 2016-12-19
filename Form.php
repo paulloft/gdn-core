@@ -252,7 +252,7 @@ class Form
                     $errField = val(0, $error);
                     $error = val(1, $error);
                 } else {
-                    $errField = t($this->model ? val('table', $this->model, 'form') : 'form' . '.' . $field, $field);
+                    $errField = t(($this->model ? val('table', $this->model, 'form') : 'form') . '.' . $field, $field);
                 }
                 if ($text) {
                     $html[] = $errField . ' ' . $error;
