@@ -72,7 +72,7 @@ class System extends \Garden\Cache
         foreach ($dir as $filename) {
             if(preg_match($regexp, $filename)) {
                 $file = GDN_CACHE.'/'.$filename;
-                if(!is_dir($file)) {
+                if(is_file($file)) {
                     @unlink($file);
                 }
             }
