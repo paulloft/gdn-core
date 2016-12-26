@@ -45,6 +45,8 @@ class Model extends Plugin {
     public $fieldUserUpdated = 'userUpdated';
     public $fieldUserInserted = 'userInserted';
 
+    public $DBinstance;
+
     /**
      * Class constructor. Defines the related database table name.
      * @param string $table table name
@@ -90,7 +92,7 @@ class Model extends Plugin {
     {
         $query = DB::select('*')->from($this->table)->where($this->primaryKey, '=', $id)->limit(1);
 
-        return $query->execute(null, $this->resultObject)->current();
+        return $query->execute($this->DBinstance, $this->resultObject)->current();
     }
 
     /**
@@ -130,7 +132,7 @@ class Model extends Plugin {
             $this->_query->offset($offset);
         }
 
-        return $this->_query->execute(null, $this->resultObject);
+        return $this->_query->execute($this->DBinstance, $this->resultObject);
     }
 
     /**
@@ -147,7 +149,7 @@ class Model extends Plugin {
 
         $this->_where($where);
 
-        return $this->_query->execute()->get('count');
+        return $this->_query->execute($this->DBinstance, $this->resultObject)->get('count');
     }
 
     /**
@@ -182,7 +184,7 @@ class Model extends Plugin {
         $data = $this->fixPostData($data);
         $columns = array_keys($data);
 
-        $query = DB::insert($this->table, $columns)->values($data)->execute();
+        $query = DB::insert($this->table, $columns)->values($data)->execute($this->DBinstance);
 
         return val(0, $query, false);
     }
@@ -198,7 +200,7 @@ class Model extends Plugin {
         $data = $this->updateDefaultFields($data);
         $data = $this->fixPostData($data);
 
-        DB::update($this->table)->set($data)->where($this->primaryKey, '=', $id)->execute();
+        DB::update($this->table)->set($data)->where($this->primaryKey, '=', $id)->execute($this->DBinstance);
     }
 
     /**
@@ -216,7 +218,7 @@ class Model extends Plugin {
 
         $this->_where($where);
 
-        $this->_query->execute();
+        $this->_query->execute($this->DBinstance);
     }
 
     /**
@@ -302,7 +304,7 @@ class Model extends Plugin {
     {
         $this->_query = DB::delete($this->table);
         $this->_where($where);
-        $this->_query->execute();
+        $this->_query->execute($this->DBinstance);
     }
 
     /**
@@ -405,9 +407,11 @@ class Model extends Plugin {
             $sql .= $this->_query->compile() . ";\n";
         }
 
-        if (empty($sql)) return;
+        if (empty($sql)) {
+            return;
+        }
 
-        DB::query(null, $sql)->execute();
+        DB::query(null, $sql)->execute($this->DBinstance);
 
         $this->_updateFields = $this->_insertFields = $this->_deleteFields = [];
     }
@@ -426,7 +430,7 @@ class Model extends Plugin {
             $query->where($field, '=', $value);
         }
 
-        return (bool)$query->execute()->get('total_count');
+        return (bool)$query->execute($this->DBinstance, $this->resultObject)->get('total_count');
     }
 
     /**

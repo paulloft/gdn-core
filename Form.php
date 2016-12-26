@@ -243,7 +243,9 @@ class Form
     public function errors($text = false)
     {
         $errors = $this->validation()->errors();
-        if (empty($errors) && empty($this->errors)) return false;
+        if (empty($errors) && empty($this->errors)) {
+            return false;
+        }
 
         $html = array();
         foreach ($errors as $field => $fieldErrors) {
@@ -267,9 +269,9 @@ class Form
         }
 
         if ($text) {
-            return implode("; ", $html);
+            return implode('; ', $html);
         } else {
-            return sprintf(t('form_html_error_wrapper', '<div class="alert alert-danger">%s</div>'), implode("<br>", $html));
+            return sprintf(t('form_html_error_wrapper', '<div class="alert alert-danger">%s</div>'), implode('<br>', $html));
         }
     }
 
