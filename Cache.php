@@ -58,7 +58,7 @@ abstract class Cache
     protected static function flush()
     {
         if (isset($_GET['nocache']) || file_exists(self::$clearFile)) {
-            if (!self::$clear) {
+            if (!self::$clear && is_file(self::$clearFile)) {
                 @unlink(self::$clearFile);
             }
             self::$clear = true;
