@@ -547,13 +547,20 @@ class Model extends Plugin {
         return $result;
     }
 
-    protected function conditionExpr($field, $value)
+    /**
+     * parses the field in the form array [field, operator, value] suitable for sql where() function
+     * @param $field
+     * @param $value
+     * @return array [field, operator, value]
+     */
+    public function conditionExpr($field, $value)
     {
         $op = ''; // logical operator
 
         // Try and split an operator out of $Field.
-        $fieldOpRegex = "/(?:\s*(=|<>|>|<|>=|<=)\s*$)|\s+(like|not\s+like)\s*$|\s+(?:(is)\s+(null)|(is\s+not)\s+(null)|(not\s+in))\s*$/i";
+        $fieldOpRegex = "/(?:\s*(=|!=|<>|>|<|>=|<=)\s*$)|\s+(like|not\s+like)\s*$|\s+(?:(is)(\s+null)?|(is\s+not)(\s+null)?|(not\s+in))\s*$/i";
         $split = preg_split($fieldOpRegex, $field, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+
         if (count($split) > 1) {
             list($field, $op) = $split;
 
