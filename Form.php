@@ -289,7 +289,17 @@ class Form
             if ($this->model && $this->model instanceof Model) {
                 $id = array_extract($this->model->primaryKey, $post);
                 $post = $this->fixPostData($post);
-                $result = $this->model->save($post, $id);
+                try {
+                    $result = $this->model->save($post, $id);
+                } catch (\Exception $e) {
+                    if (c('main.debug', true)) {
+                        $this->addError(t_sprintf('form_save_error_debug', $e->getMessage()));
+                    } else {
+                        $this->addError(t('form_save_error'));
+                    }
+
+                    $result = false;
+                }
             } else {
                 $result = $post;
             }

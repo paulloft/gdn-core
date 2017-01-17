@@ -54,7 +54,7 @@ class PDO extends SQL {
         try {
             // Create a new PDO connection
             $this->_connection = new \PDO($dsn, $username, $password, $options);
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new \Exception($e->getMessage(), $e->getCode());
         }
 
@@ -131,7 +131,7 @@ class PDO extends SQL {
             $result = $this->_connection->query($sql);
         } catch (\Exception $e) {
             // Convert the exception in a database exception
-            throw new Exception\Custom("%s \n[ %s ]", array($e->getMessage(), $sql), $e->getCode());
+            throw new Exception\Custom("%s \n[ %s ]", array($e->getMessage(), $sql));
         }
 
         // Set the last query

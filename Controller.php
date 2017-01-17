@@ -153,7 +153,7 @@ class Controller extends Plugin {
         $filename = val('filename', $pathinfo, 'index');
         $ext = val('extension', $pathinfo, $this->viewExt);
 
-        $this->templateBaseDir = $addonFolder.'/views/'.strtolower($controllerName).'/';
+        $this->templateBaseDir = $addonFolder.'/Views/'.strtolower($controllerName).'/';
 
         return $this->templateBaseDir.$filename.'.'.$ext;
     }
@@ -237,11 +237,11 @@ class Controller extends Plugin {
             if (count($space) < 3) {
                 $result = false;
             } else {
-                $result = array(
+                $result = [
                     'addon' => $space[1],
                     'folder' => strtolower($space[0]).'/'.$space[1],
                     'controller' => array_pop($space)
-                );
+                ];
             }
             Gdn::dirtyCache()->set($className, $result);
         }

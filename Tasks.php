@@ -3,19 +3,19 @@ namespace Garden;
 
 class Tasks extends Plugin {
 
-    const ticks = array(
-        60 => 'minute',
-        3600 => 'hour',
+    const ticks = [
+        60    => 'minute',
+        3600  => 'hour',
         86400 => 'day'
-    );
+    ];
 
-    const matches = array(
+    const matches = [
         'minutes' => 'i',
-        'hours' => 'H',
+        'hours'   => 'H',
         'dayname' => 'l',
-        'day' => 'j',
-        'month' => 'n'
-    );
+        'day'     => 'j',
+        'month'   => 'n'
+    ];
 
     private $lockfile;
 
@@ -23,6 +23,7 @@ class Tasks extends Plugin {
     {
         $config = c('tasks');
 
+        set_time_limit(val('timelimit', $config, 900));
         ini_set('memory_limit', val('memorylimit', $config, '256M'));
         $this->lockfile = val('lockfile', $config, GDN_CACHE."/.tasklock");
     }
@@ -61,7 +62,7 @@ class Tasks extends Plugin {
     }
 
     public function flatten($Array) {
-        $Result = array();
+        $Result = [];
         foreach (new \RecursiveIteratorIterator(new \RecursiveArrayIterator($Array)) as $Value)
             $Result[] = $Value;
         return $Result;
@@ -98,7 +99,7 @@ class Tasks extends Plugin {
         if (file_exists($this->lockfile)) {
             $modifyTime = filemtime($this->lockfile);
             if (strtotime('55 minutes ago') > $modifyTime) {
-                unlink($lockfile);
+                unlink($this->lockfile);
             } else {
                 return true;
             }

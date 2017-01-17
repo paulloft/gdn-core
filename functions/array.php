@@ -403,7 +403,19 @@ function array_extract($key, array &$array, $default = false)
  * @param bool $dafult
  * @return mixed
  */
-function array_get(array $array, $key, $dafult = false)
+function array_get($array, $key, $dafult = false)
 {
     return val($key, $array, $dafult);
+}
+
+/**
+ * alias for function valr()
+ * @param $array
+ * @param $key
+ * @param bool $dafult
+ * @return mixed
+ */
+function array_path($array, $key, $dafult = false)
+{
+    return valr($key, $array, $dafult);
 }

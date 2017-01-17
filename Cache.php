@@ -63,7 +63,7 @@ abstract class Cache
             }
             self::$clear = true;
 
-            if (extension_loaded('opcache')) {
+            if (extension_loaded('Zend OPcache')) {
                 opcache_reset();
             }
         }

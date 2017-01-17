@@ -1,4 +1,4 @@
 <?php
 return [
-    "installer" => true
+    'installer' => true
 ];

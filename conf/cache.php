@@ -1,22 +1,22 @@
 <?php
 return [
-    "driver" => "dirty",
-    "file" => [
-        "defaultLifetime" => 3600,
-        "cacheDir" => "cache"
+    'driver' => 'dirty',
+    'file' => [
+        'defaultLifetime' => 3600,
+        'cacheDir' => 'cache'
     ],
-    "memcache" => [
-        "defaultLifetime" => 3600,
-        "host" => "localhost",
-        "port" => "11211",
-        "persistent" => false,
-        "keyPrefix" => "gdn_"
+    'memcache' => [
+        'defaultLifetime' => 3600,
+        'host' => 'localhost',
+        'port' => '11211',
+        'persistent' => false,
+        'keyPrefix' => 'gdn_'
     ],
-    "memcached" => [
-        "defaultLifetime" => 3600,
-        "host" => "localhost",
-        "port" => "11211",
-        "persistent" => false,
-        "keyPrefix" => "gdn_"
+    'memcached' => [
+        'defaultLifetime' => 3600,
+        'host' => 'localhost',
+        'port' => '11211',
+        'persistent' => false,
+        'keyPrefix' => 'gdn_'
     ]
 ];

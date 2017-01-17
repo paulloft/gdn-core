@@ -134,23 +134,6 @@ function format_declension($num, $exp)
     return trim((($dig === 1) ? $exp[1] : (($dig > 4 || $dig < 1) ? $exp[0] : $exp[2])));
 }
 
-function format_shortFIO($fio)
-{
-    $words = explode(' ', $fio);
-
-    $result = $words[0];
-
-    if (!empty($words[1])) {
-        $result .= ' '.mb_substr($words[1], 0, 1).'.';
-    }
-
-    if (!empty($words[2])) {
-        $result .= mb_substr($words[1], 0, 1).'.';
-    }
-
-    return $result;
-}
-
 function format_substr($string, $limit = 120)
 {
     $string = strip_tags($string);

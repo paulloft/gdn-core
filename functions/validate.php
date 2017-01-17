@@ -6,7 +6,7 @@ function validate_email($value, $params)
 
 function validate_ip($value, $params)
 {
-    return !(filter_var($value, FILTER_VALIDATE_IP) === false) ;
+    return !(filter_var($value, FILTER_VALIDATE_IP) === false);
 }
 
 function validate_url($value, $params)
@@ -21,10 +21,10 @@ function validate_mac($value, $params)
 
 function validate_not_empty($value, $params)
 {
-    return !in_array($value, array(NULL, FALSE, '', array()), TRUE);
+    return !in_array($value, [NULL, FALSE, '', []], TRUE);
 }
 
-function validate_not_value($value, array $params)
+function validate_not_value($value, $params)
 {
     return !in_array($value, $params);
 }
@@ -68,4 +68,25 @@ function validate_sql_date($value)
         && checkdate($matches[2], $matches[3], $matches[1])
         || preg_match($datetime, $value, $matches)
         && checkdate($matches[2], $matches[3], $matches[1]);
+}
+
+function validate_min_date($value, $params)
+{
+    return strtotime($value) >= (is_int($params) ? $params : strtotime($params));
+}
+
+function validate_max_date($value, $params)
+{
+    return strtotime($value) <= (is_int($params) ? $params : strtotime($params));
+}
+
+function validate_unique($value, $params)
+{
+    /**
+     * @var $model \Garden\Model
+     */
+    list($id, $field, $model) = $params;
+    $count = $model->getCount([$field => $value, $model->primaryKey.'!=' => $id]);
+
+    return !$count;
 }

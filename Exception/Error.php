@@ -41,6 +41,15 @@ class Error extends \ErrorException {
     }
 
     /**
+     * Gets a longer description for the exception.
+     *
+     * @return string Returns the description of the exception or an empty string if there isn't one.
+     */
+    public function getDescription() {
+        return val('description', $this->context, '');
+    }
+
+    /**
      * Get the error context.
      *
      * @return int

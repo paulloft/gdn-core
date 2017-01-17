@@ -7,9 +7,9 @@ class Template extends Controller {
     protected $template = 'template';
     protected $templateAddon;
 
-    protected $_js  = array();
-    protected $_css = array();
-    protected $meta = array();
+    protected $_js  = [];
+    protected $_css = [];
+    protected $meta = [];
 
     /**
      * Add js library to template
@@ -39,7 +39,7 @@ class Template extends Controller {
      */
     public function meta($name, $content, $http_equiv = false)
     {
-        $this->meta[$name] = array($content, $http_equiv);
+        $this->meta[$name] = [$content, $http_equiv];
     }
 
     /**
@@ -69,7 +69,7 @@ class Template extends Controller {
         $view = $view ?: $this->callerMethod();
         $view = $this->fetchView($view, $controllerName, $addonFolder);
 
-        $data = array(
+        $data = [
             'content'  => $view,
             'meta'     => $this->meta,
             'js'       => $this->_js,
@@ -78,7 +78,7 @@ class Template extends Controller {
             'action'     => strtolower($this->callerMethod()),
             'addon'      => strtolower($this->controllerInfo('addon')),
             'controller' => strtolower($this->controllerInfo('controller')),
-        );
+        ];
 
         $this->setData('gdn', $data);
         $this->setData('sitename', c('main.sitename'));
@@ -99,7 +99,7 @@ class Template extends Controller {
         Event::fire('render_before');
 
         $view = $view ?: $this->callerMethod();
-        if ($this->renderType() == Request::RENDER_VIEW) {
+        if ($this->renderType() === Request::RENDER_VIEW) {
             if ($this->_js) {
                 Response::current()->headers('Ajax-Js', json_encode($this->_js));
             }
@@ -108,8 +108,9 @@ class Template extends Controller {
             }
 
             echo $this->fetchView($view, $controllerName, $addonFolder);
-        } elseif ($this->renderType() == Request::RENDER_JSON) {
-            echo json_encode($this->data);
+        } elseif ($this->renderType() === Request::RENDER_JSON) {
+            Response::current()->headers('Content-Type', 'application/json');
+            echo json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         } else {
             echo $this->fetchTemplate($view, $controllerName, $addonFolder);
         }
@@ -121,7 +122,7 @@ class Template extends Controller {
     {
         $addon = $addon !== null ? $addon : strtolower($this->getAddonName());
         $local = is_local_url($src);
-        if ($local && $addon && file_exists(GDN_ADDONS.'/'.ucfirst($addon).'/assets/'.$resource.'/'.$src)) {
+        if ($local && $addon && file_exists(GDN_ADDONS.'/'.ucfirst($addon).'/Assets/'.$resource.'/'.$src)) {
             return "/assets/$addon/$resource/$src";
         } elseif (!$local || file_exists(PATH_PUBLIC.'/'.$src)) {
             return $src;

@@ -85,7 +85,7 @@ class Model extends Plugin {
     /**
      * Get the data from the table based on its primary key
      *
-     * @param ind $id Element ID
+     * @param int $id Element ID
      * @return array|object
      */
     public function getID($id)

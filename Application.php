@@ -239,10 +239,10 @@ class Application {
                     return $response->jsonSerialize();
                 }
                 // No break because everything returns.
-            case 'application/json':
-                $response->flushHeaders();
-                echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-                break;
+//            case 'application/json':
+//                $response->flushHeaders();
+//                echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+//                break;
             default:
                 $data = $response->data();
                 if (is_string($data)) {

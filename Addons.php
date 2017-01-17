@@ -23,6 +23,7 @@ class Addons {
     const K_BOOTSTRAP = 'bootstrap'; // bootstrap path key
     const K_CONFIG    = 'config'; // config path key
     const K_CLASSES   = 'classes';
+    const K_HOOKS     = 'hooks';
     const K_DIR       = 'dir';
     const K_INFO      = 'info'; // addon info key
 
@@ -41,7 +42,7 @@ class Addons {
     /**
      * @var array An array that maps class names to their fully namespaced class names.
      */
-//    protected static $basenameMap;
+    //    protected static $basenameMap;
 
     /**
      * @var array|null An array that maps class names to file paths.
@@ -148,10 +149,8 @@ class Addons {
             if (!isset($addon[self::K_CLASSES])) {
                 continue;
             }
-            foreach ($addon[self::K_CLASSES] as $className=>$path) {
-                if (str_ends($className, 'hooks')) {
-                    Event::bindClass($className);
-                }
+            foreach ($addon[self::K_HOOKS] as $className) {
+                Event::bindClass($className);
             }
         }
 
@@ -296,7 +295,7 @@ class Addons {
         }
 
         // Recurse.
-        $addon_subdirs = array('/addons');
+        $addon_subdirs = array('/Addons');
         foreach ($addon_subdirs as $addon_subdir) {
             if (is_dir($dir.$addon_subdir)) {
                 static::scanAddons($dir.$addon_subdir, $enabled, $addons);
@@ -316,7 +315,7 @@ class Addons {
     protected static function scanAddon($dir) {
         $dir = rtrim($dir, '/');
         $addon_key = strtolower(basename($dir));
-        $settings = $dir.'/settings';
+        $settings = $dir.'/Settings';
 
         // Look for the addon info array.
         $info_path = $settings.'/about.json';
@@ -333,15 +332,16 @@ class Addons {
         $settingsFiles = array(self::K_BOOTSTRAP, self::K_CONFIG);
 
         foreach ($settingsFiles as $file) {
-            $$file = self::checkFile($dir.'/settings', $file);
+            $$file = self::checkFile($dir.'/Settings', $file);
         }
 
         // Scan the appropriate subdirectories  for classes.
-        $subdirs = array('', '/library', '/modules', '/settings');
-        $classes = array();
+        $subdirs = array('', '/Library', '/Modules', '/Hooks');
+        $classes = $hooks = array();
         foreach ($subdirs as $subdir) {
             // Get all of the php files in the subdirectory.
             $paths = glob($dir.$subdir.'/*.php');
+            $isHooks = str_ends($subdir, 'Hooks');
             foreach ($paths as $path) {
                 $decls = static::scanFile($path);
                 foreach ($decls as $namespace_row) {
@@ -350,7 +350,11 @@ class Addons {
                         $namespace_classes = $namespace_row['classes'];
 
                         foreach ($namespace_classes as $class_row) {
-                            $classes[$namespace.$class_row['name']] = $path;
+                            if ($isHooks) {
+                                $hooks[] = $namespace.$class_row['name'];
+                            } else {
+                                $classes[$namespace.$class_row['name']] = $path;
+                            }
                         }
                     } else {
                         $classes[$namespace_row[0]['name']] = $path;
@@ -363,6 +367,7 @@ class Addons {
             self::K_BOOTSTRAP => $bootstrap,
             self::K_CONFIG    => $config,
             self::K_CLASSES   => $classes,
+            self::K_HOOKS     => $hooks,
             self::K_DIR       => $dir,
             self::K_INFO      => $info
         );
@@ -492,7 +497,7 @@ class Addons {
         if (!$cache->get('translations')) {
             $locale = c('main.locale', 'en_US');
             $locale_path = val('dir', $addon);
-            Translate::load("$locale_path/locales/$locale.".Translate::$defaultExtension);
+            Translate::load("$locale_path/Locales/$locale.".Translate::$defaultExtension);
         }
 
         // Run the class' bootstrap.

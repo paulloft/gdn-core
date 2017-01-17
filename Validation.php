@@ -25,7 +25,7 @@ class Validation
      */
     public function getStructure()
     {
-        return $this->model ? $this->model->getStructure() : false;
+        return $this->model ? $this->model->getStructure() : [];
     }
 
     /**
@@ -100,11 +100,11 @@ class Validation
      */
     public function rule($field, $rule, $params = null, $message = false)
     {
-        $this->rule[$field][] = array(
+        $this->rule[$field][] = [
             'type' => $rule,
             'params' => $params,
             'message' => $message
-        );
+        ];
 
         return $this;
     }
@@ -112,7 +112,7 @@ class Validation
     /**
      * validate data
      * @param array $data
-     * @return bool|void
+     * @return bool
      */
     public function validate($data = false)
     {
@@ -122,7 +122,7 @@ class Validation
             }
 
             if (!is_array($this->data)) {
-                return;
+                return false;
             }
 
             if ($this->model) {
@@ -132,7 +132,7 @@ class Validation
             $this->checkRules();
             $this->validated = true;
         }
-        
+
         return empty($this->errors);
     }
 
@@ -229,10 +229,14 @@ class Validation
                 $value = trim($value);
 
                 if(is_array($type)) {
-                    $ruleFunc = array($type[0], $type[1]);
+                    $ruleFunc = [$type[0], $type[1]];
                     $type = $type[1];
                 } else {
                     $ruleFunc =  'validate_' . $type;
+                }
+
+                if ($type == 'unique') {
+                    $params = [':id', $field, $this->model];
                 }
 
                 $params = $this->replaceParams($params, $this->data);
@@ -242,7 +246,7 @@ class Validation
                         if (is_array($message)) {
                             $field = val(0, $message);
                             $message = val(1, $message);
-                            $error = array(t($field), vsprintf(t($message ?: 'validate_'.$type), $params));
+                            $error = [t($field), vsprintf(t($message ?: 'validate_'.$type), $params)];
                         } else {
                             $error = vsprintf(t($message ?: 'validate_'.$type), $params);
                         }
@@ -254,16 +258,20 @@ class Validation
     }
 
     protected function replaceParams($params, $data) {
-        if (!$params) return false;
+        if (!$params) {
+            return false;
+        }
 
         if (is_array($params)) {
             foreach ($params as $k => $param) {
-                $params[$k] = $this->replaceParams($params, $data);
+                $params[$k] = $this->replaceParams($param, $data);
             }
             return $params;
         } elseif (str_begins($params, ':')) {
             $key = ltrim_substr($params, ':');
             return val($key, $data);
+        } else {
+            return $params;
         }
     }
 }

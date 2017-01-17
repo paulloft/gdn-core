@@ -39,7 +39,7 @@ function base64url_decode($str)
  *
  * @param string $key The config key.
  * @param string $default The default value if the config setting isn't available.
- * @return string The config value.
+ * @return mixed The config value.
  * @see config()
  */
 function c($key = false, $default = null)
