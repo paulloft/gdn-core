@@ -291,7 +291,7 @@ class MySQL extends \Garden\Db\Structure
             if ($sql != '')
                 $sql .= ',';
 
-            $sql .= "\n" . $this->defineColumn($column);
+            $sql .= "\n" . $this->defineColumn($column, true);
 
             $columnKeyTypes = (array)$column->keyType;
 
@@ -499,7 +499,7 @@ class MySQL extends \Garden\Db\Structure
         return $result;
     }
 
-    protected function defineColumn($column)
+    protected function defineColumn($column, $create = false)
     {
         if (!is_array($column->type) && !in_array($column->type, array('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'char', 'varchar', 'varbinary', 'date', 'datetime', 'mediumtext', 'longtext', 'text', 'decimal', 'numeric', 'float', 'double', 'enum', 'timestamp', 'tinyblob', 'blob', 'mediumblob', 'longblob')))
             throw new Exception\Custom(t('The specified data type (%1$s) is not accepted for the MySQL database.'), $column->type);
@@ -508,26 +508,35 @@ class MySQL extends \Garden\Db\Structure
 
         $lengthTypes = $this->types('length');
         if ($column->length != '' && in_array(strtolower($column->type), $lengthTypes)) {
-            if ($column->precision != '')
+            if ($column->precision != '') {
                 $return .= '(' . $column->length . ', ' . $column->precision . ')';
-            else
+            } else {
                 $return .= '(' . $column->length . ')';
+            }
         }
         if (property_exists($column, 'unsigned') && $column->unsigned) {
             $return .= ' unsigned';
         }
 
-        if (is_array($column->enum))
+        if (is_array($column->enum)) {
             $return .= "('" . implode("','", $column->enum) . "')";
+        }
 
-        if (!$column->allowNull)
+        if (!$column->allowNull) {
             $return .= ' not null';
+        }
 
-        if (!($column->default === null || $column->default === '') && strcasecmp($column->type, 'timestamp') !== 0)
+        if (!($column->default === null || $column->default === '') && strcasecmp($column->type, 'timestamp') !== 0) {
             $return .= ' default ' . self::quoteValue($column->default);
+        }
 
-        if ($column->autoIncrement)
-            $return .= ' auto_increment primary key';
+        if ($column->autoIncrement) {
+            $return .= ' auto_increment';
+            if ($create) {
+                $return .= ' primary key';
+            }
+        }
+
 
         return $return;
     }

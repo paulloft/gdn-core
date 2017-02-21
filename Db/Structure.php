@@ -21,6 +21,8 @@ abstract class Structure {
     public $database;
     public $capture = false;
 
+    public $addonEnabled = true;
+
     protected $_sql = array();
     protected $_prefix = '';
     protected $_encoding;
@@ -176,6 +178,11 @@ abstract class Structure {
     {
         /// Throw an event so that the structure can be overridden.
         \Garden\Event::fire('structure_before_set', $explicit, $drop);
+
+        if (!$this->addonEnabled) {
+            $this->reset();
+            return;
+        }
 
         try {
             // Make sure that table and columns have been defined
@@ -410,7 +417,7 @@ abstract class Structure {
             case 'numeric':
                 return array_merge($float, $int, $decimal);
             case 'length':
-                return array_merge($string, $length, $decimal);
+                return array_merge($int, $string, $length, $decimal);
             case 'precision':
                 return $decimal;
 

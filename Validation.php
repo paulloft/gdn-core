@@ -25,7 +25,7 @@ class Validation
      */
     public function getStructure()
     {
-        return $this->model ? $this->model->getStructure() : [];
+        return $this->model ? $this->model->getStructure() : false;
     }
 
     /**

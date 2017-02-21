@@ -1,8 +1,6 @@
 <?php
 namespace Garden;
 
-use Garden\Db\Database;
-
 /**
  * Model base class
  *

@@ -2,8 +2,8 @@
 namespace Garden;
 use \Garden\Exception;
 /**
-* 
-*/
+ *
+ */
 abstract class Cache
 {
     const DEFAULT_LIFETIME = 3600;
@@ -33,25 +33,31 @@ abstract class Cache
             $driver = val('driver', $options, self::$default);
         }
 
-        if (isset(self::$instances[$driver])) {
-            return self::$instances[$driver];
+        if (!isset(self::$instances[$driver])) {
+            $driverClass = 'Garden\Cache\\' . ucfirst($driver);
+
+            if (!class_exists($driverClass)) {
+                throw new Exception\Custom('Cache driver "%s" not found', array($driver));
+            } else {
+                $config = $config ?: val($driver, $options);
+                self::$instances[$driver] = new $driverClass($config);
+            }
         }
 
-        $driverClass = 'Garden\Cache\\'.ucfirst($driver);
-
-        if(!class_exists($driverClass)) {
-            throw new Exception\Custom("Cache driver \"%s\" not found", array($driver));
-        } else {
-            $config = $config ?: val($driver, $options);
-            self::$instances[$driver] = new $driverClass($config);
+        if (self::$clear) {
+            self::$instances[$driver]->deleteAll();
         }
 
         return self::$instances[$driver];
     }
 
+    /**
+     * Request to clear all cache
+     */
     public static function clear()
     {
         self::$clear = true;
+        self::_reset_opcache();
         touch(self::$clearFile);
     }
 
@@ -61,11 +67,16 @@ abstract class Cache
             if (!self::$clear && is_file(self::$clearFile)) {
                 @unlink(self::$clearFile);
             }
-            self::$clear = true;
 
-            if (extension_loaded('Zend OPcache')) {
-                opcache_reset();
-            }
+            self::$clear = true;
+            self::_reset_opcache();
+        }
+    }
+
+    protected static function _reset_opcache()
+    {
+        if (extension_loaded('Zend OPcache')) {
+            opcache_reset();
         }
     }
 

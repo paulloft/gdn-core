@@ -7,8 +7,6 @@
 
 namespace Garden\Exception;
 
-use Garden\Response;
-
 /**
  * An exception that represents an entire http response.
  *

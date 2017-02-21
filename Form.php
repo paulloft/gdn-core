@@ -46,8 +46,9 @@ class Form
     {
         $this->model = $model;
 
-        if ($dataset !== false)
+        if ($dataset !== false) {
             $this->setData($dataset);
+        }
     }
 
     /**
@@ -91,7 +92,7 @@ class Form
     public function validation()
     {
         if ($this->model && $this->model instanceof Model) {
-            return $this->model->validation();
+            return $this->model->validation($this);
         }
 
         if (!$this->validation) {
@@ -223,7 +224,7 @@ class Form
     {
         $data = $this->getFormValues();
         $data = $this->fixPostData($data);
-        return $this->validation()->validate($data);
+        return $this->validation()->validate($data) && !count($this->errors);
     }
 
     /**
