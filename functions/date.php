@@ -140,3 +140,20 @@ function date_passed($date)
             break;
     }
 }
+
+/**
+ * Вычислить разницу между двумя датами
+ * @param string $start
+ * @param string $end
+ * @param string $differenceFormat Формат даты, возвращаемый функцией
+ * @return string
+ */
+function date_difference($start, $end, $differenceFormat = '%a')
+{
+    $datetime1 = date_create($start);
+    $datetime2 = date_create($end);
+
+    $interval = date_diff($datetime1, $datetime2);
+
+    return $interval->format($differenceFormat);
+}

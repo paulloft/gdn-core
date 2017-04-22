@@ -6,17 +6,20 @@
  */
 
 namespace Garden;
+use Garden\Traits\Instance;
 
 
 /**
  * A class that provides functionality for encrypting and signing strings and then decoding those secure strings.
  */
-class SecureString extends Plugin {
+class SecureString {
     const SEP = '.';
     const EOS = '-';
     const STRICT = 'strict';
 
     protected $timestampExpiry;
+
+    use Instance;
 
     /**
      * Initialize an instance of the {@link SecureString} class.

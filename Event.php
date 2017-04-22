@@ -129,12 +129,11 @@ class Event {
      */
     public static function bindClass($class, $priority = Event::PRIORITY_NORMAL) {
         $method_names = get_class_methods($class);
-        
+
         // Grab an instance of the class so there is something to bind to.
         if (is_string($class)) {
             if (method_exists($class, 'instance')) {
-                // TODO: Make the instance lazy load.
-                $instance = call_user_func(array($class, 'instance'));
+                $instance = $class::instance();
             } else {
                 throw new \InvalidArgumentException('Event::bindClass(): The class for argument #1 must have an instance() method or be passed as an object.', 422);
             }
@@ -179,7 +178,7 @@ class Event {
         $result = [];
 
         foreach (self::$handlers as $event_name => $nested) {
-            $handlers = call_user_func_array('array_merge', static::getHandlers($event_name));
+            $handlers = array_merge(...static::getHandlers($event_name));
             $result[$event_name] = array_map('format_callback', $handlers);
         }
 
@@ -192,21 +191,8 @@ class Event {
      * @param string $event The name of the event.
      * @return mixed Returns the result of the last event handler.
      */
-    public static function fire($event) {
-        $handlers = self::getHandlers($event);
-        if (!$handlers) {
-            return null;
-        }
-
-        // Grab the handlers and call them.
-        $args = array_slice(func_get_args(), 1);
-        $result = null;
-        foreach ($handlers as $callbacks) {
-            foreach ($callbacks as $callback) {
-                $result = call_user_func_array($callback, $args);
-            }
-        }
-        return $result;
+    public static function fire($event, ...$args) {
+        return self::fireArray($event, $args);
     }
 
     /**
@@ -229,7 +215,7 @@ class Event {
         $result = null;
         foreach ($handlers as $callbacks) {
             foreach ($callbacks as $callback) {
-                $result = call_user_func_array($callback, $args);
+                $result = $callback(...$args);
             }
         }
         return $result;
@@ -255,7 +241,7 @@ class Event {
         $args = array_slice(func_get_args(), 1);
         foreach ($handlers as $callbacks) {
             foreach ($callbacks as $callback) {
-                $value = call_user_func_array($callback, $args);
+                $value = $callback(...$args);
                 $args[0] = $value;
             }
         }

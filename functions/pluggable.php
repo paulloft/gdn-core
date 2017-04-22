@@ -92,3 +92,17 @@ if (!function_exists('is_id')) {
         }
     }
 }
+
+if (!function_exists('mb_ucfirst')) {
+    /**
+     * multibyte ucfirst
+     * @param $str
+     * @return string
+     */
+    function mb_ucfirst($str)
+    {
+        $str = mb_strtolower($str);
+        $fc = mb_strtoupper(mb_substr($str, 0, 1));
+        return $fc.mb_substr($str, 1);
+    }
+}

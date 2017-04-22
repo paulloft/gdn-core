@@ -434,7 +434,7 @@ function t_sprintf($formatCode, $arg1 = null)
 {
     $args = func_get_args();
     $args[0] = t($formatCode);
-    return call_user_func_array('sprintf', $args);
+    return sprintf(...$args);
 }
 
 /**
@@ -513,10 +513,7 @@ function valr($keys, $array, $default = false)
     }
 
     $value = $array;
-    $count = count($keys);
-    for ($i = 0; $i < $count; ++$i) {
-        $SubKey = $keys[$i];
-
+    foreach ($keys as $SubKey) {
         if (is_array($value) && isset($value[$SubKey])) {
             $value = $value[$SubKey];
         } elseif (is_object($value) && isset($value->$SubKey)) {
@@ -557,7 +554,7 @@ function getInclude($path, array $data = array())
     return $result;
 }
 
-function redirect($url, $code = 302)
+function redirect($url)
 {
     $host = Garden\Gdn::request()->getHost();
     $scheme = Garden\Gdn::request()->getScheme();

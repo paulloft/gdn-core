@@ -1,5 +1,6 @@
 <?php 
 namespace Garden\Db\Database\Query\Builder;
+use Garden\DB;
 use Garden\Db\Database;
 /**
  * Database query builder for SELECT statements. See [Query Builder](/database/query/builder) for usage and examples.
@@ -37,6 +38,9 @@ class Select extends Where {
     protected $_union = array();
 
     // The last JOIN statement created
+    /**
+     * @var Join
+     */
     protected $_last_join;
 
     /**
@@ -151,11 +155,9 @@ class Select extends Where {
      * @param   string  $columns  column name
      * @return  $this
      */
-    public function using($columns)
+    public function using(...$columns)
     {
-        $columns = func_get_args();
-
-        call_user_func_array(array($this->_last_join, 'using'), $columns);
+        $this->_last_join->using(...$columns);
 
         return $this;
     }
@@ -166,10 +168,8 @@ class Select extends Where {
      * @param   mixed   $columns  column name or array($column, $alias) or object
      * @return  $this
      */
-    public function group_by($columns)
+    public function group_by(...$columns)
     {
-        $columns = func_get_args();
-
         $this->_group_by = array_merge($this->_group_by, $columns);
 
         return $this;
@@ -300,8 +300,10 @@ class Select extends Where {
         {
             $select = DB::select()->from($select);
         }
-        if ( ! $select instanceof Select)
+
+        if ( ! $select instanceof Select) {
             throw new \Exception('first parameter must be a string or an instance of Database\Query\Builder\Select');
+        }
         $this->_union []= array('select' => $select, 'all' => $all);
         return $this;
     }

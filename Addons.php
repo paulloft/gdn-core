@@ -40,11 +40,6 @@ class Addons {
     protected static $baseDir;
 
     /**
-     * @var array An array that maps class names to their fully namespaced class names.
-     */
-    //    protected static $basenameMap;
-
-    /**
      * @var array|null An array that maps class names to file paths.
      */
     protected static $classMap;
@@ -329,11 +324,8 @@ class Addons {
         array_touch('name', $info, $addon_key);
         array_touch('version', $info, '0.0');
 
-        $settingsFiles = array(self::K_BOOTSTRAP, self::K_CONFIG);
-
-        foreach ($settingsFiles as $file) {
-            $$file = self::checkFile($dir.'/Settings', $file);
-        }
+        $bootstrap = self::checkFile($settings, self::K_BOOTSTRAP);
+        $config = self::checkFile($settings, self::K_CONFIG);
 
         // Scan the appropriate subdirectories  for classes.
         $subdirs = array('', '/Library', '/Modules', '/Hooks');
@@ -489,7 +481,7 @@ class Addons {
         // load config.
         if (!$cache->get('config-autoload')) {
             if($config_path = val(self::K_CONFIG, $addon)) {
-                Config::load($addon_key, $config_path);
+                Config::load($addon_key, $config_path, true);
             }
         }
 

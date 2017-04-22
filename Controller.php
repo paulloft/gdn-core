@@ -1,8 +1,9 @@
 <?php
 namespace Garden;
-use \Garden\Exception;
+use Garden\Exception;
+use Garden\Traits\Instance;
 
-class Controller extends Plugin {
+class Controller {
 
     /**
      * @var Form
@@ -23,6 +24,8 @@ class Controller extends Plugin {
 
     private $smarty;
 
+    use Instance;
+
     public function __construct()
     {
         $this->addonName = $this->controllerInfo('addon');
@@ -37,7 +40,7 @@ class Controller extends Plugin {
 
     /**
      * Assign template data by key
-     * @param string $key
+     * @param array|string $key
      * @param mixed $value
      */
     public function setData($key, $value = null)
@@ -94,9 +97,13 @@ class Controller extends Plugin {
     {
         Event::fire('render_before');
 
-        $view = $view ?: $this->callerMethod();
-        $view = $this->fetchView($view, $controllerName, $addonName);
-        echo $view;
+        if ($this->renderType() === Request::RENDER_JSON) {
+            Response::current()->headers('Content-Type', 'application/json');
+            echo json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        } else {
+            $view = $view ?: $this->callerMethod();
+            echo $this->fetchView($view, $controllerName, $addonName);
+        }
 
         Event::fire('render_after');
     }
@@ -195,6 +202,11 @@ class Controller extends Plugin {
         return Request::current()->renderType();
     }
 
+    public function setRenderType($type)
+    {
+        Request::current()->setRenderType($type);
+    }
+
     /**
      * Return current addon name
      * @return string
@@ -213,8 +225,10 @@ class Controller extends Plugin {
         $tablename = is_string($model) ? $model : false;
         $this->form = new Form($tablename);
 
-        if ($model) {
+        if ($model instanceof Model) {
             $this->form->setModel($model, $data);
+        } elseif ($data !== false) {
+            $this->form->setData($data);
         }
 
         $this->setData('gdn_form', $this->form);

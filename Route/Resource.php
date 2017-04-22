@@ -32,7 +32,7 @@ class Resource extends \Garden\Route {
      * Initialize an instance of the {@link ResourceRoute} class.
      *
      * @param string $root The url root of that this route will map to.
-     * @param string $controllerPattern A pattern suitable for {@link sprintf} that will map
+     * @param string $controllerPattern A pattern sui table for {@link sprintf} that will map
      * a path to a controller object name.
      */
     public function __construct($root = '', $controllerPattern = null) {
@@ -59,7 +59,7 @@ class Resource extends \Garden\Route {
         $method = strtolower($args['method']);
         $actionArgs = $args['args'];
         $action = $args['action'];
-        $actions = ['get' => 'index', 'post' => 'post', 'options' => 'options', 'delete' => 'delete'];
+        $actions = ['get' => 'index', 'post' => 'index', 'options' => 'options', 'delete' => 'delete', 'put' => 'put'];
 
         $initialize = method_exists($controller, 'initialize');
 

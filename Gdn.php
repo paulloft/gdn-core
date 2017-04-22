@@ -27,19 +27,11 @@ class Gdn {
     }
 
     /**
-     * @return Tasks
-     */
-    public static function tasks()
-    {
-        return Factory::get('Garden\\Tasks');
-    }
-
-    /**
      * @return Application
      */
     public static function app()
     {
-        return Factory::get('Garden\\Application');
+        return Application::instance();
     }
 
     /**
@@ -86,7 +78,8 @@ class Gdn {
      */
     public static function permission()
     {
-        return Factory::get('\\Addons\\Dashboard\\Models\\Permission');
+
+        return self::getClass('Addons\\Dashboard\\Models\\Permission');
     }
 
     /**
@@ -94,7 +87,7 @@ class Gdn {
      */
     public static function auth()
     {
-        return Factory::get('\\Addons\\Dashboard\\Models\\Auth');
+        return self::getClass('Addons\\Dashboard\\Models\\Auth');
     }
 
     /**
@@ -102,7 +95,24 @@ class Gdn {
      */
     public static function users()
     {
-        return Factory::get('\\Addons\\Dashboard\\Models\\Users');
+        return self::getClass('Addons\\Dashboard\\Models\\Users');
+    }
+
+    /**
+     * @param Traits\Instance $className
+     * @return bool
+     */
+    private static function getClass($className)
+    {
+        return class_exists($className) ? $className::instance() : false;
+    }
+
+    /**
+     * @return bool
+     */
+    public static function authLoaded()
+    {
+        return class_exists('Addons\\Dashboard\\Models\\Auth') ? \Addons\Dashboard\Models\Auth::loaded() : false;
     }
 
 }

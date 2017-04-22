@@ -10,7 +10,7 @@ namespace Garden;
  * @license http://www.opensource.org/licenses/gpl-2.0.php GPL
  * @package Garden
  */
-class Model extends Plugin {
+class Model {
 
     public $table;
     public $primaryKey = 'id';
@@ -26,7 +26,11 @@ class Model extends Plugin {
      */
     public $resultObject = false;
 
+    /**
+     * @var Db\Database\Query\Builder\Where
+     */
     protected $_query;
+    protected $_select = ['*'];
     protected $_allowedFields = [];
 
     private $_insertFields = [];
@@ -45,6 +49,24 @@ class Model extends Plugin {
 
     public $DBinstance;
 
+    private static $instances;
+
+    /**
+     * Returns the application singleton or null if the singleton has not been created yet.
+     * @return $this
+     */
+    public static function instance($table = null) {
+        $class_name = get_called_class();
+
+        $instance = $class_name === self::class && $table ? $table : $class_name;
+
+        if (!self::$instances[$instance]) {
+            self::$instances[$instance] = new $class_name($table);
+        }
+
+        return self::$instances[$instance];
+    }
+
     /**
      * Class constructor. Defines the related database table name.
      * @param string $table table name
@@ -55,12 +77,23 @@ class Model extends Plugin {
             $this->setTable($table);
         }
 
-        if (Factory::exists('auth')) {
+        if (Gdn::authLoaded()) {
             $user = Gdn::auth()->user;
             $this->userID = val('id', $user);
         }
 
         $this->setFields($this->allowedFields);
+    }
+
+    /**
+     * List of columns to be selected for the next query
+     * @param array $columns
+     * @return $this
+     */
+    public function select(array $columns)
+    {
+        $this->_select = $columns;
+        return $this;
     }
 
     /**
@@ -88,7 +121,7 @@ class Model extends Plugin {
      */
     public function getID($id)
     {
-        $query = DB::select('*')->from($this->table)->where($this->primaryKey, '=', $id)->limit(1);
+        $query = DB::select_array($this->_select)->from($this->table)->where($this->primaryKey, '=', $id)->limit(1);
 
         return $query->execute($this->DBinstance, $this->resultObject)->current();
     }
@@ -117,7 +150,7 @@ class Model extends Plugin {
      */
     public function getWhere(array $where = [], array $order = [], $limit = 0, $offset = 0)
     {
-        $this->_query = DB::select('*')->from($this->table);
+        $this->_query = DB::select_array($this->_select)->from($this->table);
 
         $this->_where($where);
 
@@ -182,7 +215,9 @@ class Model extends Plugin {
         $data = $this->fixPostData($data);
         $columns = array_keys($data);
 
-        $query = DB::insert($this->table, $columns)->values($data)->execute($this->DBinstance);
+        $query = DB::insert($this->table, $columns)
+            ->values($data)
+            ->execute($this->DBinstance);
 
         return val(0, $query, false);
     }
@@ -198,7 +233,11 @@ class Model extends Plugin {
         $data = $this->updateDefaultFields($data);
         $data = $this->fixPostData($data);
 
-        DB::update($this->table)->set($data)->where($this->primaryKey, '=', $id)->execute($this->DBinstance);
+        DB::update($this->table)
+            ->set($data)
+            ->where($this->primaryKey, '=', $id)
+            ->execute($this->DBinstance);
+        return true;
     }
 
     /**
@@ -241,7 +280,7 @@ class Model extends Plugin {
 
 
     /**
-     * Кemoves fields are not part of the table
+     * Removes fields are not part of the table
      *
      * @param array $post
      * @return array
@@ -249,7 +288,10 @@ class Model extends Plugin {
     public function fixPostData(array $post)
     {
         $fields = $this->getFields() ?: $this->getTableFields();
-        return $this->checkArray($post, $fields);
+        $post = $this->checkArray($post, $fields);
+        $post = $this->setNullValues($post);
+
+        return $post;
     }
 
     /**
@@ -298,7 +340,7 @@ class Model extends Plugin {
      * removes records of the $where condition
      * @param array $where
      */
-    public function delete(array $where = [])
+    public function delete(array $where)
     {
         $this->_query = DB::delete($this->table);
         $this->_where($where);
@@ -483,6 +525,23 @@ class Model extends Plugin {
     }
 
 
+    protected static $nullTypes = ['int', 'tinyint', 'bigint', 'float', 'datetime', 'date', 'time'];
+    protected function setNullValues(array $post)
+    {
+        $structure = $this->getStructure();
+
+        foreach ($post as $field => $value) {
+            $type = valr($field.'.dataType', $structure);
+            $default = valr($field.'.default', $structure);
+            $allowNull = valr($field.'.allowNull', $structure);
+            if ($allowNull && $value === '' && in_array($type, self::$nullTypes)) {
+                $post[$field] = $default ?: null;
+            }
+        }
+
+        return $post;
+    }
+
     protected function insertDefaultFields(array $data)
     {
         if (!val($this->fieldDateInserted, $data)) {
@@ -531,7 +590,7 @@ class Model extends Plugin {
      *
      * @param array $array
      * @param array $fields POST data
-     * @return fixed array
+     * @return array fixed array
      */
     protected function checkArray(array $array, $fields)
     {

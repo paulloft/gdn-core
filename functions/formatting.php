@@ -137,9 +137,14 @@ function format_declension($num, $exp)
 function format_substr($string, $limit = 120)
 {
     $string = strip_tags($string);
-    $string = substr($string, 0, $limit);
+    $string = mb_substr($string, 0, $limit);
     $string = rtrim($string, '!,.-');
-    $string = substr($string, 0, strrpos($string, ' '));
+    $string = mb_substr($string, 0, strrpos($string, ' '));
 
     return $string.'… ';
+}
+
+function format_cost($cost)
+{
+    return $cost ? number_format($cost, 2, '.', ' ') : 0;
 }

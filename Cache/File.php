@@ -1,8 +1,8 @@
 <?php
 namespace Garden\Cache;
 /**
-* 
-*/
+ *
+ */
 class File extends \Garden\Cache
 {
     public $lifetime;
@@ -10,6 +10,8 @@ class File extends \Garden\Cache
 
     public $packFunction = 'serialize';
     public $unpackFunction = 'unserialize';
+
+    public $extention = '.cache';
 
     protected $dirty;
 
@@ -21,7 +23,7 @@ class File extends \Garden\Cache
 
         $cacheDir = val('cacheDir', $config);
 
-        $this->cacheDir = $cacheDir ? realpath(PATH_ROOT.'/'.$cacheDir) : GDN_CACHE;
+        $this->cacheDir = $cacheDir ? realpath(PATH_ROOT . '/' . $cacheDir) : GDN_CACHE;
 
         if (!is_dir($this->cacheDir)) {
             @mkdir($this->cacheDir, 0777, true);
@@ -42,11 +44,12 @@ class File extends \Garden\Cache
         return str_replace(array('/', '\\', ' '), '_', $id);
     }
 
-    protected function getFileName($id) {
+    protected function getFileName($id)
+    {
         $id = $this->fixID($id);
         $salt = substr(md5($id), 0, 10);
 
-        return $id.'-'.$salt.'.cache';
+        return $id . '-' . $salt . '.cache';
     }
 
     /**
@@ -61,11 +64,11 @@ class File extends \Garden\Cache
         $fileName = $this->getFileName($id);
         $data = false;
 
-        if(!self::$clear && !$data = $this->dirty->get($fileName)) {
+        if (!self::$clear && !$data = $this->dirty->get($fileName)) {
 
-            $file = $this->cacheDir.'/'.$fileName;
+            $file = $this->cacheDir . '/' . $fileName;
 
-            if(!is_file($file)) {
+            if (!is_file($file)) {
                 return $default;
             }
 
@@ -76,7 +79,7 @@ class File extends \Garden\Cache
             $expire = val('expire', $result, 0);
             $data   = val('data', $result, false);
 
-            if($expire !== false && time() > $expire) {
+            if ($expire !== false && time() > $expire) {
                 $this->delete($id);
                 return $default;
             }
@@ -90,7 +93,7 @@ class File extends \Garden\Cache
 
     public function exists($id)
     {
-        $file = $this->cacheDir.'/'.$this->getFileName($id);
+        $file = $this->cacheDir . '/' . $this->getFileName($id);
 
         return (!self::$clear && is_file($file));
     }
@@ -117,7 +120,7 @@ class File extends \Garden\Cache
         $cacheData = $packFunction($cacheData);
 
         $fileName = $this->getFileName($id);
-        $cachePath = $this->cacheDir.'/'.$fileName;
+        $cachePath = $this->cacheDir . '/' . $fileName;
 
         $result = file_put_contents($cachePath, $cacheData, LOCK_EX);
         chmod($cachePath, 0664);
@@ -129,7 +132,7 @@ class File extends \Garden\Cache
 
     public function add($id, $data, $lifetime = null)
     {
-        if(!$this->exists($id)) {
+        if (!$this->exists($id)) {
             return $this->set($id, $data, $lifetime);
         } else {
             return false;
@@ -144,7 +147,7 @@ class File extends \Garden\Cache
      */
     public function delete($id)
     {
-        unlink($this->cacheDir.'/'.$this->getFileName($id));
+        unlink($this->cacheDir . '/' . $this->getFileName($id));
     }
 
     /**
@@ -159,16 +162,12 @@ class File extends \Garden\Cache
      */
     public function deleteAll()
     {
-        $dir = scandir($this->cacheDir);
-        $regexp = '/([\w-_]+).cache/';
-        foreach ($dir as $filename) {
-            if(preg_match($regexp, $filename)) {
-                $file = $this->cacheDir.'/'.$filename;
-                if(!is_dir($file)) {
-                    unlink($file);
-                }
-            }
+        $files = glob($this->cacheDir . '/*' . $this->extention);
 
+        foreach ($files as $file) {
+            if (!is_dir($file)) {
+                unlink($file);
+            }
         }
     }
 }

@@ -179,7 +179,7 @@ function array_load($path) {
 }
 
 function array_export(array $array) {
-    $string = json_encode($array, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
+    $string = json_encode($array, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
     $string = str_replace(['{', '}', '": '], ['[', ']', '" => '], $string);
 
     return $string;
@@ -370,10 +370,10 @@ function array_map_recursive($callbacks, array $array, $keys = NULL)
         } elseif ( ! is_array($keys) || in_array($key, $keys)) {
             if (is_array($callbacks)) {
                 foreach ($callbacks as $cb) {
-                    $array[$key] = call_user_func($cb, $array[$key]);
+                    $array[$key] = $cb($array[$key]);
                 }
             } else {
-                $array[$key] = call_user_func($callbacks, $array[$key]);
+                $array[$key] = $callbacks($array[$key]);
             }
         }
     }
@@ -418,4 +418,17 @@ function array_get($array, $key, $dafult = false)
 function array_path($array, $key, $dafult = false)
 {
     return valr($key, $array, $dafult);
+}
+
+if (!function_exists('array_filter_keys')) {
+    /**
+     * Filter array with allowed keys
+     * @param array $array
+     * @param array $keys
+     * @return array
+     */
+    function array_filter_keys(array $array, array $keys)
+    {
+        return array_intersect_key($array, array_flip($keys));
+    }
 }

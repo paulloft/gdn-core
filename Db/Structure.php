@@ -167,12 +167,14 @@ abstract class Structure {
      * Creates the table and columns specified with $this->table() and
      * $this->column(). If no table or columns have been specified, this method
      * will throw a fatal error.
-     *
-     * @param boolean $explicit If TRUE, and the table specified with $this->table() already exists, this
+
+     * @param bool $explicit If TRUE, and the table specified with $this->table() already exists, this
      * method will remove any columns from the table that were not defined with
      * $this->column().
-     * @param boolean $drop If TRUE, and the table specified with $this->table() already exists, this
+     * @param bool $drop If TRUE, and the table specified with $this->table() already exists, this
      * method will drop the table before attempting to re-create it.
+     * @return mixed
+     * @throws Exception\Custom
      */
     public function set($explicit = false, $drop = false)
     {

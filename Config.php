@@ -132,9 +132,9 @@ class Config {
 
     public static function loadDir($path)
     {
-        $files = glob($path.'*.'.self::$defaultExtension);
+        $files = glob($path.'/*.'.self::$defaultExtension);
         foreach ($files as $file) {
-            $info = pathinfo($filename);
+            $info = pathinfo($file);
             $group = val('filename', $info);
 
             if($group) {
@@ -155,19 +155,7 @@ class Config {
                 Config::autoload(self::$coreConfig);
             }
 
-            $dir = scandir($path);
-            foreach ($dir as $filename) {
-                if($filename == '.' || $filename == '..') {
-                    continue;
-                }
-                $file = $path.'/'.$filename;
-                $info = pathinfo($filename);
-                $group = val('filename', $info);
-
-                if($group) {
-                    self::load($group, $file);
-                }
-            }
+            self::loadDir($path);
         } else {
             self::$data = $cached; 
         }

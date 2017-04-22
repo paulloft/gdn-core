@@ -7,9 +7,8 @@ namespace Garden;
  * @license http://www.opensource.org/licenses/gpl-2.0.php GPL
  * @package Garden
  */
-class Session extends Plugin
+class Session
 {
-
     /**
      * Current user id
      * @var int
@@ -18,7 +17,9 @@ class Session extends Plugin
 
     protected $model;
 
-    public function __construct()
+    use \Garden\Traits\Singleton;
+
+    private function __construct()
     {
         $this->model = new Model('session');
         $this->model->primaryKey = 'sessionID';
@@ -54,26 +55,20 @@ class Session extends Plugin
         $lifetime = c('session.lifetime');
         $sessionID = md5($salt.$userID.session_id());
 
+        $data = [
+            'sessionID' => $sessionID,
+            'userID' => $userID,
+            'expire' => date_sql(time() + ($remember ? $lifetime : (60*60*8))),
+            'lastActivity' => DB::expr('now()'),
+            'userAgent' => Gdn::request()->getEnv('HTTP_USER_AGENT')
+        ];
 
-        $data = array(
-            "sessionID" => $sessionID,
-            "userID" => $userID,
-            "expire" => date_sql(time() + ($remember ? $lifetime : (60*60*8))),
-            "lastActivity" => DB::expr('now()'),
-            "userAgent" => Gdn::request()->getEnv('HTTP_USER_AGENT')
-        );
-//        d($data);
+        if ($this->model->getID($sessionID)) {
+            $this->model->update($sessionID, $data);
+        } else {
+            $this->model->insert($data);
+        }
 
-        // if ($remember) {
-        // $data["lastActivity"] = DB::expr('now()');
-            if ($this->model->getID($sessionID)) {
-                $this->model->update($sessionID, $data);
-            } else {
-                $this->model->insert($data);
-            }
-        // }
-
-        // $_SESSION[$sessionID] = (object)$data;
         $this->setCookie('sessionid', $sessionID, ($remember ? $lifetime : 0));
 
         $this->start($userID);
@@ -100,19 +95,21 @@ class Session extends Plugin
         session_destroy();
     }
 
+    /**
+     * Get session userID
+     * @return bool|mixed
+     */
     public function get()
     {
         $sessionID = $this->getCookie('sessionid');
-        if (!$sessionID) return false;
+        if (!$sessionID) {
+            return false;
+        }
 
-        // if (!$_SESSION[$sessionID]) {
-            $session = $this->model->getID($sessionID);
-            if (!$session) return false;
-
-        //     $_SESSION[$sessionID] = $session;
-        // } else {
-        //     $session = $_SESSION[$sessionID];
-        // }
+        $session = $this->model->getID($sessionID);
+        if (!$session) {
+            return false;
+        }
 
         $userID = val('userID', $session);
         $expire = val('expire', $session);

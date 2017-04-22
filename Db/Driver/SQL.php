@@ -137,6 +137,7 @@ abstract class SQL extends Database {
             }
 
             // MySQL attributes
+            // ToDo Обрабатывать не только auto_increment, а ещё 'ON UPDATE CURRENT_TIMESTAMP', ''
             $column->autoIncrement = strpos($row['Extra'], 'auto_increment') !== FALSE;
             $column->key = $row['Key'];
             $column->privileges = $row['Privileges'];

@@ -7,6 +7,12 @@ use \Garden\Exception;
  *
  */
 class Memcached extends Memcache {
+
+    /**
+     * @var \Memcached
+     */
+    public $cache;
+
     protected function connect()
     {
         if (!$this->cache) {

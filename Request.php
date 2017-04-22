@@ -27,6 +27,8 @@ class Request implements JsonSerializable {
     const RENDER_ALL  = 'all';
     const RENDER_JSON = 'json';
 
+    public $allowRenderJson = false;
+
     /// Properties ///
 
     /**
@@ -1050,13 +1052,28 @@ class Request implements JsonSerializable {
     {
         $type = val('renderType', $_REQUEST, 'all');
 
-        switch ($type) {
-            case self::RENDER_VIEW:
-                return self::RENDER_VIEW;
-            case self::RENDER_JSON:
-                return self::RENDER_JSON;
-            default:
-                return self::RENDER_ALL;
+        if($type === self::RENDER_VIEW) {
+            return self::RENDER_VIEW;
         }
+
+        if ($type === self::RENDER_JSON && $this->allowRenderJson){
+            return self::RENDER_JSON;
+        }
+
+        return self::RENDER_ALL;
+    }
+
+    /**
+     * Set current render type
+     *
+     * @return string
+     */
+    public function setRenderType($type)
+    {
+        if ($type === self::RENDER_JSON) {
+            $this->allowRenderJson = true;
+        }
+
+        $_REQUEST['renderType'] = $type;
     }
 }

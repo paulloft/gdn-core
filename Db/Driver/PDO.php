@@ -35,13 +35,16 @@ class PDO extends SQL {
         // Extract the connection parameters, adding required variabels
         $host = val('host', $this->_config, 'localhost');
         $type = val('type', $this->_config, 'mysql');
+        $dsn = val('dsn', $this->_config);
         $database = val('database', $this->_config);
         $username = val('username', $this->_config, NULL);
         $password = val('password', $this->_config, NULL);
         $persistent = val('persistent', $this->_config);
         $options = val('options', $this->_config, []);
 
-        $dsn = "$type:host=$host;dbname=$database";
+        if (!$dsn) {
+            $dsn = "$type:host=$host;dbname=$database";
+        }
 
         // Force PDO to use exceptions for all errors
         $options[\PDO::ATTR_ERRMODE] = \PDO::ERRMODE_EXCEPTION;

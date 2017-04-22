@@ -9,7 +9,7 @@ class System extends \Garden\Cache
     {
         $this->dirty = \Garden\Gdn::dirtyCache();
 
-        if(!is_dir(GDN_CACHE)) {
+        if (!is_dir(GDN_CACHE)) {
             @mkdir(GDN_CACHE, 0777, true);
         }
     }
@@ -24,11 +24,11 @@ class System extends \Garden\Cache
         $file = $this->getFile($id);
         $data = $this->dirty->get($file);
 
-        if(!self::$clear && !$data) {
+        if (!self::$clear && !$data) {
 
-            $filePath = GDN_CACHE.'/'.$file;
+            $filePath = GDN_CACHE . '/' . $file;
 
-            if(!is_file($filePath)) {
+            if (!is_file($filePath)) {
                 return $default;
             }
 
@@ -51,7 +51,7 @@ class System extends \Garden\Cache
 
         $file = $this->getFile($id);
 
-        $filePath = GDN_CACHE.'/'.$file;
+        $filePath = GDN_CACHE . '/' . $file;
 
         try {
             $result = file_put_contents($filePath, $cacheData);
@@ -68,11 +68,11 @@ class System extends \Garden\Cache
     public function deleteAll()
     {
         $dir = scandir(GDN_CACHE);
-        $regexp = '/'.$this->getFile('([\w-_]+)').'/';
+        $regexp = '/' . $this->getFile('([\w-_]+)') . '/';
         foreach ($dir as $filename) {
-            if(preg_match($regexp, $filename)) {
-                $file = GDN_CACHE.'/'.$filename;
-                if(is_file($file)) {
+            if (preg_match($regexp, $filename)) {
+                $file = GDN_CACHE . '/' . $filename;
+                if (is_file($file)) {
                     @unlink($file);
                 }
             }
@@ -82,8 +82,8 @@ class System extends \Garden\Cache
 
     public function delete($id)
     {
-        $file = GDN_CACHE.'/'.$this->getFile($id);
-        if(!is_dir($file)) {
+        $file = GDN_CACHE . '/' . $this->getFile($id);
+        if (!is_dir($file)) {
             @unlink($file);
         }
     }

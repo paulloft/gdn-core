@@ -85,6 +85,23 @@ class Form
 
     }
 
+
+    /**
+     * sets form value if field not exists in post (see force param)
+     * @param $field
+     * @param $value
+     * @param bool $force force write if field exists
+     * @return bool
+     */
+    public function setFormValue($field, $value, $force = false)
+    {
+        if (isset($this->formValues[$field]) && !$force) {
+            return false;
+        }
+        $this->formValues[$field] = trim($value);
+        return true;
+    }
+
     /**
      * return form validation class
      * @return Validation
@@ -112,7 +129,7 @@ class Form
         $postValues = is_array($this->getFormValues()) && count($this->getFormValues()) > 0;
 
         if ($method === Request::METHOD_GET) {
-            return count(Gdn::request()->getQuery()) > 0 || $postValues;
+            return (bool)$this->getFormValue('form-submitted', 0);
         } else {
             return Gdn::request()->isPost() && $postValues;
         }
@@ -158,7 +175,7 @@ class Form
             $this->magicQuotes = get_magic_quotes_gpc();
 
             $this->formValues = [];
-            $var = '_'.strtoupper($this->method);
+            $var = '_' . strtoupper($this->method);
             $formData = val($var, $GLOBALS, []);
 
             $this->formValues = $this->clearFormData($formData);
@@ -193,17 +210,6 @@ class Form
         } else {
             return $this->data;
         }
-    }
-
-    /**
-     * set form field value
-     * @param string $name field value
-     * @param mixed $value
-     */
-    public function setFormValue($name, $value)
-    {
-        $this->getFormValues();
-        $this->formValues[$name] = trim($value);
     }
 
     /**
@@ -278,7 +284,7 @@ class Form
 
     /**
      * save form data
-     * @return int id record
+     * @return mixed id record or false
      */
     public function save()
     {
@@ -328,7 +334,7 @@ class Form
      */
     public function getSecureKey()
     {
-        $var = '_'.strtoupper($this->method);
+        $var = '_' . strtoupper($this->method);
         $formData = val($var, $GLOBALS, []);
 
         return val('secureKey', $formData);
@@ -375,6 +381,10 @@ class Form
         $this->method = val('method', $attributes);
 
         $return .= $this->attrToString($attributes);
+
+        if (strtoupper($this->method) === Request::METHOD_GET) {
+            $this->addHidden('form-submitted', 1);
+        }
 
         $return .= '>';
         return $return;
@@ -469,7 +479,7 @@ class Form
         array_touch('value', $attributes, 1);
         $defaultValue = array_extract('defaultValue', $attributes, null);
 
-        $html = '<input type="hidden" name="' . $name . '" value="'.$defaultValue.'" />';
+        $html = '<input type="hidden" name="' . $name . '" value="' . $defaultValue . '" />';
         $html .= $this->input($name, 'checkbox', $attributes);
 
         return $html;
@@ -614,7 +624,7 @@ class Form
 
     protected function correctName($name)
     {
-        return str_replace(['[]','[', ']'], ['', '.', ''], $name);
+        return str_replace(['[]', '[', ']'], ['', '.', ''], $name);
     }
 
     protected function addInput($name)

@@ -5,18 +5,16 @@
 */
 
 if (!function_exists('p')) {
-    function p() {
-        $Args = func_get_args();
-        foreach ($Args as $A) {
-            \Dumphper\Dumphper::dump($A);
+    function p(...$args) {
+        foreach ($args as $a) {
+            \Dumphper\Dumphper::dump($a);
         }
     }
 }
 
 if (!function_exists('d')) {
-    function d() {
-        $Args = func_get_args();
-        call_user_func_array('p', $Args);
+    function d(...$args) {
+        p(...$args);
         exit();
     }
 }

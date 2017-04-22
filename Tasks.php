@@ -1,7 +1,11 @@
 <?php
 namespace Garden;
 
-class Tasks extends Plugin {
+use Garden\Traits\Instance;
+
+class Tasks
+{
+    use Instance;
 
     const ticks = [
         60    => 'minute',
@@ -23,11 +27,14 @@ class Tasks extends Plugin {
     {
         $config = c('tasks');
 
-        set_time_limit(val('timelimit', $config, 900));
         ini_set('memory_limit', val('memorylimit', $config, '256M'));
-        $this->lockfile = val('lockfile', $config, GDN_CACHE."/.tasklock");
+        set_time_limit(val('timelimit', $config, 15 * 60));
+        $this->lockfile = val('lockfile', $config, GDN_CACHE . '/.tasklock');
     }
 
+    /**
+     * Run tasks
+     */
     public function run()
     {
         if ($this->locked()) return false;
@@ -40,34 +47,28 @@ class Tasks extends Plugin {
         $this->unlock();
     }
 
+    /**
+     * Triggering Event time-bound
+     */
     public function startMatches()
     {
         $string = '';
         foreach (self::matches as $name => $token) {
-            if ($name == 'dayname') {
+            if ($name === 'dayname') {
                 $event = 'task_match' . $string . '_' . strtolower(date($token));
             } else {
                 $string = $string . '_' . date($token) . '_' . $name;
                 $event = 'task_match' . $string;
             }
 
-            $this->log('Task: ' . $event);
-
-            try {
-                Event::fire($event);
-            } catch (\Exception $exception) {
-
-            }
+            self::log('Task: ' . $event);
+            self::fireEvent($event);
         }
     }
 
-    public function flatten($Array) {
-        $Result = [];
-        foreach (new \RecursiveIteratorIterator(new \RecursiveArrayIterator($Array)) as $Value)
-            $Result[] = $Value;
-        return $Result;
-    }
-
+    /**
+     * Triggering Event Interval
+     */
     public function startTicks()
     {
         $range = array_merge(
@@ -75,25 +76,25 @@ class Tasks extends Plugin {
             range(100, 999, 5)
         );
 
-        $yearSeconds = (int)((time() - strtotime('1 Jan'))/60) * 60;
+        $yearSeconds = (int)((time() - strtotime('1 Jan')) / 60) * 60;
 
         foreach ($range as $i) {
             foreach (self::ticks as $second => $name) {
-                $suffix = ($i == 1) ? '' : 's';
-                if ($yearSeconds % $second == 0 && ($yearSeconds / $second) % $i == 0) {
-                    $event = 'task_every_'.$i.'_'.$name.$suffix;
-                    $this->log('Task: ' . $event);
+                $suffix = ($i === 1) ? '' : 's';
+                if ($yearSeconds % $second === 0 && ($yearSeconds / $second) % $i === 0) {
+                    $event = 'task_every_' . $i . '_' . $name . $suffix;
 
-                    try {
-                        Event::fire($event);
-                    } catch(\Exception $exception) {
-
-                    }
+                    self::log('Task: ' . $event);
+                    self::fireEvent($event);
                 }
             }
         }
     }
 
+    /**
+     * Checks lock tasks
+     * @return bool
+     */
     public function locked()
     {
         if (file_exists($this->lockfile)) {
@@ -108,19 +109,44 @@ class Tasks extends Plugin {
         return false;
     }
 
+    /**
+     * Lock task
+     */
     public function lock()
     {
         touch($this->lockfile);
     }
 
+    /**
+     * Unlock tasks
+     */
     public function unlock()
     {
         unlink($this->lockfile);
     }
 
-    public function log($string)
+    /**
+     * Output in console
+     * @param $string
+     */
+    public static function log($string)
     {
         $line = sprintf("[%s] %s\n", date('Y-m-d H:i:s'), $string);
         print($line);
+    }
+
+    protected static function fireEvent($event)
+    {
+        $handlers = Event::getHandlers($event);
+
+        foreach ($handlers as $callbacks) {
+            foreach ($callbacks as $callback) {
+                try {
+                    $callback();
+                } catch (\Exception $e) {
+                    self::log($e);
+                }
+            }
+        }
     }
 }

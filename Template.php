@@ -109,8 +109,7 @@ class Template extends Controller {
 
             echo $this->fetchView($view, $controllerName, $addonFolder);
         } elseif ($this->renderType() === Request::RENDER_JSON) {
-            Response::current()->headers('Content-Type', 'application/json');
-            echo json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            parent::render();
         } else {
             echo $this->fetchTemplate($view, $controllerName, $addonFolder);
         }

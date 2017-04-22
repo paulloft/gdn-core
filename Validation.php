@@ -151,7 +151,7 @@ class Validation
         $structure = $this->getStructure();
 
         foreach ($structure as $field => $opt) {
-            if(!array_key_exists($field, $this->data)) continue;
+            if (!array_key_exists($field, $this->data)) continue;
 
             $value = val($field, $this->data);
             if (is_array($value)) {
@@ -178,7 +178,7 @@ class Validation
             switch ($opt->dataType) {
                 case 'int':
                 case 'bigint':
-                    if (!$this->isEmpty($value) && !ctype_digit($value)) {
+                    if (!$this->isEmpty($value) && (filter_var($value, FILTER_VALIDATE_INT) === false)) {
                         $this->errors[$field][] = t('validate_int');
                         continue 2;
                     }
@@ -232,7 +232,7 @@ class Validation
                     $ruleFunc = [$type[0], $type[1]];
                     $type = $type[1];
                 } else {
-                    $ruleFunc =  'validate_' . $type;
+                    $ruleFunc = 'validate_' . $type;
                 }
 
                 if ($type == 'unique') {
@@ -241,14 +241,14 @@ class Validation
 
                 $params = $this->replaceParams($params, $this->data);
 
-                if(!$this->isEmpty($value) || $type === 'not_empty') {
-                    if (!call_user_func($ruleFunc, $value, $params)) {
+                if (!$this->isEmpty($value) || $type === 'not_empty') {
+                    if (!$ruleFunc($value, $params)) {
                         if (is_array($message)) {
                             $field = val(0, $message);
                             $message = val(1, $message);
-                            $error = [t($field), vsprintf(t($message ?: 'validate_'.$type), $params)];
+                            $error = [t($field), vsprintf(t($message ?: 'validate_' . $type), $params)];
                         } else {
-                            $error = vsprintf(t($message ?: 'validate_'.$type), $params);
+                            $error = vsprintf(t($message ?: 'validate_' . $type), $params);
                         }
                         $this->errors[$field][] = $error;
                     }
@@ -257,7 +257,8 @@ class Validation
         }
     }
 
-    protected function replaceParams($params, $data) {
+    protected function replaceParams($params, $data)
+    {
         if (!$params) {
             return false;
         }
