@@ -183,7 +183,7 @@ abstract class Structure {
 
         if (!$this->addonEnabled) {
             $this->reset();
-            return;
+            return false;
         }
 
         try {
@@ -206,7 +206,7 @@ abstract class Structure {
                 }
 
                 // If the table already exists, go into modify mode.
-                return $this->modify($explicit, $drop);
+                return $this->modify($explicit);
             } else {
                 // If it doesn't already exist, go into create mode.
                 return $this->create();
@@ -220,7 +220,7 @@ abstract class Structure {
     /**
      * Send a query to the database and return the result.
      * @param string $sql The sql to execute.
-     * @return bool Whethor or not the query succeeded.
+     * @return mixed Whethor or not the query succeeded.
      */
     public function query($sql, $type = Database::INSERT)
     {

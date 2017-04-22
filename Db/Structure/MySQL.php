@@ -24,6 +24,8 @@ class MySQL extends \Garden\Db\Structure
         if ($this->tableExists()) {
             return $this->query('drop table `' . $this->_prefix . $this->_table . '`');
         }
+
+        return false;
     }
 
     public function dropColumn($name)
