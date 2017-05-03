@@ -90,14 +90,10 @@ class Form
      * sets form value if field not exists in post (see force param)
      * @param $field
      * @param $value
-     * @param bool $force force write if field exists
      * @return bool
      */
-    public function setFormValue($field, $value, $force = false)
+    public function setFormValue($field, $value)
     {
-        if (isset($this->formValues[$field]) && !$force) {
-            return false;
-        }
         $this->formValues[$field] = trim($value);
         return true;
     }
