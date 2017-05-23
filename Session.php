@@ -17,7 +17,7 @@ class Session
 
     protected $model;
 
-    use \Garden\Traits\Singleton;
+    use Traits\Singleton;
 
     private function __construct()
     {
@@ -85,7 +85,7 @@ class Session
 
         $this->deleteCookie('sessionid');
 
-        $where = $endAll ? array('userID' => $userID ?: $this->userID) : array('sessionID' => $sessionID);
+        $where = $endAll ? ['userID' => $userID ?: $this->userID] : ['sessionID' => $sessionID];
         $this->model->delete($where);
 
         if ($this->userID === $userID) {

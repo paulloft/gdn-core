@@ -26,13 +26,13 @@ class Event {
      * All of the event handlers that have been registered.
      * @var array An array of event handlers.
      */
-    protected static $handlers = array();
+    protected static $handlers = [];
 
     /**
      * All of the event handlers that still need to be sorted by priority.
      * @var array An array of event handler names that need to be sorted.
      */
-    protected static $toSort = array();
+    protected static $toSort = [];
 
     /// Methods ///
 
@@ -162,7 +162,7 @@ class Event {
             }
             // Bind the event if we have one.
             if ($event_name) {
-                static::bind($event_name, array($instance, $method_name), $priority);
+                static::bind($event_name, [$instance, $method_name], $priority);
             }
         }
     }
@@ -259,9 +259,8 @@ class Event {
     public static function functionExists($function_name, $only_events = false) {
         if (!$only_events && function_exists($function_name)) {
             return true;
-        } else {
-            return static::hasHandler($function_name);
         }
+        return static::hasHandler($function_name);
     }
 
     /**
@@ -273,7 +272,8 @@ class Event {
     protected static function getEventname($callback) {
         if (is_string($callback)) {
             return strtolower($callback);
-        } elseif (is_array($callback)) {
+        }
+        if (is_array($callback)) {
             if (is_string($callback[0])) {
                 $classname = $callback[0];
             } else {
@@ -334,11 +334,10 @@ class Event {
     public static function methodExists($object, $method_name, $only_events = false) {
         if (!$only_events && method_exists($object, $method_name)) {
             return true;
-        } else {
-            // Check to see if there is an event bound to the method.
-            $event_name = self::getEventname([$object, $method_name]);
-            return static::hasHandler($event_name);
         }
+        // Check to see if there is an event bound to the method.
+        $event_name = self::getEventname([$object, $method_name]);
+        return static::hasHandler($event_name);
     }
 
     /**

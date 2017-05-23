@@ -126,9 +126,8 @@ class Form
 
         if ($method === Request::METHOD_GET) {
             return (bool)$this->getFormValue('form-submitted', 0);
-        } else {
-            return Gdn::request()->isPost() && $postValues;
         }
+        return Gdn::request()->isPost() && $postValues;
     }
 
     /**
@@ -140,9 +139,8 @@ class Form
         if ($this->submitted()) {
             if ($this->checkValidData()) {
                 return true;
-            } else {
-                $this->addError(t('The data obtained from these different form'));
             }
+            $this->addError(t('The data obtained from these different form'));
         }
 
         return false;
@@ -190,9 +188,8 @@ class Form
     {
         if ($this->submitted()) {
             return $this->getFormValue($name, $default);
-        } else {
-            return valr($name, $this->data, $default);
         }
+        return valr($name, $this->data, $default);
     }
 
     /**
@@ -203,9 +200,8 @@ class Form
     {
         if ($this->submitted()) {
             return $this->getFormValues();
-        } else {
-            return $this->data;
         }
+        return $this->data;
     }
 
     /**
@@ -220,7 +216,7 @@ class Form
 
     /**
      * check data to valid
-     * @return bool|void
+     * @return bool
      */
     public function valid()
     {
@@ -250,7 +246,7 @@ class Form
             return false;
         }
 
-        $html = array();
+        $html = [];
         foreach ($errors as $field => $fieldErrors) {
             foreach ($fieldErrors as $error) {
                 if (is_array($error)) {
@@ -273,9 +269,9 @@ class Form
 
         if ($text) {
             return implode('; ', $html);
-        } else {
-            return sprintf(t('form_html_error_wrapper', '<div class="alert alert-danger">%s</div>'), implode('<br>', $html));
         }
+
+        return sprintf(t('form_html_error_wrapper', '<div class="alert alert-danger">%s</div>'), implode('<br>', $html));
     }
 
     /**

@@ -28,9 +28,9 @@ class Dirty extends \Garden\Cache
         if(!isset($this->data[$id])) {
             $this->data[$id] = $data;
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     public function exists($id)

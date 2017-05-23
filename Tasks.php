@@ -37,7 +37,9 @@ class Tasks
      */
     public function run()
     {
-        if ($this->locked()) return false;
+        if ($this->locked()) {
+            return false;
+        }
 
         $this->lock();
 

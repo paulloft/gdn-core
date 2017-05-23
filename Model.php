@@ -373,15 +373,15 @@ class Model {
 
     /**
      * enqueues update data
-     * @param array $fields
      * @param array $where
+     * @param array $fields
      */
-    public function update_queue(array $fields, array $where = [])
+    public function update_queue(array $where = [], array $fields)
     {
         $fields = $this->updateDefaultFields($fields);
         $fields = $this->fixPostData($fields);
         if (!empty($fields)) {
-            $this->_updateFields[] = array('fields' => $fields, 'where' => $where);
+            $this->_updateFields[] = ['fields' => $fields, 'where' => $where];
         }
     }
 
@@ -464,7 +464,7 @@ class Model {
      */
     public function unique(array $where)
     {
-        $query = DB::select(array('COUNT("*")', 'total_count'))->from($this->table);
+        $query = DB::select(['COUNT("*")', 'total_count'])->from($this->table);
 
         foreach ($where as $field => $value) {
             $query->where($field, '=', $value);
@@ -571,7 +571,7 @@ class Model {
     protected function _where($field, $value = null)
     {
         if (!is_array($field)) {
-            $field = array($field => $value);
+            $field = [$field => $value];
         }
 
         foreach ($field as $subField => $subValue) {
@@ -612,8 +612,6 @@ class Model {
      */
     public function conditionExpr($field, $value)
     {
-        $op = ''; // logical operator
-
         // Try and split an operator out of $Field.
         $fieldOpRegex = "/(?:\s*(=|!=|<>|>|<|>=|<=)\s*$)|\s+(like|not\s+like)\s*$|\s+(?:(is)(\s+null)?|(is\s+not)(\s+null)?|(not\s+in))\s*$/i";
         $split = preg_split($fieldOpRegex, $field, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
@@ -638,7 +636,7 @@ class Model {
             $op = 'in';
         }
 
-        return array($field, $op, $value);
+        return [$field, $op, $value];
     }
 
 }

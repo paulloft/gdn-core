@@ -21,7 +21,7 @@ class Validation
 
     /**
      * Return table columns
-     * @return array
+     * @return array|bool
      */
     public function getStructure()
     {
@@ -85,7 +85,7 @@ class Validation
                     $this->addError($field, $inerror);
                 }
             } else {
-                $this->addError($field, $errors);
+                $this->addError($field, $error);
             }
         }
     }
@@ -151,7 +151,9 @@ class Validation
         $structure = $this->getStructure();
 
         foreach ($structure as $field => $opt) {
-            if (!array_key_exists($field, $this->data)) continue;
+            if (!array_key_exists($field, $this->data)) {
+                continue;
+            }
 
             $value = val($field, $this->data);
             if (is_array($value)) {
@@ -217,7 +219,9 @@ class Validation
 
     protected function checkRules()
     {
-        if (empty($this->rule)) return true;
+        if (empty($this->rule)) {
+            return true;
+        }
 
         foreach ($this->rule as $field => $rules) {
             foreach ($rules as $opt) {
@@ -268,11 +272,13 @@ class Validation
                 $params[$k] = $this->replaceParams($param, $data);
             }
             return $params;
-        } elseif (str_begins($params, ':')) {
+        }
+
+        if (str_begins($params, ':')) {
             $key = ltrim_substr($params, ':');
             return val($key, $data);
-        } else {
-            return $params;
         }
+
+        return $params;
     }
 }

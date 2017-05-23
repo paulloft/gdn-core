@@ -248,15 +248,15 @@ class Controller {
         if (!$result = Gdn::dirtyCache()->get($className)) {
             $space = explode('\\', $className);
 
-            if (count($space) < 3) {
-                $result = false;
-            } else {
+            $result = false;
+            if (count($space) >= 3) {
                 $result = [
                     'addon' => $space[1],
                     'folder' => strtolower($space[0]).'/'.$space[1],
                     'controller' => array_pop($space)
                 ];
             }
+
             Gdn::dirtyCache()->set($className, $result);
         }
 

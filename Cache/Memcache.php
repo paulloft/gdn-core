@@ -22,7 +22,7 @@ class Memcache extends \Garden\Cache {
      */
     public $cache;
 
-    public function __construct($config = false)
+    public function __construct($config)
     {
         $this->lifetime = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
         $this->persistent = val('persistent', $config, $this->persistent);

@@ -78,16 +78,18 @@ class Addons {
         // The array should be built now return the addon.
         if ($addon_key === null) {
             return self::$all;
-        } else {
-            $addon = val(strtolower($addon_key), self::$all);
-            if ($addon && $key) {
-                return val($key, $addon);
-            } elseif ($addon) {
-                return $addon;
-            } else {
-                return null;
-            }
         }
+
+        $addon = val(strtolower($addon_key), self::$all);
+        if ($addon && $key) {
+            return val($key, $addon);
+        }
+
+        if ($addon) {
+            return $addon;
+        }
+
+        return null;
     }
 
     /**
@@ -96,7 +98,7 @@ class Addons {
      * @param string $classname The name of the class to load.
      */
     public static function autoload($classname) {
-        list($fullClass, $path) = static::classMap($classname);
+        list(, $path) = static::classMap($classname);
         if ($path) {
             require_once $path;
         }
@@ -123,11 +125,13 @@ class Addons {
      * Start up the addon framework.
      *
      * @param array $enabled_addons An array of enabled addons.
+     * @throws Exception\Client
+     * @throws \InvalidArgumentException
      */
     public static function bootstrap($enabled_addons = null) {
         // Load the addons from the config if they aren't passed in.
         if (!is_array($enabled_addons)) {
-            $enabled_addons = config('addons', false, array());
+            $enabled_addons = config('addons', false, []);
         }
 
         // Reformat the enabled array into the form: array('addon_key' => 'addon_key')
@@ -137,7 +141,7 @@ class Addons {
         self::$classMap = null; // invalidate so it will rebuild
 
         // Enable the addon autoloader.
-        spl_autoload_register(array(get_class(), 'autoload'), true, false);
+        spl_autoload_register([__CLASS__, 'autoload'], true, false);
 
         // Bind all of the addon plugin events now.
         foreach (self::enabled() as $addon) {
@@ -165,12 +169,12 @@ class Addons {
      * @param string $classname An optional class name to get the path of.
      * @return array Returns an array in the form `[fullClassname, classPath]`.
      * If no {@link $classname} is passed then the entire class map is returned.
-     * @throws \Exception Throws an exception if the class map is corrupt.
+     * @throws Exception\Client Throws an exception if the class map is corrupt.
      */
     public static function classMap($classname = null) {
         if (self::$classMap === null) {
             // Loop through the enabled addons and grab their classes.
-            $class_map = array();
+            $class_map = [];
             foreach (static::enabled() as $addon) {
                 if (isset($addon[self::K_CLASSES])) {
                     $class_map = array_replace($class_map, $addon[self::K_CLASSES]);
@@ -187,16 +191,20 @@ class Addons {
 
             if ($row === null) {
                 return ['', ''];
-            } elseif (is_string($row)) {
-                return [$classname, $row];
-            } elseif (is_array($row)) {
-                return  $row;
-            } else {
-                return ['', ''];
             }
-        } else {
-            return self::$classMap;
+
+            if (is_string($row)) {
+                return [$classname, $row];
+            }
+
+            if (is_array($row)) {
+                return  $row;
+            }
+
+            return ['', ''];
         }
+
+        return self::$classMap;
     }
 
     /**
@@ -205,19 +213,19 @@ class Addons {
      * @param string $addon_key If you supply an addon key then only that addon will be returned.
      * @param string $key Supply one of the Addons::K_* constants to get a specific key from the addon.
      * @return array Returns the addon with the given key or all enabled addons if no key is passed.
-     * @throws \Exception Throws an exception if {@link Addons::bootstrap()} hasn't been called yet.
+     * @throws Exception\Client Throws an exception if {@link Addons::bootstrap()} hasn't been called yet.
      */
     public static function enabled($addon_key = null, $key = null) {
         // Lazy build the enabled array.
         if (self::$enabled === null) {
             // Make sure the enabled addons have been added first.
             if (self::$enabledKeys === null) {
-                throw new \Exception("Addons::boostrap() must be called before Addons::enabled() can be called.", 500);
+                throw new Exception\Client('Addons::boostrap() must be called before Addons::enabled() can be called.', 500);
             }
 
             if (self::$all !== null || self::$sharedEnvironment) {
                 // Build the enabled array by filtering the all array.
-                self::$enabled = array();
+                self::$enabled = [];
                 $allAddons = self::all();
                 foreach ($allAddons as $row) {
                     if (isset($key, self::$enabledKeys)) {
@@ -236,16 +244,18 @@ class Addons {
         // The array should be built now return the addon.
         if ($addon_key === null) {
             return self::$enabled;
-        } else {
-            $addon = val(strtolower($addon_key), self::$enabled);
-            if ($addon && $key) {
-                return val($key, $addon);
-            } elseif ($addon) {
-                return $addon;
-            } else {
-                return null;
-            }
         }
+
+        $addon = val(strtolower($addon_key), self::$enabled);
+        if ($addon && $key) {
+            return val($key, $addon);
+        }
+
+        if ($addon) {
+            return $addon;
+        }
+
+        return null;
     }
 
     /**
@@ -253,6 +263,7 @@ class Addons {
      *
      * @param string $addon_key The addon key.
      * @return array|null Returns the addon's info array or null if the addon wasn't found.
+     * @throws Exception\Client
      */
     public static function info($addon_key) {
         $addon_key = strtolower($addon_key);
@@ -260,9 +271,9 @@ class Addons {
         // Check the enabled array first so that we don't load all addons if we don't have to.
         if (isset(self::$enabledKeys[$addon_key])) {
             return static::enabled($addon_key, self::K_INFO);
-        } else {
-            return static::all($addon_key, self::K_INFO);
         }
+
+        return static::all($addon_key, self::K_INFO);
     }
 
     /**
@@ -290,14 +301,14 @@ class Addons {
         }
 
         // Recurse.
-        $addon_subdirs = array('/Addons');
+        $addon_subdirs = ['/Addons'];
         foreach ($addon_subdirs as $addon_subdir) {
             if (is_dir($dir.$addon_subdir)) {
                 static::scanAddons($dir.$addon_subdir, $enabled, $addons);
             }
         }
 
-        return array($addonKey, $addon);
+        return [$addonKey, $addon];
     }
 
     /**
@@ -319,7 +330,7 @@ class Addons {
             $info = json_decode(file_get_contents($info_path), true);
         }
         if (!$info) {
-            $info = array();
+            $info = [];
         }
         array_touch('name', $info, $addon_key);
         array_touch('version', $info, '0.0');
@@ -328,8 +339,8 @@ class Addons {
         $config = self::checkFile($settings, self::K_CONFIG);
 
         // Scan the appropriate subdirectories  for classes.
-        $subdirs = array('', '/Library', '/Modules', '/Hooks');
-        $classes = $hooks = array();
+        $subdirs = ['', '/Library', '/Modules', '/Hooks'];
+        $classes = $hooks = [];
         foreach ($subdirs as $subdir) {
             // Get all of the php files in the subdirectory.
             $paths = glob($dir.$subdir.'/*.php');
@@ -355,16 +366,16 @@ class Addons {
             }
         }
 
-        $addon = array(
+        $addon = [
             self::K_BOOTSTRAP => $bootstrap,
             self::K_CONFIG    => $config,
             self::K_CLASSES   => $classes,
             self::K_HOOKS     => $hooks,
             self::K_DIR       => $dir,
             self::K_INFO      => $info
-        );
+        ];
 
-        return array($addon_key, $addon);
+        return [$addon_key, $addon];
     }
 
     protected static function checkFile($dir, $filename)
@@ -386,7 +397,7 @@ class Addons {
             $dir = self::baseDir();
         }
         if ($addons === null) {
-            $addons = array();
+            $addons = [];
         }
 
         /* @var \DirectoryIterator */
@@ -407,12 +418,12 @@ class Addons {
      * @see http://stackoverflow.com/a/11114724/1984219
      */
     protected static function scanFile($file) {
-        $classes = $nsPos = $final = array();
+        $classes = $nsPos = $final = [];
         $foundNamespace = false;
         $ii = 0;
 
         if (!file_exists($file)) {
-            return array();
+            return [];
         }
 
         $er = error_reporting();
@@ -432,12 +443,12 @@ class Addons {
                 $foundNamespace = false;
             } elseif ($i - 2 >= 0 && $tokens[$i - 2][0] == T_CLASS && $tokens[$i - 1][0] == T_WHITESPACE && $tokens[$i][0] == T_STRING) {
                 if ($i - 4 >= 0 && $tokens[$i - 4][0] == T_ABSTRACT) {
-                    $classes[$ii][] = array('name' => $tokens[$i][1], 'type' => 'ABSTRACT CLASS');
+                    $classes[$ii][] = ['name' => $tokens[$i][1], 'type' => 'ABSTRACT CLASS'];
                 } else {
-                    $classes[$ii][] = array('name' => $tokens[$i][1], 'type' => 'CLASS');
+                    $classes[$ii][] = ['name' => $tokens[$i][1], 'type' => 'CLASS'];
                 }
             } elseif ($i - 2 >= 0 && $tokens[$i - 2][0] == T_INTERFACE && $tokens[$i - 1][0] == T_WHITESPACE && $tokens[$i][0] == T_STRING) {
-                $classes[$ii][] = array('name' => $tokens[$i][1], 'type' => 'INTERFACE');
+                $classes[$ii][] = ['name' => $tokens[$i][1], 'type' => 'INTERFACE'];
             }
         }
         error_reporting($er);
@@ -453,7 +464,7 @@ class Addons {
                 }
 
                 $ns = trim($ns);
-                $final[$k] = array('namespace' => $ns, 'classes' => $classes[$k + 1]);
+                $final[$k] = ['namespace' => $ns, 'classes' => $classes[$k + 1]];
             }
             $classes = $final;
         }
@@ -470,6 +481,7 @@ class Addons {
      *
      * @param string $addon_key The key of the addon to enable.
      * @return bool Returns true if the addon was enabled. False otherwise.
+     * @throws Exception\Client
      */
     public static function startAddon($addon_key) {
         $addon = static::enabled($addon_key);

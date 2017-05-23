@@ -1,6 +1,9 @@
 <?php
+
 namespace Garden;
+
 use \Garden\Exception;
+
 /**
  *
  */
@@ -12,10 +15,10 @@ abstract class Cache
      * @var   string     default driver to use
      */
     public static $default = 'dirty';
-    public static $instances = array();
+    public static $instances = [];
     public static $clear = false;
 
-    private static $clearFile = GDN_CACHE.'/.clear_cache';
+    private static $clearFile = GDN_CACHE . '/.clear_cache';
 
     /**
      * get singletone cache class
@@ -29,7 +32,7 @@ abstract class Cache
 
         self::flush();
 
-        if(!$driver) {
+        if (!$driver) {
             $driver = val('driver', $options, self::$default);
         }
 
@@ -37,11 +40,11 @@ abstract class Cache
             $driverClass = 'Garden\Cache\\' . ucfirst($driver);
 
             if (!class_exists($driverClass)) {
-                throw new Exception\Custom('Cache driver "%s" not found', array($driver));
-            } else {
-                $config = $config ?: val($driver, $options);
-                self::$instances[$driver] = new $driverClass($config);
+                throw new Exception\Custom('Cache driver "%s" not found', [$driver]);
             }
+
+            $config = $config ?: val($driver, $options);
+            self::$instances[$driver] = new $driverClass($config);
         }
 
         if (self::$clear) {
@@ -83,19 +86,18 @@ abstract class Cache
     /**
      * Retrieve a cached value entry by id.
      *
-     * @param   string  $id       id of cache to entry
-     * @param   string  $default  default value to return if cache miss
+     * @param   string $id id of cache to entry
+     * @param   string $default default value to return if cache miss
      * @return  mixed
-     * @throws  Cache_Exception
      */
     abstract public function get($id, $default = null);
 
     /**
      * Set a value to cache with id and lifetime
      *
-     * @param   string   $id        id of cache entry
-     * @param   string   $data      data to set to cache
-     * @param   integer  $lifetime  lifetime in seconds
+     * @param   string $id id of cache entry
+     * @param   mixed $data data to set to cache
+     * @param   integer $lifetime lifetime in seconds
      * @return  boolean
      */
     abstract public function set($id, $data, $lifetime = 3600);
@@ -103,9 +105,9 @@ abstract class Cache
     /**
      * Add a value to cache if a key doesn`t exists
      *
-     * @param   string   $id        id of cache entry
-     * @param   string   $data      data to set to cache
-     * @param   integer  $lifetime  lifetime in seconds
+     * @param   string $id id of cache entry
+     * @param   mixed $data data to set to cache
+     * @param   integer $lifetime lifetime in seconds
      * @return  boolean
      */
     abstract public function add($id, $data, $lifetime = 3600);
@@ -113,7 +115,7 @@ abstract class Cache
     /**
      * Check exists cache id
      *
-     * @param   string   $id        id of cache entry
+     * @param   string $id id of cache entry
      * @return  boolean
      */
     abstract public function exists($id);
@@ -121,7 +123,7 @@ abstract class Cache
     /**
      * Delete a cache entry based on id
      *
-     * @param   string  $id  id to remove from cache
+     * @param   string $id id to remove from cache
      * @return  boolean
      */
     abstract public function delete($id);

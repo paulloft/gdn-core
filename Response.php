@@ -584,7 +584,7 @@ class Response implements JsonSerializable {
         // The content type is a special case.
         if (isset($headers['Content-Type'])) {
             $contentType = (array)$headers['Content-Type'];
-            header('Content-Type: '.reset($contentType).'; charset=utf8', true);
+            header('Content-Type: '.reset($contentType).'; charset=utf-8', true);
             unset($headers['Content-Type']);
         }
 

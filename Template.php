@@ -50,8 +50,13 @@ class Template extends Controller {
      */
     public function template($template = false, $addonName = false)
     {
-        if($template)  $this->template      = $template;
-        if($addonName) $this->templateAddon = $addonName;
+        if($template)  {
+            $this->template = $template;
+        }
+
+        if($addonName) {
+            $this->templateAddon = $addonName;
+        }
 
         return $this->template;
     }
@@ -123,11 +128,13 @@ class Template extends Controller {
         $local = is_local_url($src);
         if ($local && $addon && file_exists(GDN_ADDONS.'/'.ucfirst($addon).'/Assets/'.$resource.'/'.$src)) {
             return "/assets/$addon/$resource/$src";
-        } elseif (!$local || file_exists(PATH_PUBLIC.'/'.$src)) {
-            return $src;
-        } else {
-            return false;
         }
+
+        if (!$local || file_exists(PATH_PUBLIC.'/'.$src)) {
+            return $src;
+        }
+
+        return false;
     }
 
     protected function addResurce($resource, $src, $addon = false)

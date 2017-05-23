@@ -35,13 +35,13 @@ class File extends \Garden\Cache
     /**
      * Replaces troublesome characters with underscores.
      *
-     * @param   string  $id  id of cache to sanitize
+     * @param   string $id id of cache to sanitize
      * @return  string
      */
     protected function fixID($id)
     {
         // Change slashes and spaces to underscores
-        return str_replace(array('/', '\\', ' '), '_', $id);
+        return str_replace(['/', '\\', ' '], '_', $id);
     }
 
     protected function getFileName($id)
@@ -112,10 +112,10 @@ class File extends \Garden\Cache
             $lifetime = $this->lifetime;
         }
 
-        $cacheData = array(
+        $cacheData = [
             'expire' => $lifetime === false ? false : (time() + (int)$lifetime),
             'data' => $data
-        );
+        ];
         $packFunction = $this->packFunction;
         $cacheData = $packFunction($cacheData);
 
@@ -134,9 +134,9 @@ class File extends \Garden\Cache
     {
         if (!$this->exists($id)) {
             return $this->set($id, $data, $lifetime);
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -147,7 +147,7 @@ class File extends \Garden\Cache
      */
     public function delete($id)
     {
-        unlink($this->cacheDir . '/' . $this->getFileName($id));
+        return unlink($this->cacheDir . '/' . $this->getFileName($id));
     }
 
     /**
@@ -158,7 +158,7 @@ class File extends \Garden\Cache
      * entry within the system for all clients.
      *
      *
-     * @return  boolean
+     * @return  void
      */
     public function deleteAll()
     {

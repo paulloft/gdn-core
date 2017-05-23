@@ -25,7 +25,7 @@ class Application {
     /// Methods ///
 
     public function __construct($name = 'default') {
-        $this->routes = array();
+        $this->routes = [];
 
         self::$instances[$name] = $this;
     }
@@ -48,12 +48,12 @@ class Application {
      * @return array An array of arrays corresponding to matching routes and their args.
      */
     public function matchRoutes(Request $request) {
-        $result = array();
+        $result = [];
 
         foreach ($this->routes as $route) {
             $matches = $route->matches($request, $this);
             if ($matches) {
-                $result[] = array($route, $matches);
+                $result[] = [$route, $matches];
             }
         }
         return $result;
@@ -85,7 +85,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @return CallbackRoute Returns the new route.
+     * @throws \InvalidArgumentException
+     * @return Route Returns the new route.
      */
     public function get($pattern, callable $callback) {
         return $this->route($pattern, $callback)->methods('GET');
@@ -96,7 +97,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @return CallbackRoute Returns the new route.
+     * @throws \InvalidArgumentException
+     * @return Route Returns the new route.
      */
     public function post($pattern, callable $callback) {
         return $this->route($pattern, $callback)->methods('POST');
@@ -107,7 +109,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @return CallbackRoute Returns the new route.
+     * @throws \InvalidArgumentException
+     * @return Route Returns the new route.
      */
     public function put($pattern, callable $callback) {
         return $this->route($pattern, $callback)->methods('PUT');
@@ -118,7 +121,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @return CallbackRoute Returns the new route.
+     * @throws \InvalidArgumentException
+     * @return Route Returns the new route.
      */
     public function patch($pattern, callable $callback) {
         return $this->route($pattern, $callback)->methods('PATCH');
@@ -129,7 +133,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @return CallbackRoute Returns the new route.
+     * @throws \InvalidArgumentException
+     * @return Route Returns the new route.
      */
     public function delete($pattern, callable $callback) {
         return $this->route($pattern, $callback)->methods('DELETE');
@@ -140,6 +145,7 @@ class Application {
      *
      * @param Request|null $request A {@link Request} to run the application against or null to run against a request
      * on the current environment.
+     * @throws \Exception
      * @return mixed Returns a response appropriate to the request's ACCEPT header.
      */
     public function run(Request $request = null) {
@@ -158,6 +164,9 @@ class Application {
         Event::fire('dispatch_before');
         try {
             foreach ($routes as $route_args) {
+                /**
+                 * @var $route Route
+                 */
                 list($route, $args) = $route_args;
 
                 try {
@@ -235,9 +244,9 @@ class Application {
             case 'application/internal':
                 if ($response->contentAsset() === 'response') {
                     return $response;
-                } else {
-                    return $response->jsonSerialize();
                 }
+
+                return $response->jsonSerialize();
                 // No break because everything returns.
 //            case 'application/json':
 //                $response->flushHeaders();

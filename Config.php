@@ -60,11 +60,13 @@ class Config {
 
         if($key === false) {
             return $data;
-        } elseif (array_key_exists($key, $data)) {
-            return $data[$key];
-        } else {
-            return $default;
         }
+
+        if (array_key_exists($key, $data)) {
+            return $data[$key];
+        }
+
+        return $default;
     }
 
     /**

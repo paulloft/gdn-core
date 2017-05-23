@@ -15,13 +15,16 @@ class Translate {
     {
         if (strpos($code, '@') === 0) {
             return substr($code, 1);
-        } elseif (isset(self::$translations[$code])) {
-            return self::$translations[$code];
-        } elseif ($default !== null) {
-            return $default;
-        } else {
-            return $code;
         }
+
+        if (isset(self::$translations[$code])) {
+            return self::$translations[$code];
+        }
+
+        if ($default !== null) {
+            return $default;
+        }
+        return $code;
     }
 
     public static function load($path, $underlay = false)
