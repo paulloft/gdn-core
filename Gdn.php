@@ -74,7 +74,7 @@ class Gdn {
     }
 
     /**
-     * @return \Addons\Dashboard\Models\Permission
+     * @return \Addons\Dashboard\Models\Permission|bool
      */
     public static function permission()
     {
@@ -83,7 +83,7 @@ class Gdn {
     }
 
     /**
-     * @return \Addons\Dashboard\Models\Auth
+     * @return \Addons\Dashboard\Models\Auth|bool
      */
     public static function auth()
     {
@@ -91,7 +91,7 @@ class Gdn {
     }
 
     /**
-     * @return \Addons\Dashboard\Models\Users
+     * @return \Addons\Dashboard\Models\Users|bool
      */
     public static function users()
     {
@@ -99,8 +99,8 @@ class Gdn {
     }
 
     /**
-     * @param Traits\Instance $className
-     * @return bool
+     * @param string
+     * @return bool|Model
      */
     private static function getClass($className)
     {

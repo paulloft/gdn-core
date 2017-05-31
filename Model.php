@@ -32,6 +32,7 @@ class Model {
     protected $_query;
     protected $_select = ['*'];
     protected $_allowedFields = [];
+    protected $_form;
 
     private $_insertFields = [];
     private $_updateFields = [];
@@ -40,7 +41,7 @@ class Model {
 
     private $_b_table;
 
-    protected $validation;
+    protected $_validation;
 
     public $fieldDateInserted = 'dateInserted';
     public $fieldDateUpdated = 'dateUpdated';
@@ -48,6 +49,7 @@ class Model {
     public $fieldUserInserted = 'userInserted';
 
     public $DBinstance;
+    public $form;
 
     private static $instances;
 
@@ -78,8 +80,7 @@ class Model {
         }
 
         if (Gdn::authLoaded()) {
-            $user = Gdn::auth()->user;
-            $this->userID = val('id', $user);
+            $this->userID = val('id', Gdn::auth()->user);
         }
 
         $this->setFields($this->allowedFields);
@@ -117,7 +118,7 @@ class Model {
      * Get the data from the table based on its primary key
      *
      * @param int $id Element ID
-     * @return array|object
+     * @return array|\stdClass
      */
     public function getID($id)
     {
@@ -500,11 +501,11 @@ class Model {
      */
     public function validation()
     {
-        if (!$this->validation) {
-            $this->validation = new Validation($this);
+        if (!$this->_validation) {
+            $this->_validation = new Validation($this);
         }
 
-        return $this->validation;
+        return $this->_validation;
     }
 
     /**

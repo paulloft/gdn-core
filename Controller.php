@@ -236,11 +236,19 @@ class Controller {
         return $this->form;
     }
 
+    /**
+     * @return string
+     */
     protected function callerMethod()
     {
         return Request::current()->getEnv('action');
     }
 
+    /**
+     * @param bool $key
+     * @param bool $default
+     * @return array|bool|mixed
+     */
     protected function controllerInfo($key = false, $default = false)
     {
         $className = get_called_class();

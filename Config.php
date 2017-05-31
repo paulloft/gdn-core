@@ -104,7 +104,7 @@ class Config {
      * Save data to the config file.
      * @param array $data The config data to save.
      * @param string $name Config name
-     * @param bool $extension php|json|ser|yml Config file extention
+     * @param string $extension php|json|ser|yml Config file extention
      * @param bool $rewrite Replace all data on the $data
      * @return bool
      */

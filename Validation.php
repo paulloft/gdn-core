@@ -14,7 +14,7 @@ class Validation
 
     public $validated = false;
 
-    public function __construct($model = false)
+    public function __construct(Model $model = null)
     {
         $this->model = $model;
     }
@@ -93,7 +93,7 @@ class Validation
     /**
      * Add validation rule for field
      * @param string $field
-     * @param string $rule
+     * @param string|array $rule
      * @param mixed $params
      * @param string $message
      * @return $this
@@ -220,7 +220,7 @@ class Validation
     protected function checkRules()
     {
         if (empty($this->rule)) {
-            return true;
+            return;
         }
 
         foreach ($this->rule as $field => $rules) {
@@ -245,7 +245,7 @@ class Validation
 
                 $params = $this->replaceParams($params, $this->data);
 
-                if (!$this->isEmpty($value) || $type === 'not_empty') {
+                if ($type === 'not_empty' || !$this->isEmpty($value)) {
                     if (!$ruleFunc($value, $params)) {
                         if (is_array($message)) {
                             $field = val(0, $message);

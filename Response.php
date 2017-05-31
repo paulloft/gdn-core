@@ -71,7 +71,7 @@ class Response implements JsonSerializable {
     /**
      * @var array An array of http headers.
      */
-    protected $headers = array();
+    protected $headers = [];
 
     /**
      * @var array An array of global http headers.
@@ -86,7 +86,7 @@ class Response implements JsonSerializable {
     /**
      * @var array HTTP response codes and messages.
      */
-    protected static $messages = array(
+    protected static $messages = [
         // Informational 1xx
         100 => 'Continue',
         101 => 'Switching Protocols',
@@ -136,7 +136,7 @@ class Response implements JsonSerializable {
         503 => 'Service Unavailable',
         504 => 'Gateway Timeout',
         505 => 'HTTP Version Not Supported'
-    );
+    ];
 
     /// Methods ///
 
@@ -165,7 +165,8 @@ class Response implements JsonSerializable {
     public static function create($result = false) {
         if ($result instanceof Response) {
             return $result;
-        } elseif ($result instanceof Exception\Response) {
+        }
+        if ($result instanceof Exception\Response) {
             /* @var Exception\Response $result */
             return $result->getResponse();
         }
@@ -253,11 +254,11 @@ class Response implements JsonSerializable {
      * Set the content type from an accept header.
      *
      * @param string $accept The value of the accept header.
-     * @return Response $this Returns `$this` for fluent calls.
+     * @return bool|Response $this Returns `$this` for fluent calls.
      */
     public function contentTypeFromAccept($accept) {
         if (!empty($this->headers['Content-Type'])) {
-            return;
+            return false;
         }
 
         $accept = strtolower($accept);
@@ -288,9 +289,8 @@ class Response implements JsonSerializable {
 
         if ($header) {
             return "HTTP/1.1 $statusCode $message";
-        } else {
-            return $message;
         }
+        return $message;
     }
 
     /**
@@ -364,9 +364,9 @@ class Response implements JsonSerializable {
                 $this->meta = $meta;
             }
             return $this;
-        } else {
-            return $this->meta;
         }
+
+        return $this->meta;
     }
 
     /**
@@ -384,9 +384,8 @@ class Response implements JsonSerializable {
                 $this->data = $data;
             }
             return $this;
-        } else {
-            return $this->data;
         }
+        return $this->data;
     }
 
     /**
@@ -470,12 +469,13 @@ class Response implements JsonSerializable {
                 // The name is in the form Header: value.
                 list($name, $value) = explode(':', $name, 2);
                 return [static::normalizeHeader(trim($name)) => trim($value)];
-            } elseif ($value !== null) {
-                return [static::normalizeHeader($name) => $value];
-            } else {
-                return static::normalizeHeader($name);
             }
-        } elseif (is_array($name)) {
+            if ($value !== null) {
+                return [static::normalizeHeader($name) => $value];
+            }
+            return static::normalizeHeader($name);
+        }
+        if (is_array($name)) {
             $result = [];
             foreach ($name as $key => $value) {
                 if (is_numeric($key)) {

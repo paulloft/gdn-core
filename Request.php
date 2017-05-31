@@ -66,14 +66,14 @@ class Request implements JsonSerializable {
      *
      * @var array
      */
-    protected static $specialHeaders = array(
+    protected static $specialHeaders = [
         'CONTENT_TYPE',
         'CONTENT_LENGTH',
         'PHP_AUTH_USER',
         'PHP_AUTH_PW',
         'PHP_AUTH_DIGEST',
         'AUTH_TYPE'
-    );
+    ];
 
     /// Methods ///
 
@@ -144,7 +144,7 @@ class Request implements JsonSerializable {
      */
     public static function defaultEnvironment($key = null, $merge = false) {
         if (self::$defaultEnv === null) {
-            self::$defaultEnv = array(
+            self::$defaultEnv = [
                 'REQUEST_METHOD' => 'GET',
                 'X_REWRITE' => true,
                 'SCRIPT_NAME' => '',
@@ -159,24 +159,27 @@ class Request implements JsonSerializable {
                 'HTTP_USER_AGENT' => 'Garden/0.1 (Howdy stranger)',
                 'REMOTE_ADDR' => '127.0.0.1',
                 'URL_SCHEME' => 'http',
-                'INPUT' => [],
-            );
+                'INPUT' => []
+            ];
         }
 
         if ($key === null) {
             return self::$defaultEnv;
-        } elseif (is_array($key)) {
+        }
+
+        if (is_array($key)) {
+            self::$defaultEnv = $key;
+
             if ($merge) {
                 self::$defaultEnv = array_merge(self::$defaultEnv, $key);
-            } else {
-                self::$defaultEnv = $key;
             }
             return self::$defaultEnv;
-        } elseif (is_string($key)) {
-            return val($key, self::$defaultEnv);
-        } else {
-            throw new \InvalidArgumentException("Argument #1 for Request::globalEnvironment() is invalid.", 422);
         }
+        if (is_string($key)) {
+            return val($key, self::$defaultEnv);
+        }
+
+        throw new \InvalidArgumentException('Argument #1 for Request::globalEnvironment() is invalid.', 422);
     }
 
     /**
@@ -297,7 +300,7 @@ class Request implements JsonSerializable {
         if (isset($get['x-method'])) {
             $method = strtoupper($get['x-method']);
 
-            $getMethods = array(self::METHOD_GET, self::METHOD_HEAD, self::METHOD_OPTIONS);
+            $getMethods = [self::METHOD_GET, self::METHOD_HEAD, self::METHOD_OPTIONS];
 
             // Don't allow get style methods to be overridden to post style methods.
             if (!in_array($env['REQUEST_METHOD'], $getMethods) || in_array($method, $getMethods)) {
@@ -355,7 +358,7 @@ class Request implements JsonSerializable {
         } elseif (is_array($key)) {
             $this->env = $key;
         } else {
-            throw new \InvalidArgumentException("Argument 1 must be either a string or array.", 422);
+            throw new \InvalidArgumentException('Argument 1 must be either a string or array.', 422);
         }
         return $this;
     }
@@ -394,7 +397,8 @@ class Request implements JsonSerializable {
             $env[$key] = $env[$key.'_RAW'];
             unset($env[$key.'_RAW']);
             return $env[$key];
-        } elseif (isset($env[$key])) {
+        }
+        if (isset($env[$key])) {
             return $env[$key];
         }
         return null;
@@ -770,7 +774,7 @@ class Request implements JsonSerializable {
         } elseif (is_array($key)) {
             $this->env['QUERY'] = $key;
         } else {
-            throw new \InvalidArgumentException("Argument 1 must be a string or array.", 422);
+            throw new \InvalidArgumentException('Argument 1 must be a string or array.', 422);
         }
         return $this;
     }
@@ -822,9 +826,8 @@ class Request implements JsonSerializable {
     public function getData($key = null, $default = null) {
         if ($this->hasInput()) {
             return $this->getInput($key, $default);
-        } else {
-            return $this->getQuery($key, $default);
         }
+        return $this->getQuery($key, $default);
     }
 
     /**
@@ -871,7 +874,7 @@ class Request implements JsonSerializable {
     /**
      * Get the root directory (SCRIPT_NAME) of the request.
      *
-     * @return Returns the root directory of the request as a string.
+     * @return string Returns the root directory of the request as a string.
      * @see Request::setRoot()
      */
     public function getRoot() {
@@ -1027,9 +1030,8 @@ class Request implements JsonSerializable {
             $ext = substr($path, $pos);
             $path = substr($path, 0, $pos);
             return [$path, $ext];
-        } else {
-            return [$path, ''];
         }
+        return [$path, ''];
     }
 
     /**
@@ -1065,8 +1067,7 @@ class Request implements JsonSerializable {
 
     /**
      * Set current render type
-     *
-     * @return string
+     * @param $type string
      */
     public function setRenderType($type)
     {

@@ -17,9 +17,13 @@ class Form
      * @var \Garden\Model
      */
     protected $model;
-    protected $validation;
     protected $data;
     protected $formValues;
+
+    /**
+     * @var Validation
+     */
+    protected $_validation;
 
     private $hiddenInputs = [];
     private $inputs;
@@ -39,11 +43,12 @@ class Form
 
     /**
      * set form model
-     * @param object $model table model
-     * @param array|object $dataset
+     * @param Model $model table model
+     * @param array|\stdClass $dataset
      */
-    public function setModel($model, $dataset = false)
+    public function setModel(Model $model, $dataset = false)
     {
+        $model->form = $this;
         $this->model = $model;
 
         if ($dataset !== false) {
@@ -62,14 +67,14 @@ class Form
 
     /**
      * set form data
-     * @param array|object $data
+     * @param array|\stdClass $data
      */
     public function setData($data)
     {
         if (is_object($data)) {
             if ($data instanceof Db\Database\Result) {
                 $this->data = $data->current();
-            } elseif ($data instanceof \StdClass) {
+            } elseif ($data instanceof \stdClass) {
                 $this->data = (array)$data;
             }
         } elseif (is_array($data)) {
@@ -104,15 +109,15 @@ class Form
      */
     public function validation()
     {
-        if ($this->model && $this->model instanceof Model) {
-            return $this->model->validation($this);
+        if ($this->model) {
+            return $this->model->validation();
         }
 
-        if (!$this->validation) {
-            $this->validation = new Validation($this->model);
+        if (!$this->_validation) {
+            $this->_validation = new Validation($this->model);
         }
 
-        return $this->validation;
+        return $this->_validation;
     }
 
     /**
@@ -285,7 +290,7 @@ class Form
         if ($this->valid()) {
             $post = $this->getFormValues();
 
-            if ($this->model && $this->model instanceof Model) {
+            if ($this->model) {
                 $id = array_extract($this->model->primaryKey, $post);
                 $post = $this->fixPostData($post);
                 try {
@@ -303,8 +308,6 @@ class Form
                 $result = $post;
             }
         }
-
-        Response::current()->headers('Form-Error', !$result);
 
         return $result;
     }
@@ -335,7 +338,7 @@ class Form
     /**
      * Сhecks the integrity of the data came
      * @param array $post
-     * @param array $secureKey
+     * @param string $secureKey
      * @return bool
      */
     public function checkValidData($post = false, $secureKey = false)
@@ -352,7 +355,7 @@ class Form
         }
 
         $postFields = array_keys($post);
-        $fields = SecureString::instance()->decode($secureKey, ['aes256' => c('main.hashsalt')]);
+        $fields = (array)SecureString::instance()->decode($secureKey, ['aes256' => c('main.hashsalt')]);
 
         $result = array_diff($postFields, $fields);
 
@@ -537,7 +540,7 @@ class Form
      */
     public function addHidden($name, $value = null, $forceValue = false)
     {
-        if ($this->submitted() && $forceValue === false) {
+        if ($forceValue === false && $this->submitted()) {
             $value = $this->getFormValue($name, $value);
         }
 
@@ -566,10 +569,9 @@ class Form
      */
     protected function fixPostData($post)
     {
-        if ($this->model instanceof Model) {
+        if ($this->model) {
             $structure = $this->validation()->getStructure();
             foreach ($post as $field => $value) {
-                // if (empty($value)) $value = null;
                 if ($value && $options = val($field, $structure)) {
                     switch ($options->dataType) {
                         case 'time':
