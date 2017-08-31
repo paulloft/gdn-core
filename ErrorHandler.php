@@ -23,6 +23,9 @@ class ErrorHandler {
 
         if ( c('main.logs', true) ) {
             $handler->on('fatal', function ($exception, $debug) {
+                /**
+                 * @var \Exception $exception
+                 */
                 $logFilePath = GDN_LOGS.'/'.date('Y').'/'.date('m').'/';
                 $old_umask = umask(0);
                 @mkdir($logFilePath, 0775, true);

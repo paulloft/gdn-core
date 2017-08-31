@@ -14,20 +14,27 @@ class Form
     public $inputClass = 'form-control';
 
     /**
+     * @var bool if true, ignored all fields that was not present when the form was initialized
+     */
+    public $protection = false;
+
+    /**
      * @var \Garden\Model
      */
     protected $model;
     protected $data;
     protected $formValues;
-
     /**
      * @var Validation
      */
-    protected $_validation;
+    private $_validation;
+    private $_valid;
 
     private $hiddenInputs = [];
     private $inputs;
     private $errors = [];
+
+    const KEY_LIFE_TIME = 43200; //12 hours
 
     /**
      * Form constructor.
@@ -46,9 +53,8 @@ class Form
      * @param Model $model table model
      * @param array|\stdClass $dataset
      */
-    public function setModel(Model $model, $dataset = false)
+    public function setModel($model, $dataset = false)
     {
-        $model->form = $this;
         $this->model = $model;
 
         if ($dataset !== false) {
@@ -109,12 +115,13 @@ class Form
      */
     public function validation()
     {
-        if ($this->model) {
-            return $this->model->validation();
-        }
-
         if (!$this->_validation) {
-            $this->_validation = new Validation($this->model);
+            if ($this->model && $this->model instanceof Model) {
+                $this->_validation = $this->model->validation($this);
+                $this->model->initFormValidation($this);
+            } else {
+                $this->_validation = new Validation($this->model);
+            }
         }
 
         return $this->_validation;
@@ -127,28 +134,12 @@ class Form
     public function submitted()
     {
         $method = strtoupper($this->method);
-        $postValues = is_array($this->getFormValues()) && count($this->getFormValues()) > 0;
 
         if ($method === Request::METHOD_GET) {
             return (bool)$this->getFormValue('form-submitted', 0);
         }
-        return Gdn::request()->isPost() && $postValues;
-    }
 
-    /**
-     * Check the form submission and data integrity
-     * @return bool
-     */
-    public function submittedValid()
-    {
-        if ($this->submitted()) {
-            if ($this->checkValidData()) {
-                return true;
-            }
-            $this->addError(t('The data obtained from these different form'));
-        }
-
-        return false;
+        return Gdn::request()->getMethod() == $method;
     }
 
     /**
@@ -166,18 +157,19 @@ class Form
 
     /**
      * return form values
+     * @param bool $force
      * @return array|mixed
      */
-    public function getFormValues()
+    public function getFormValues($force = false)
     {
-        if (!is_array($this->formValues)) {
+        if ($force || !is_array($this->formValues)) {
             $this->magicQuotes = get_magic_quotes_gpc();
 
             $this->formValues = [];
             $var = '_' . strtoupper($this->method);
             $formData = val($var, $GLOBALS, []);
 
-            $this->formValues = $this->clearFormData($formData);
+            $this->formValues = $this->clearFormData($formData, $this->protection);
         }
 
         return $this->formValues;
@@ -194,6 +186,7 @@ class Form
         if ($this->submitted()) {
             return $this->getFormValue($name, $default);
         }
+
         return valr($name, $this->data, $default);
     }
 
@@ -206,6 +199,7 @@ class Form
         if ($this->submitted()) {
             return $this->getFormValues();
         }
+
         return $this->data;
     }
 
@@ -221,13 +215,25 @@ class Form
 
     /**
      * check data to valid
-     * @return bool
+     * @return bool|void
      */
     public function valid()
     {
-        $data = $this->getFormValues();
-        $data = $this->fixPostData($data);
-        return $this->validation()->validate($data) && !count($this->errors);
+        if ($this->_valid === null) {
+            $data = $this->getFormValues();
+            $data = $this->fixPostData($data);
+
+            if ($this->protection && !$this->getSecureKey()) {
+                $this->addError(t('Secure key is empty'));
+            } elseif ($this->protection && empty($this->getSecureFields())) {
+                $this->addError(t('Form session timeout'));
+            }
+
+            $this->_valid = $this->validation()->validate($data) && !count($this->errors);
+            Response::current()->headers('Form-Error', !$this->_valid);
+        }
+
+        return $this->_valid;
     }
 
     /**
@@ -263,7 +269,7 @@ class Form
                 if ($text) {
                     $html[] = $errField . ' ' . $error;
                 } else {
-                    $html[] = '<strong>' . $errField . ':</strong> ' . $error;
+                    $html[] = sprintf(t('form_html_error', '%s: %s'), $errField, $error);
                 }
             }
         }
@@ -276,7 +282,7 @@ class Form
             return implode('; ', $html);
         }
 
-        return sprintf(t('form_html_error_wrapper', '<div class="alert alert-danger">%s</div>'), implode('<br>', $html));
+        return sprintf(t('form_html_error_wrapper', '%s'), implode('<br>', $html));
     }
 
     /**
@@ -290,7 +296,7 @@ class Form
         if ($this->valid()) {
             $post = $this->getFormValues();
 
-            if ($this->model) {
+            if ($this->model && $this->model instanceof Model) {
                 $id = array_extract($this->model->primaryKey, $post);
                 $post = $this->fixPostData($post);
                 try {
@@ -320,7 +326,11 @@ class Form
     public function generateSecureKey($data)
     {
         $keys = array_keys($data);
-        return SecureString::instance()->encode($keys, ['aes256' => c('main.hashsalt')]);
+        $key = md5(implode(';', $keys).c('main.hashsalt'));
+
+        Gdn::cache()->set("form_$key", $keys, self::KEY_LIFE_TIME);
+
+        return $key;
     }
 
     /**
@@ -336,30 +346,32 @@ class Form
     }
 
     /**
-     * Сhecks the integrity of the data came
-     * @param array $post
-     * @param string $secureKey
-     * @return bool
+     * Gets initialized form fields
+     * @param array $secureKey
+     * @return array
      */
-    public function checkValidData($post = false, $secureKey = false)
+    public function getSecureFields($secureKey = false)
     {
-        if (!$post) {
-            $post = $this->getFormValues();
-        }
         if (!$secureKey) {
             $secureKey = $this->getSecureKey();
         }
 
-        if (!$post || !$secureKey) {
-            return false;
+        if (!$secureKey) {
+            return [];
         }
 
-        $postFields = array_keys($post);
-        $fields = (array)SecureString::instance()->decode($secureKey, ['aes256' => c('main.hashsalt')]);
+        return Gdn::cache()->get("form_$secureKey", []);
+    }
 
-        $result = array_diff($postFields, $fields);
-
-        return empty($result);
+    /**
+     * Reset all form data
+     */
+    public function reset()
+    {
+        $this->errors = [];
+        $this->_valid = null;
+        $this->_validation = null;
+        $this->formValues = null;
     }
 
     /**
@@ -425,7 +437,7 @@ class Form
 
         if ($type == 'radio' || $type == 'checkbox') {
             $value = $this->getValue($correctName);
-            $checked = is_array($value) ? in_array($inputValue, $value) : $inputValue == $value;
+            $checked = is_array($value) ? in_array($inputValue, $value) : (string)$inputValue == (string)$value;
             if ($inputValue !== false && $checked) {
                 array_touch('checked', $attributes, 'checked');
             }
@@ -522,7 +534,7 @@ class Form
             $optionValue = $keyName && $keyValue ? val($keyValue, $option) : $key;
             $optionName = $keyName && $keyValue ? val($keyName, $option) : $option;
 
-            $selected = is_array($fieldValue) ? in_array($optionValue, $fieldValue) : $optionValue == $fieldValue;
+            $selected = is_array($fieldValue) ? in_array($optionValue, $fieldValue) : (string)$optionValue == (string)$fieldValue;
 
             $html .= '<option value="' . $optionValue . '"' . ($selected ? ' selected' : '') . '>' . $optionName . '</option>';
         }
@@ -559,6 +571,12 @@ class Form
      */
     protected function attrToString($attributes)
     {
+        foreach ($attributes as $attr => $value) {
+            if ($attributes[$attr] === false) {
+                unset($attributes[$attr]);
+            }
+        }
+
         return implode_assoc('" ', '="', $attributes) . '"';
     }
 
@@ -569,7 +587,7 @@ class Form
      */
     protected function fixPostData($post)
     {
-        if ($this->model) {
+        if ($this->model instanceof Model) {
             $structure = $this->validation()->getStructure();
             foreach ($post as $field => $value) {
                 if ($value && $options = val($field, $structure)) {
@@ -597,11 +615,17 @@ class Form
      * @param array $formData
      * @return array $formData
      */
-    protected function clearFormData($formData)
+    protected function clearFormData($formData, $protected = false)
     {
         unset($formData['secureKey']);
 
+        $secureFileds = $protected ? $this->getSecureFields() : [];
+
         foreach ($formData as $name => $value) {
+            if ($protected && !in_array($name, $secureFileds)) {
+                unset($formData[$name]);
+                continue;
+            }
             if (is_array($value)) {
                 $formData[$name] = $this->clearFormData($value);
             } else {

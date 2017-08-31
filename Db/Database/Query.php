@@ -76,7 +76,7 @@ class Query {
      * Enables the query to be cached for a specified amount of time.
      *
      * @param   integer  $lifetime  number of seconds to cache, 0 deletes it from the cache
-     * @param   boolean  whether or not to execute the query during a cache hit
+     * @param   boolean  $force whether or not to execute the query during a cache hit
      * @return  $this
      * @uses    Cache::$cache_life
      */
@@ -84,7 +84,7 @@ class Query {
     {
         if ($lifetime === NULL) {
             // Use the global setting
-            $lifetime = Gdn::cache()->lifetime;
+            $lifetime = \Garden\Cache::DEFAULT_LIFETIME;
         }
 
         $this->_force_execute = $force;

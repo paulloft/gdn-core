@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden;
 
 use Garden\Traits\Instance;

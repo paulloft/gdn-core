@@ -27,25 +27,25 @@ class Model {
     public $resultObject = false;
 
     /**
-     * @var Db\Database\Query\Builder\Where
+     * @var Db\Database\Query\Builder\Select
      */
     protected $_query;
     protected $_select = ['*'];
     protected $_allowedFields = [];
-    protected $_form;
 
     private $_insertFields = [];
     private $_updateFields = [];
     private $_insupdFields = [];
     private $_deleteFields = [];
 
-    private $_b_table;
-
+    /**
+     * @var Validation
+     */
     protected $_validation;
 
     public $fieldDateInserted = 'dateInserted';
-    public $fieldDateUpdated = 'dateUpdated';
-    public $fieldUserUpdated = 'userUpdated';
+    public $fieldDateUpdated  = 'dateUpdated';
+    public $fieldUserUpdated  = 'userUpdated';
     public $fieldUserInserted = 'userInserted';
 
     public $DBinstance;
@@ -73,10 +73,10 @@ class Model {
      * Class constructor. Defines the related database table name.
      * @param string $table table name
      */
-    public function __construct($table = null)
+    public function __construct($table = null, $primaryKey = null)
     {
         if ($table !== null) {
-            $this->setTable($table);
+            $this->setTable($table, $primaryKey);
         }
 
         if (Gdn::authLoaded()) {
@@ -101,17 +101,13 @@ class Model {
      * Set using table
      * @param string $table table name
      */
-    public function setTable($table = null)
+    public function setTable($table = null, $primaryKey = null)
     {
-        $this->table = $this->_b_table = $table;
-    }
+        $this->table = $table;
 
-    public function switchTable($table = false)
-    {
-        if (!$this->_b_table) {
-            $this->_b_table = $this->table;
+        if ($primaryKey) {
+            $this->primaryKey = $primaryKey;
         }
-        $this->table = $table ?: $this->_b_table;
     }
 
     /**
@@ -122,7 +118,10 @@ class Model {
      */
     public function getID($id)
     {
-        $query = DB::select_array($this->_select)->from($this->table)->where($this->primaryKey, '=', $id)->limit(1);
+        $query = DB::select_array($this->_select)
+            ->from($this->table)
+            ->where($this->primaryKey, '=', $id)
+            ->limit(1);
 
         return $query->execute($this->DBinstance, $this->resultObject)->current();
     }
@@ -214,13 +213,18 @@ class Model {
     {
         $data = $this->insertDefaultFields($data);
         $data = $this->fixPostData($data);
+
+        if (empty($data)) {
+            return false;
+        }
+
         $columns = array_keys($data);
 
         $query = DB::insert($this->table, $columns)
             ->values($data)
             ->execute($this->DBinstance);
 
-        return val(0, $query, false);
+        return val(0, $query);
     }
 
     /**
@@ -233,6 +237,10 @@ class Model {
     {
         $data = $this->updateDefaultFields($data);
         $data = $this->fixPostData($data);
+
+        if (empty($data)) {
+            return false;
+        }
 
         DB::update($this->table)
             ->set($data)
@@ -482,9 +490,7 @@ class Model {
      */
     public function convertPostDate($post, array $fields)
     {
-        $fields = (array)$fields;
-
-        foreach ($fields as $field) {
+         foreach ($fields as $field) {
             $value = val($field, $post);
 
             if ($value !== false) {
@@ -496,17 +502,24 @@ class Model {
         return $post;
     }
 
+    protected function initValidation()
+    {
+        return new Validation($this);
+    }
+
     /**
      * @return Validation
      */
     public function validation()
     {
         if (!$this->_validation) {
-            $this->_validation = new Validation($this);
+            $this->_validation = $this->initValidation();
         }
 
         return $this->_validation;
     }
+
+    public function initFormValidation(Form $form){}
 
     /**
      * Get table columns

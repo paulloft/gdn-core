@@ -55,14 +55,14 @@ class File extends \Garden\Cache
     /**
      * Retrieve a cached value entry by id.
      *
-     * @param   string  $id       id of cache to entry
-     * @param   string  $default  default value to return if cache miss
+     * @param   string $id id of cache to entry
+     * @param   string $default default value to return if cache miss
      * @return  mixed
      */
-    public function get($id, $default = false)
+    public function get($id, $default = null)
     {
         $fileName = $this->getFileName($id);
-        $data = false;
+        $data = null;
 
         if (!self::$clear && !$data = $this->dirty->get($fileName)) {
 
@@ -77,7 +77,7 @@ class File extends \Garden\Cache
             $result = file_get_contents($file);
             $result = $unpackFunction($result);
             $expire = val('expire', $result, 0);
-            $data   = val('data', $result, false);
+            $data = val('data', $result, null);
 
             if ($expire !== false && time() > $expire) {
                 $this->delete($id);
@@ -101,9 +101,9 @@ class File extends \Garden\Cache
     /**
      * Set a value to cache with id and lifetime
      *
-     * @param   string   $id        id of cache entry
-     * @param   string   $data      data to set to cache
-     * @param   integer  $lifetime  lifetime in seconds
+     * @param   string $id id of cache entry
+     * @param   string $data data to set to cache
+     * @param   integer $lifetime lifetime in seconds
      * @return  boolean
      */
     public function set($id, $data, $lifetime = null)

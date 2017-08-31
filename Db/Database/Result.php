@@ -71,7 +71,7 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      *
      *     $cachable = serialize($result->cached());
      *
-     * @return  Database_Result_Cached
+     * @return  Result\Cached
      * @since   3.0.5
      */
     public function cached()
@@ -225,11 +225,11 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      * @param   int     $offset
      * @param   mixed   $value
      * @return  void
-     * @throws  Kohana_Exception
+     * @throws  \Exception
      */
     final public function offsetSet($offset, $value)
     {
-        throw new Kohana_Exception('Database results are read-only');
+        throw new \Exception('Database results are read-only');
     }
 
     /**
@@ -239,11 +239,11 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      *
      * @param   int     $offset
      * @return  void
-     * @throws  Kohana_Exception
+     * @throws  \Exception
      */
     final public function offsetUnset($offset)
     {
-        throw new Kohana_Exception('Database results are read-only');
+        throw new \Exception('Database results are read-only');
     }
 
     /**

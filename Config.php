@@ -96,6 +96,7 @@ class Config {
         } else {
             $data = array_replace(self::$data[$group], $loaded);
         }
+
         self::$data[$group] = $data;
     }
 

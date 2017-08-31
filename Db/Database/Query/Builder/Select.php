@@ -152,7 +152,7 @@ class Select extends Where {
     /**
      * Adds "USING ..." conditions for the last created JOIN statement.
      *
-     * @param   string  $columns  column name
+     * @param   string  ...$columns  column name
      * @return  $this
      */
     public function using(...$columns)
@@ -165,7 +165,7 @@ class Select extends Where {
     /**
      * Creates a "GROUP BY ..." filter.
      *
-     * @param   mixed   $columns  column name or array($column, $alias) or object
+     * @param   mixed   ...$columns  column name or array($column, $alias) or object
      * @return  $this
      */
     public function group_by(...$columns)

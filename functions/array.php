@@ -10,98 +10,6 @@
  */
 
 /**
- * Returns the values from a single column of the input array, identified by the $columnKey.
- *
- * Optionally, you may provide an $indexKey to index the values in the returned
- * array by the values from the $indexKey column in the input array.
- *
- * @param array $array A multi-dimensional array (record set) from which to pull a column of values.
- * @param int|string|null $columnKey The column of values to return.
- * This value may be the integer key of the column you wish to retrieve, or it
- * may be the string key name for an associative array.
- * @param mixed $indexKey The column to use as the index/keys for the returned array.
- * This value may be the integer key of the column, or it may be the string key name.
- * @return array Returns an array of values representing a single column from the input array.
- * @category Array Functions
- */
-function array_column_php(array $array, $columnKey = null, $indexKey = null) {
-    if (!is_int($columnKey)
-        && !is_float($columnKey)
-        && !is_string($columnKey)
-        && $columnKey !== null
-        && !(is_object($columnKey) && method_exists($columnKey, '__toString'))
-    ) {
-        trigger_error('array_column(): The column key should be either a string or an integer', E_USER_WARNING);
-    }
-
-    if (isset($indexKey)
-        && !is_int($indexKey)
-        && !is_float($indexKey)
-        && !is_string($indexKey)
-        && !(is_object($indexKey) && method_exists($indexKey, '__toString'))
-    ) {
-        trigger_error('array_column(): The index key should be either a string or an integer', E_USER_WARNING);
-    }
-
-    $paramsColumnKey = ($columnKey !== null) ? (string)$columnKey : null;
-
-    $paramsIndexKey = null;
-    if (isset($indexKey)) {
-        if (is_float($indexKey) || is_int($indexKey)) {
-            $paramsIndexKey = (int)$indexKey;
-        } else {
-            $paramsIndexKey = (string)$indexKey;
-        }
-    }
-
-    $resultArray = array();
-
-    foreach ($array as $row) {
-
-        $key = $value = null;
-        $keySet = $valueSet = false;
-
-        if ($paramsIndexKey !== null && array_key_exists($paramsIndexKey, $row)) {
-            $keySet = true;
-            $key = (string)$row[$paramsIndexKey];
-        }
-
-        if ($paramsColumnKey === null) {
-            $valueSet = true;
-            $value = $row;
-        } elseif (is_array($row) && array_key_exists($paramsColumnKey, $row)) {
-            $valueSet = true;
-            $value = $row[$paramsColumnKey];
-        }
-
-        if ($valueSet) {
-            if ($keySet) {
-                $resultArray[$key] = $value;
-            } else {
-                $resultArray[] = $value;
-            }
-        }
-
-    }
-
-    return $resultArray;
-}
-
-if (!function_exists('array_column')) {
-    /**
-     * A custom implementation of array_column for older versions of php.
-     *
-     * @param array $array The dataset to test.
-     * @param int|string $columnKey The column of values to return.
-     * @param int|string|null $indexKey The column to use as the index/keys for the returned array.
-     * @return array Returns the columns from the {@link $input} array.
-     */
-    function array_column($array, $columnKey, $indexKey = null) {
-        return array_column_php($array, $columnKey, $indexKey);
-    }
-}
-
-/**
  * Converts a quick array into a key/value form.
  *
  * @param array $array The array to work on.
@@ -247,9 +155,9 @@ function array_usearch($needle, array $haystack, callable $cmp) {
 
     if (empty($found)) {
         return false;
-    } else {
-        return array_pop($found);
     }
+
+    return array_pop($found);
 }
 
 /**
@@ -431,4 +339,22 @@ if (!function_exists('array_filter_keys')) {
     {
         return array_intersect_key($array, array_flip($keys));
     }
+}
+
+/**
+ * array_column from user function
+ * @param array|Garden\Db\Database\Result $array
+ * @param callable $callback
+ * @param string $key
+ * @return array
+ */
+function array_ucolumn($array, callable $callback, $key = false)
+{
+    $result = [];
+
+    foreach ($array as $k => $v) {
+        $result[$key ? val($key, $v) : $k] = $callback($v, $k);
+    }
+
+    return $result;
 }

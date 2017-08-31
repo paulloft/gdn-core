@@ -2,7 +2,9 @@
 
 function date_sql($date = false)
 {
-    if ($date === false) $date = time();
+    if ($date === false) {
+        $date = time();
+    }
     if (is_string($date)) {
         $date = strtotime($date);
     }

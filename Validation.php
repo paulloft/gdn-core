@@ -160,10 +160,10 @@ class Validation
                 $this->errors[$field][] = t('validate_wrong_type_data');
                 continue;
             }
+
             $value = trim($value);
-
-
             $length = (int)$opt->length;
+
             if (!empty($length)) {
                 $len = mb_strlen($value);
                 if ($len > $length) {
@@ -220,7 +220,7 @@ class Validation
     protected function checkRules()
     {
         if (empty($this->rule)) {
-            return;
+            return true;
         }
 
         foreach ($this->rule as $field => $rules) {
@@ -245,7 +245,7 @@ class Validation
 
                 $params = $this->replaceParams($params, $this->data);
 
-                if ($type === 'not_empty' || !$this->isEmpty($value)) {
+                if ($type == 'required' || $type === 'not_empty' || !$this->isEmpty($value)) {
                     if (!$ruleFunc($value, $params)) {
                         if (is_array($message)) {
                             $field = val(0, $message);

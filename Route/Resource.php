@@ -233,7 +233,7 @@ class Resource extends \Garden\Route {
         if (preg_match($regex, $path, $matches)) {
             $args = [];
             foreach ($matches as $key => $value) {
-                if ($key === 'controller' || $key === 'action') {
+                if ($key === 'addon' || $key === 'controller' || $key === 'action') {
                     $$key = $value;
                     $printArgs[] = ucfirst($value);
                 } elseif (!is_numeric($key)) {

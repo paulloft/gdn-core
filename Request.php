@@ -807,7 +807,7 @@ class Request implements JsonSerializable {
         } elseif (is_array($key)) {
             $this->env['INPUT'] = $key;
         } else {
-            throw new \InvalidArgumentException("Argument 1 must be a string or array.", 422);
+            throw new \InvalidArgumentException('Argument 1 must be a string or array.', 422);
         }
         return $this;
     }

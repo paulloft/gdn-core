@@ -3,38 +3,44 @@ namespace Garden\Cache;
 
 use \Garden\Exception;
 
-/**
- *
- */
-class Memcache extends \Garden\Cache {
+class Redis extends \Garden\Cache
+{
+    /**
+     * @var \Redis
+     */
+    public $cache;
+
     protected $lifetime;
 
-    protected $host = 'localhost';
-    protected $port = 11211;
-    protected $persistent = false;
     protected $prefix = 'gdn_';
+    protected $host = 'localhost';
+    protected $port = 6379;
+    protected $timeout = 0;
+    protected $reserved;
+    protected $retry_interval = 0;
 
     protected $salt;
     protected $dirty;
 
-    /**
-     * @var \Memcache
-     */
-    public $cache;
+    private $_igbinary;
 
-    public function __construct(array $config = [])
+    public function __construct($config)
     {
         $this->lifetime = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
-        $this->persistent = val('persistent', $config, $this->persistent);
-
         $this->host = val('host', $config, $this->host);
         $this->port = val('port', $config, $this->port);
         $this->prefix = val('keyPrefix', $config, $this->prefix);
+
+        $this->timeout = val('timeout', $config, $this->timeout);
+        $this->reserved = val('reserved', $config, $this->reserved);
+        $this->retry_interval = val('retry_interval', $config, $this->retry_interval);
+
         $this->cache = val('connection', $config, null);
 
         $this->salt = c('main.hashsalt', 'gdn');
-
         $this->dirty = \Garden\Gdn::dirtyCache();
+
+        $this->_igbinary = function_exists('igbinary_serialize');
 
         $this->connect();
     }
@@ -42,12 +48,14 @@ class Memcache extends \Garden\Cache {
     protected function connect()
     {
         if (!$this->cache) {
-            if (!class_exists('memcache')) {
-                throw new Exception\Custom('memcache extention not found');
+            if (!class_exists('Redis')) {
+                throw new Exception\Custom('Redis extention not found');
             }
 
-            $this->cache = new \Memcache();
-            $this->cache->addServer($this->host, $this->port, $this->persistent);
+            $this->cache = new \Redis();
+            if (!$this->cache->connect($this->host, $this->port, $this->timeout, $this->reserved, $this->retry_interval)) {
+                throw new Exception\Custom($this->cache->getLastError());
+            }
         }
     }
 
@@ -62,8 +70,7 @@ class Memcache extends \Garden\Cache {
         $result = null;
 
         if (!self::$clear && !$result = $this->dirty->get($id)) {
-            $result = $this->cache->get($id);
-            //save to temporary cache
+            $result = $this->unserialize($this->cache->get($id));
             $this->dirty->add($id, $result);
         }
         return $result ?: $default;
@@ -78,7 +85,7 @@ class Memcache extends \Garden\Cache {
         $id = $this->fixID($id);
         $this->dirty->set($id, $data);
 
-        return $this->cache->set($id, $data, MEMCACHE_COMPRESSED, (int)$lifetime);
+        return $this->cache->setex($id, (int)$lifetime, $this->serialise($data));
     }
 
     public function add($id, $data, $lifetime = null)
@@ -89,12 +96,13 @@ class Memcache extends \Garden\Cache {
 
         $id = $this->fixID($id);
 
-        return $this->cache->add($id, $data, MEMCACHE_COMPRESSED, (int)$lifetime);
+        return $this->cache->exists($id) ? $this->cache->set($id, $data, (int)$lifetime) : false;
     }
 
     public function exists($id)
     {
-        return (bool)$this->get($id);
+        $id = $this->fixID($id);
+        return (bool)$this->cache->exists($id);
     }
 
     public function delete($id)
@@ -106,12 +114,30 @@ class Memcache extends \Garden\Cache {
 
     public function deleteAll()
     {
-        $this->cache->flush();
+        $this->cache->flushAll();
     }
 
 
     public function __destruct()
     {
         $this->cache->close();
+    }
+
+    protected function serialise($data)
+    {
+        if ($this->_igbinary) {
+            return igbinary_serialize($data);
+        }
+
+        return serialize($data);
+    }
+
+    protected function unserialize($data)
+    {
+        if ($this->_igbinary) {
+            return igbinary_unserialize($data);
+        }
+
+        return unserialize($data);
     }
 }

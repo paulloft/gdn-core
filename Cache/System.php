@@ -19,7 +19,7 @@ class System extends \Garden\Cache
         return "$id.json";
     }
 
-    public function get($id, $default = false)
+    public function get($id, $default = null)
     {
         $file = $this->getFile($id);
         $data = $this->dirty->get($file);
@@ -57,7 +57,7 @@ class System extends \Garden\Cache
             $result = file_put_contents($filePath, $cacheData);
             chmod($filePath, 0664);
         } catch (\Exception $exception) {
-            $result = false;
+            $result = null;
         }
 
         $this->dirty->set($file, $data);

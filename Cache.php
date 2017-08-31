@@ -1,5 +1,4 @@
 <?php
-
 namespace Garden;
 
 use \Garden\Exception;

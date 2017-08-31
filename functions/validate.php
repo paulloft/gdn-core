@@ -21,7 +21,12 @@ function validate_mac($value, $params)
 
 function validate_not_empty($value, $params)
 {
-    return !in_array($value, [NULL, FALSE, '', []], TRUE);
+    return !in_array($value, [null, false, '', []], true);
+}
+
+function validate_required($value, $params)
+{
+    return validate_not_empty($value, $params);
 }
 
 function validate_not_value($value, $params)

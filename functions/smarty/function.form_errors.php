@@ -8,6 +8,7 @@ function smarty_function_form_errors($params, &$smarty) {
     }
 
     $text = val('text', $params);
+    $errors = $form->errors($text);
 
-    return $form->errors($text);
+    return empty($errors) ? null : '<div class="form-errors">'.$errors.'</div>';
 }

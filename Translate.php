@@ -24,6 +24,7 @@ class Translate {
         if ($default !== null) {
             return $default;
         }
+
         return $code;
     }
 
