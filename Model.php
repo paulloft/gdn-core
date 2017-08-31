@@ -49,7 +49,6 @@ class Model {
     public $fieldUserInserted = 'userInserted';
 
     public $DBinstance;
-    public $form;
 
     private static $instances;
 

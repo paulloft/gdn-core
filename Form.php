@@ -117,7 +117,7 @@ class Form
     {
         if (!$this->_validation) {
             if ($this->model && $this->model instanceof Model) {
-                $this->_validation = $this->model->validation($this);
+                $this->_validation = $this->model->validation();
                 $this->model->initFormValidation($this);
             } else {
                 $this->_validation = new Validation($this->model);
