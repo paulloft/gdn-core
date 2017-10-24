@@ -232,7 +232,8 @@ class Controller {
     }
 
     /**
-     * @param bool $tablename
+     * @param string|Model $model
+     * @param array|\stdClass|Db\Database\Result $data
      * @return Form
      */
     public function form($model = false, $data = false)

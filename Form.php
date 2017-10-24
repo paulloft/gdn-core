@@ -73,7 +73,7 @@ class Form
 
     /**
      * set form data
-     * @param array|\stdClass $data
+     * @param array|\stdClass|Db\Database\Result $data
      */
     public function setData($data)
     {

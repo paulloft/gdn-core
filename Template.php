@@ -5,10 +5,9 @@ class Template extends Controller {
 
     // template file
     protected $template = 'template';
-    protected $templateAddon;
+    protected $addon;
 
-    protected $_js  = [];
-    protected $_css = [];
+    protected $resources = [];
     protected $meta = [];
 
     /**
@@ -55,7 +54,7 @@ class Template extends Controller {
         }
 
         if($addonName) {
-            $this->templateAddon = $addonName;
+            $this->addon = $addonName;
         }
 
         return $this->template;
@@ -74,12 +73,12 @@ class Template extends Controller {
             'h1'       => $title,
             'title'    => strip_tags($title.' '.$separator.' '.$sitename),
             'meta'     => $this->meta,
-            'js'       => $this->_js,
-            'css'      => $this->_css,
+            'js'       => val('js', $this->resources, []),
+            'css'      => val('css', $this->resources, []),
 
             'action'     => strtolower($this->callerMethod()),
             'addon'      => strtolower($this->controllerInfo('addon')),
-            'controller' => strtolower($this->controllerInfo('controller')),
+            'controller' => strtolower($this->controllerInfo('controller'))
         ];
     }
 
@@ -103,9 +102,7 @@ class Template extends Controller {
         $this->setData('gdn', $data);
         $this->setData('sitename', c('main.sitename'));
 
-        $template = $this->fetchView($this->template, '/', $addonFolder?: $this->templateAddon);
-
-        return $template;
+        return $this->fetchView($this->template, '/', $addonFolder?: $this->addon);
     }
 
     /**
@@ -165,7 +162,7 @@ class Template extends Controller {
 
         if ($src) {
             $hash = hash('md4', $src);
-            $this->{'_'.$resource}[$hash] = $src;
+            $this->resources[$resource][$hash] = $src;
         }
     }
 }
