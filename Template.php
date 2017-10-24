@@ -62,6 +62,29 @@ class Template extends Controller {
     }
 
     /**
+     * @return array
+     */
+    protected function getPageData()
+    {
+        $sitename = c('main.sitename');
+        $separator = c('main.titleSeparator', '-');
+        $title = $this->data('title');
+
+        return [
+            'h1'       => $title,
+            'title'    => strip_tags($title.' '.$separator.' '.$sitename),
+            'meta'     => $this->meta,
+            'js'       => $this->_js,
+            'css'      => $this->_css,
+
+            'action'     => strtolower($this->callerMethod()),
+            'addon'      => strtolower($this->controllerInfo('addon')),
+            'controller' => strtolower($this->controllerInfo('controller')),
+        ];
+    }
+
+
+    /**
      * Returns generated html template content
      * @param string $view name of view file
      * @param string $controllerName controller name
@@ -74,16 +97,8 @@ class Template extends Controller {
         $view = $view ?: $this->callerMethod();
         $view = $this->fetchView($view, $controllerName, $addonFolder);
 
-        $data = [
-            'content'  => $view,
-            'meta'     => $this->meta,
-            'js'       => $this->_js,
-            'css'      => $this->_css,
-
-            'action'     => strtolower($this->callerMethod()),
-            'addon'      => strtolower($this->controllerInfo('addon')),
-            'controller' => strtolower($this->controllerInfo('controller')),
-        ];
+        $data = $this->getPageData();
+        $data['content'] = $view;
 
         $this->setData('gdn', $data);
         $this->setData('sitename', c('main.sitename'));
@@ -104,34 +119,41 @@ class Template extends Controller {
         Event::fire('render_before');
 
         $view = $view ?: $this->callerMethod();
-        if ($this->renderType() === Request::RENDER_VIEW) {
-            if ($this->_js) {
-                Response::current()->headers('Ajax-Js', json_encode($this->_js));
-            }
-            if ($this->_css) {
-                Response::current()->headers('Ajax-Css', json_encode($this->_css));
-            }
 
-            echo $this->fetchView($view, $controllerName, $addonFolder);
-        } elseif ($this->renderType() === Request::RENDER_JSON) {
-            parent::render();
-        } else {
-            echo $this->fetchTemplate($view, $controllerName, $addonFolder);
+        switch ($this->renderType()) {
+            case Request::RENDER_VIEW:
+                echo $this->fetchView($view, $controllerName, $addonFolder);
+                break;
+
+            case Request::RENDER_JSON:
+                parent::render();
+                break;
+
+            default:
+                echo $this->fetchTemplate($view, $controllerName, $addonFolder);
+                break;
         }
 
         Event::fire('render_after');
     }
 
+    /**
+     * @param $resource
+     * @param $src
+     * @param string $addon
+     * @return bool|string
+     */
     protected function getResourcePath($resource, $src, $addon = null)
     {
         $addon = $addon !== null ? $addon : strtolower($this->getAddonName());
         $local = is_local_url($src);
+        $version = (strpos($src, '?') === false ? '?': '&').'v='.APP_VERSION;
         if ($local && $addon && file_exists(GDN_ADDONS.'/'.ucfirst($addon).'/Assets/'.$resource.'/'.$src)) {
-            return "/assets/$addon/$resource/$src";
+            return "/assets/$addon/$resource/$src$version";
         }
 
         if (!$local || file_exists(PATH_PUBLIC.'/'.$src)) {
-            return $src;
+            return $src.$version;
         }
 
         return false;

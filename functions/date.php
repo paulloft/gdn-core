@@ -1,18 +1,31 @@
 <?php
-
-function date_sql($date = false)
+/**
+ * @param int|string $date
+ * @param string $modifier
+ * @return string
+ */
+function date_sql($date = null, $modifier = null)
 {
-    if ($date === false) {
+    if ($date === null) {
         $date = time();
-    }
-    if (is_string($date)) {
+    } elseif (is_string($date)) {
         $date = strtotime($date);
+    }
+
+    if ($modifier) {
+        $date = strtotime($modifier, $date);
     }
 
     return date('Y-m-d H:i:s', $date);
 }
 
-function date_convert($date, $format = 'indatetime')
+/**
+ * @param int|string $date
+ * @param string $format
+ * @param string $modifier
+ * @return string
+ */
+function date_convert($date, $format = 'indatetime', $modifier = null)
 {
     if (empty($date)) {
         return false;
@@ -22,6 +35,10 @@ function date_convert($date, $format = 'indatetime')
 
     if (is_string($date)) {
         $date = strtotime($date);
+    }
+
+    if ($modifier) {
+        $date = strtotime($modifier, $date);
     }
 
     switch ($format) {
@@ -38,6 +55,9 @@ function date_convert($date, $format = 'indatetime')
             $date = date('d.m.Y', $date);
             break;
         case ('time')           :
+            $date = date('H:i', $date);
+            break;
+        case ('timesec')           :
             $date = date('H:i:s', $date);
             break;
         case ('datetime')       :
@@ -76,16 +96,24 @@ function date_convert($date, $format = 'indatetime')
  */
 function date_compare($date1, $date2 = false)
 {
-    if (!$date2) $date2 = time();
+    if (!$date2) {
+        $date2 = time();
+    }
 
-    if (is_string($date1)) $date1 = strtotime($date1);
-    if (is_string($date2)) $date2 = strtotime($date2);
+    if (is_string($date1)) {
+        $date1 = strtotime($date1);
+    }
+    if (is_string($date2)) {
+        $date2 = strtotime($date2);
+    }
 
     if ($date1 > $date2) {
         return 1;
-    } elseif ($date1 == $date2) {
+    }
+    if ($date1 == $date2) {
         return 0;
-    } elseif ($date1 < $date2) {
+    }
+    if ($date1 < $date2) {
         return -1;
     }
 }
@@ -108,37 +136,32 @@ function date_passed($date)
     $diff = time() - $date;
     switch ($diff) {
         case ($diff < 10):
-            $txt = 'только что';
-            return $txt;
+            return 'только что';
             break;
         case ($diff < 60):
-            $txt = 'менее минуты назад';
-            return $txt;
+            return 'менее минуты';
             break;
 
         case ($diff < 3600):
             $tm = ceil($diff / 60);
             $forms = ['минут', 'минута', 'минуты'];
-            $txt = $tm . ' ' . format_declension($tm, $forms) . ' назад';
-            return $txt;
+            return $tm . ' ' . format_declension($tm, $forms) . ' назад';
             break;
 
         case ($diff < 86400):
             $tm = ceil($diff / 3600);
             $forms = ['часов', 'час', 'часа'];
-            $txt = $tm . ' ' . format_declension($tm, $forms) . ' назад';
-            return $txt;
+            return $tm . ' ' . format_declension($tm, $forms) . ' назад';
             break;
 
         case ($diff < 604800):
             $tm = round($diff / 86400);
             $forms = ['дней', 'день', 'дня'];
-            $txt = $tm . ' ' . format_declension($tm, $forms) . ' назад';
-            return $txt;
+            return $tm . ' ' . format_declension($tm, $forms) . ' назад';
             break;
 
         default:
-            return date_convert($date, 'indatetime');
+            return date_convert($date);
             break;
     }
 }

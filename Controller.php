@@ -11,24 +11,27 @@ class Controller {
     public $form;
 
     // data storage
-    protected $data;
-    protected $view;
-    protected $controllerName;
-    protected $addonFolder = 'addons';
-    protected $addonName;
+    protected $_data;
+    protected $_view;
+    protected $_controllerName;
+    protected $_addonFolder = 'addons';
+    protected $_addonName;
 
-    protected $templateBaseDir;
+    protected $_templateBaseDir;
 
     // default view extention
-    protected $viewExt = 'tpl';
+    protected $_viewExt = 'tpl';
 
-    private $smarty;
+    /**
+     * @var \Smarty
+     */
+    private $_smarty;
 
     use Instance;
 
     public function __construct()
     {
-        $this->addonName = $this->controllerInfo('addon');
+        $this->_addonName = $this->controllerInfo('addon');
     }
 
     /**
@@ -47,10 +50,10 @@ class Controller {
     {
         if (is_array($key)) {
             foreach ($key as $k => $v) {
-                $this->data[$k] = $v;
+                $this->_data[$k] = $v;
             }
         } else {
-            $this->data[$key] = $value;
+            $this->_data[$key] = $value;
         }
     }
 
@@ -62,7 +65,7 @@ class Controller {
      */
     public function data($key, $default = false)
     {
-        return val($key, $this->data, $default);
+        return val($key, $this->_data, $default);
     }
 
     /**
@@ -82,9 +85,9 @@ class Controller {
      */
     public function setView($view = false, $controllerName = false, $addonName = false)
     {
-        $this->view = $view;
-        $this->controllerName = $controllerName;
-        $this->addonName = $addonName;
+        $this->_view = $view;
+        $this->_controllerName = $controllerName;
+        $this->_addonName = $addonName;
     }
 
     /**
@@ -99,7 +102,7 @@ class Controller {
 
         if ($this->renderType() === Request::RENDER_JSON) {
             Response::current()->headers('Content-Type', 'application/json');
-            echo json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            echo json_encode($this->_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         } else {
             $view = $view ?: $this->callerMethod();
             echo $this->fetchView($view, $controllerName, $addonName);
@@ -121,20 +124,34 @@ class Controller {
         $viewPath = $this->getViewPath($view, $controllerName, $addonName);
         $realPath = realpath(PATH_ROOT.'/'.$viewPath);
 
-        if (!is_file($realPath)) {
+        if (!$this->viewExists($view, $controllerName, $addonName)) {
             throw new Exception\NotFound('Page', 'View template "'.$view.'" not found in '.$viewPath);
         }
 
-        if (str_ends($realPath, '.'.$this->viewExt)) {
+        if (str_ends($realPath, '.'.$this->_viewExt)) {
             $smarty = $this->smarty();
-            $smarty->setTemplateDir(PATH_ROOT.'/'.$this->templateBaseDir);
-            $smarty->assign($this->data);
+            $smarty->setTemplateDir(PATH_ROOT.'/'.$this->_templateBaseDir);
+            $smarty->assign($this->_data);
             $view = $smarty->fetch($realPath);
         } else {
-            $view = \getInclude($realPath, $this->data);
+            $view = \getInclude($realPath, $this->_data);
         }
 
         return $view;
+    }
+
+    /**
+     * @param $view
+     * @param bool $controllerName
+     * @param bool $addonName
+     * @return bool
+     */
+    public function viewExists($view, $controllerName = false, $addonName = false)
+    {
+        $viewPath = $this->getViewPath($view, $controllerName, $addonName);
+        $realPath = realpath(PATH_ROOT.'/'.$viewPath);
+
+        return is_file($realPath);
     }
 
     /**
@@ -146,10 +163,10 @@ class Controller {
      */
     public function getViewPath($view, $controllerName = false, $addonName = false)
     {
-        $addonName = ucfirst($addonName ?: $this->addonName);
-        $controllerName = $controllerName ?: $this->controllerName;
+        $addonName = ucfirst($addonName ?: $this->_addonName);
+        $controllerName = $controllerName ?: $this->_controllerName;
 
-        $addonFolder = $addonName ? $this->addonFolder.'/'.$addonName : $this->controllerInfo('folder');
+        $addonFolder = $addonName ? $this->_addonFolder.'/'.$addonName : $this->controllerInfo('folder');
         $controllerName = $controllerName ?: $this->controllerInfo('controller');
 
         if (str_ends($controllerName, 'controller')) {
@@ -157,12 +174,13 @@ class Controller {
         }
 
         $pathinfo = pathinfo($view);
+        $dir = val('dirname', $pathinfo);
         $filename = val('filename', $pathinfo, 'index');
-        $ext = val('extension', $pathinfo, $this->viewExt);
+        $ext = val('extension', $pathinfo, $this->_viewExt);
 
-        $this->templateBaseDir = $addonFolder.'/Views/'.strtolower($controllerName).'/';
+        $this->_templateBaseDir = $addonFolder.'/Views/'.strtolower($controllerName).'/';
 
-        return $this->templateBaseDir.$filename.'.'.$ext;
+        return $this->_templateBaseDir.$dir.'/'.$filename.'.'.$ext;
     }
 
     /**
@@ -172,25 +190,22 @@ class Controller {
      */
     public function smarty()
     {
-        if ($this->smarty === null) {
-            if (!class_exists('\Smarty')) {
-                throw new Exception\Client('Smarty class does not exists');
-            }
-            $this->smarty = new \Smarty();
+        if ($this->_smarty === null) {
+            $this->_smarty = new \Smarty();
 
             $config = c('smarty');
-            $this->smarty->caching = val('caching', $config, false);
-            $this->smarty
+            $this->_smarty->caching = val('caching', $config);
+            $this->_smarty
                 ->setCompileDir( val('compile_dir', $config, GDN_CACHE.'/smarty/') )
                 ->setCacheDir( val('cache_dir', $config, GDN_CACHE.'/smarty/') )
-                ->setPluginsDir( val('plugins_dir', $config, false) );
+                ->setPluginsDir( val('plugins_dir', $config) );
 
             if (Cache::$clear) {
-                $this->smarty->clearAllCache();
+                $this->_smarty->clearAllCache();
             }
         }
 
-        return $this->smarty;
+        return $this->_smarty;
     }
 
     /**
@@ -213,7 +228,7 @@ class Controller {
      */
     public function getAddonName()
     {
-        return $this->addonName;
+        return $this->_addonName;
     }
 
     /**
@@ -247,7 +262,7 @@ class Controller {
     /**
      * @param bool $key
      * @param bool $default
-     * @return array|bool|mixed
+     * @return mixed
      */
     protected function controllerInfo($key = false, $default = false)
     {

@@ -1052,7 +1052,7 @@ class Request implements JsonSerializable {
      */
     public function renderType()
     {
-        $type = val('renderType', $_REQUEST, 'all');
+        $type = strtolower(val('renderType', $_REQUEST, 'all'));
 
         if($type === self::RENDER_VIEW) {
             return self::RENDER_VIEW;

@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden;
 
 class Validation
@@ -230,7 +231,7 @@ class Validation
                 $params  = val('params', $opt);
 
                 $value = val($field, $this->data);
-                $value = trim($value);
+                $value = is_array($value) ? array_map('trim', $value): trim($value);
 
                 if(is_array($type)) {
                     $ruleFunc = [$type[0], $type[1]];

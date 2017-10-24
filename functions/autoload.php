@@ -1,8 +1,6 @@
 <?php
-use \Garden\Event;
-
 define('APP_VERSION', '1.0');
-define('GDN_SRC', realpath(__DIR__.'/../'));
+define('GDN_SRC', dirname(__DIR__));
 
 
 // Include the core functions.

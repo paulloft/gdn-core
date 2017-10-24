@@ -178,4 +178,41 @@ abstract class Where extends Database\Query\Builder {
         return $this;
     }
 
+    /**
+     * Alias of and_between()
+     * @param array $columns
+     * @param string $date
+     * @return $this
+     */
+    public function between_date($columns, $date)
+    {
+        return $this->and_between_date($columns, $date);
+    }
+
+    /**
+     * Creates a new "and between date" condition for the query.
+     * @param array $columns
+     * @param string $date
+     * @return $this
+     */
+    public function and_between_date($columns, $date)
+    {
+        $this->_where[] = array('AND' => array($columns, 'BETWEEN DATE', $date));
+
+        return $this;
+    }
+
+    /**
+     * Creates a new "or between date" condition for the query.
+     * @param array $columns
+     * @param string $date
+     * @return $this
+     */
+    public function or_between_date($columns, $date)
+    {
+        $this->_where[] = array('OR' => array($columns, 'BETWEEN DATE', $date));
+
+        return $this;
+    }
+
 }

@@ -58,7 +58,7 @@ function array_uquick(array $array, callable $callback) {
  */
 function array_load($path) {
     if (!file_exists($path)) {
-        return false;
+        return [];
     }
 
     // Get the extension of the file, but allow for .ini.php, .json.php etc.
@@ -74,7 +74,7 @@ function array_load($path) {
             break;
         case '.ser':
         case '.ser.php':
-            $loaded = unserialize(file_get_contents($path));
+            $loaded = unserialize(file_get_contents($path), false);
             break;
         case '.yml':
         case '.yml.php':
@@ -357,4 +357,16 @@ function array_ucolumn($array, callable $callback, $key = false)
     }
 
     return $result;
+}
+
+/**
+ * faster analog in_array function
+ * @param $value
+ * @param array $array
+ * @return bool
+ */
+function in_arrayf($value, array $array)
+{
+    $reverse = array_flip($array);
+    return isset($reverse[$value]);
 }

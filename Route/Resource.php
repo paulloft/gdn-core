@@ -26,7 +26,7 @@ class Resource extends \Garden\Route {
     /**
      * @var array An array of controller method names that can't be dispatched to by name.
      */
-    public static $specialActions = ['delete', 'get', 'index', 'initialize', 'options', 'patch', 'post'];
+    public static $specialActions = ['index', 'initialize', 'post'];
 
     /**
      * Initialize an instance of the {@link ResourceRoute} class.
@@ -59,7 +59,7 @@ class Resource extends \Garden\Route {
         $method = strtolower($args['method']);
         $actionArgs = $args['args'];
         $action = $args['action'];
-        $actions = ['get' => 'index', 'post' => 'index', 'options' => 'options', 'delete' => 'delete', 'put' => 'put'];
+        $actions = ['get' => 'index', 'post' => 'index', 'options' => 'options_index', 'delete' => 'delete_index', 'put' => 'put_index'];
 
         $initialize = method_exists($controller, 'initialize');
 
@@ -71,7 +71,7 @@ class Resource extends \Garden\Route {
         if (!$action) {
             $action = $this->actionExists($controller, $actions[$method]);
         } else {
-            $action = $this->actionExists($controller, $action, $method, false);
+            $action = $this->actionExists($controller, $action, $method, true);
         }
 
         if(!$action) {
@@ -132,7 +132,7 @@ class Resource extends \Garden\Route {
      * @param string $str The string to test.
      * @return bool Returns true if {@link $str} can be used as an identifier.
      */
-    protected static function isIdentifier($str) {
+    protected function isIdentifier($str) {
         if (preg_match('`[_a-zA-Z][_a-zA-Z0-9]{0,30}`i', $str)) {
             return true;
         }
@@ -210,7 +210,7 @@ class Resource extends \Garden\Route {
      * Try matching a route to a request.
      *
      * @param Request $request The request to match the route with.
-     * @param Application $app The application instantiating the route.
+     * @param \Garden\Application $app The application instantiating the route.
      * @return array|null Whether or not the route matches the request.
      * If the route matches an array of args is returned, otherwise the function returns null.
      */

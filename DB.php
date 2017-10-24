@@ -131,7 +131,7 @@ class DB {
      *     $users = ORM::factory('user')->where(DB::expr("BINARY `hash`"), '=', $hash)->find();
      *
      * @param   string  $string  expression
-     * @param   array   parameters
+     * @param   array   $parameters
      * @return  Db\Database\Expression
      */
     public static function expr($string, array $parameters = array())

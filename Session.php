@@ -21,8 +21,7 @@ class Session
 
     private function __construct()
     {
-        $this->model = new Model('session');
-        $this->model->primaryKey = 'sessionID';
+        $this->model = new Model('session', 'sessionID');
         session_start();
     }
 

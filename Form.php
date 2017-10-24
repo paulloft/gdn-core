@@ -93,7 +93,16 @@ class Form
             $id = val($primaryKey, $this->data, null);
             $this->addHidden($primaryKey, $id, true);
         }
+    }
 
+    /**
+     * gets initial form data
+     * @param bool $key
+     * @param bool $default
+     */
+    public function getData($key = false, $default = false)
+    {
+        return $key ? val($key, $this->data, $default) : $this->data;
     }
 
 
@@ -105,6 +114,7 @@ class Form
      */
     public function setFormValue($field, $value)
     {
+        $this->getFormValues();
         $this->formValues[$field] = trim($value);
         return true;
     }
@@ -215,7 +225,7 @@ class Form
 
     /**
      * check data to valid
-     * @return bool|void
+     * @return bool
      */
     public function valid()
     {
@@ -230,7 +240,6 @@ class Form
             }
 
             $this->_valid = $this->validation()->validate($data) && !count($this->errors);
-            Response::current()->headers('Form-Error', !$this->_valid);
         }
 
         return $this->_valid;
@@ -347,7 +356,7 @@ class Form
 
     /**
      * Gets initialized form fields
-     * @param array $secureKey
+     * @param string $secureKey
      * @return array
      */
     public function getSecureFields($secureKey = false)

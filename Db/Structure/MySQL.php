@@ -59,8 +59,12 @@ class MySQL extends \Garden\Db\Structure
         }
 
         // Rename the column
-        $oldColumn->name = $newname;
-        if (!$this->query('alter table `' . $this->_table . '` change column `' . $oldname . '` ' . $this->defineColumn($oldColumn))) {
+        $newColumn = $oldColumn;
+        $newColumn->name = $newname;
+        unset($this->_existingColumns[$oldname]);
+        $this->_existingColumns[$newname] = $oldColumn;
+
+        if (!$this->query('alter table `' . $this->_table . '` change column `' . $oldname . '` ' . $this->defineColumn($newColumn))) {
             throw new Exception\Custom(t('Failed to rename table `%1$s` to `%2$s`.'), array($oldname, $newname));
         }
 

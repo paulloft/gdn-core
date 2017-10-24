@@ -101,8 +101,18 @@ abstract class Builder extends Database\Query {
 
                     if ($column) {
                         if (is_array($column)) {
-                            // Use the column name
-                            $column = $db->quote_identifier(reset($column));
+                            if ($op == 'BETWEEN DATE') {
+                                $op = 'BETWEEN';
+                                $values = [];
+                                foreach ($column as $col) {
+                                    $values[] = "STR_TO_DATE({$db->quote_column($col)}, '%Y-%m-%d %H:%i:%s')";
+                                }
+                                $column = "STR_TO_DATE($value, '%Y-%m-%d %H:%i:%s')";
+                                $value = implode(' AND ', $values);
+                            } else {
+                                // Use the column name
+                                $column = $db->quote_identifier(reset($column));
+                            }
                         } else {
                             // Apply proper quoting to the column
                             $column = $db->quote_column($column);

@@ -75,7 +75,11 @@ class Model {
     public function __construct($table = null, $primaryKey = null)
     {
         if ($table !== null) {
-            $this->setTable($table, $primaryKey);
+            $this->setTable($table);
+        }
+
+        if ($primaryKey !== null) {
+            $this->setPrimaryKey($primaryKey);
         }
 
         if (Gdn::authLoaded()) {
@@ -96,17 +100,23 @@ class Model {
         return $this;
     }
 
+    public function getTable()
+    {
+        return $this->table;
+    }
+
     /**
      * Set using table
      * @param string $table table name
      */
-    public function setTable($table = null, $primaryKey = null)
+    public function setTable($table = null)
     {
         $this->table = $table;
+    }
 
-        if ($primaryKey) {
-            $this->primaryKey = $primaryKey;
-        }
+    public function setPrimaryKey($primaryKey)
+    {
+        $this->primaryKey = $primaryKey;
     }
 
     /**
@@ -231,6 +241,7 @@ class Model {
      *
      * @param int $id Element ID
      * @param array $data POST data
+     * @return int number of rows affected
      */
     public function update($id, array $data)
     {
@@ -241,18 +252,20 @@ class Model {
             return false;
         }
 
-        DB::update($this->table)
+        $rows = DB::update($this->table)
             ->set($data)
             ->where($this->primaryKey, '=', $id)
             ->execute($this->DBinstance);
-        return true;
+
+        return (int)$rows;
     }
 
     /**
      * Update record by filter
      *
      * @param array $where Array('field' => 'value')
-     * @param array $data POST data
+     * @param array $data POST data\
+     * @return int number of rows affected
      */
     public function updateWhere(array $where, array $data)
     {
@@ -263,7 +276,8 @@ class Model {
 
         $this->_where($where);
 
-        $this->_query->execute($this->DBinstance);
+        $rows = $this->_query->execute($this->DBinstance);
+        return (int)$rows;
     }
 
     /**
@@ -347,22 +361,26 @@ class Model {
     /**
      * removes records of the $where condition
      * @param array $where
+     * @return int number of rows affected
      */
     public function delete(array $where)
     {
         $this->_query = DB::delete($this->table);
         $this->_where($where);
-        $this->_query->execute($this->DBinstance);
+        $rows = $this->_query->execute($this->DBinstance);
+
+        return (int)$rows;
     }
 
     /**
      * Delete record by primary key
      *
-     * @param $id
+     * @param int|string $id
+     * @return int number of rows affected
      */
     public function deleteID($id)
     {
-        $this->delete([$this->primaryKey => $id]);
+        return (int)$this->delete([$this->primaryKey => $id]);
     }
 
 
@@ -581,7 +599,7 @@ class Model {
         return $data;
     }
 
-    protected function _where($field, $value = null)
+    protected function _where($field, $value = null, $alias = null)
     {
         if (!is_array($field)) {
             $field = [$field => $value];
@@ -590,6 +608,10 @@ class Model {
         foreach ($field as $subField => $subValue) {
             if (is_array($subValue) && empty($subValue)) {
                 continue;
+            }
+
+            if ($alias && !strpos($subField, '.')) {
+                $subField = $alias.'.'.$subField;
             }
 
             $expr = $this->conditionExpr($subField, $subValue);
@@ -651,5 +673,4 @@ class Model {
 
         return [$field, $op, $value];
     }
-
 }

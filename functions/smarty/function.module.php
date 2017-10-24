@@ -7,7 +7,11 @@ function smarty_function_module($Params, &$Smarty) {
 
     if(class_exists($moduleName)) {
         $module = $id ? $moduleName::instance($id) : $moduleName::instance();
-        echo $module->toString($Params);
+        try {
+            echo $module->render($Params);
+        } catch (\Garden\Exception\NotFound $exception) {
+            echo '<div class="alert alert-danger">Module <b>'.$moduleName.'</b>: '.$exception->getDescription().'</div>';
+        }
     } else {
         echo '<div class="alert alert-warning">'.t_sprintf('Module %s not found!', $name).'</div>';
     }

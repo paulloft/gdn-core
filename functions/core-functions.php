@@ -430,11 +430,9 @@ function t($code, $default = null)
  * @param mixed $arg1 The arguments to pass to {@link sprintf()}.
  * @return string The translated string.
  */
-function t_sprintf($formatCode, $arg1 = null)
+function t_sprintf($formatCode, ...$args)
 {
-    $args = func_get_args();
-    $args[0] = t($formatCode);
-    return sprintf(...$args);
+    return vsprintf(t($formatCode), $args);
 }
 
 /**
