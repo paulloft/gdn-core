@@ -249,7 +249,7 @@ class Model {
         $data = $this->fixPostData($data);
 
         if (empty($data)) {
-            return false;
+            return 0;
         }
 
         $rows = DB::update($this->table)

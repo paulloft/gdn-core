@@ -141,7 +141,7 @@ class Addons {
         self::$classMap = null; // invalidate so it will rebuild
 
         // Enable the addon autoloader.
-        spl_autoload_register([__CLASS__, 'autoload'], true, false);
+        spl_autoload_register([__CLASS__, 'autoload']);
 
         // Bind all of the addon plugin events now.
         foreach (self::enabled() as $addon) {
@@ -174,12 +174,14 @@ class Addons {
     public static function classMap($classname = null) {
         if (self::$classMap === null) {
             // Loop through the enabled addons and grab their classes.
-            $class_map = [];
+            $class_map = [[]];
             foreach (static::enabled() as $addon) {
                 if (isset($addon[self::K_CLASSES])) {
-                    $class_map = array_replace($class_map, $addon[self::K_CLASSES]);
+                    $class_map[] = $addon[self::K_CLASSES];
                 }
             }
+
+            $class_map = array_replace(...$class_map);
             self::$classMap = $class_map;
         }
 
@@ -289,7 +291,7 @@ class Addons {
         $addonKey = strtolower(basename($dir));
 
         // Scan the addon if it is enabled.
-        if ($enabled === null || in_array($addonKey, $enabled)) {
+        if ($enabled === null || in_arrayf($addonKey, $enabled)) {
             list($addonKey, $addon) = static::scanAddon($dir);
         } else {
             $addon = null;
@@ -298,14 +300,6 @@ class Addons {
         // Add the addon to the collection array if one was supplied.
         if ($addon !== null) {
             $addons[$addonKey] = $addon;
-        }
-
-        // Recurse.
-        $addon_subdirs = ['/Addons'];
-        foreach ($addon_subdirs as $addon_subdir) {
-            if (is_dir($dir.$addon_subdir)) {
-                static::scanAddons($dir.$addon_subdir, $enabled, $addons);
-            }
         }
 
         return [$addonKey, $addon];
@@ -339,7 +333,7 @@ class Addons {
         $config = self::checkFile($settings, self::K_CONFIG);
 
         // Scan the appropriate subdirectories  for classes.
-        $subdirs = ['', '/Library', '/Modules', '/Hooks'];
+        $subdirs = ['', '/Library', '/Hooks'];
         $classes = $hooks = [];
         foreach ($subdirs as $subdir) {
             // Get all of the php files in the subdirectory.
@@ -350,9 +344,8 @@ class Addons {
                 foreach ($decls as $namespace_row) {
                     if (isset($namespace_row['namespace']) && $namespace_row) {
                         $namespace = rtrim($namespace_row['namespace'], '\\').'\\';
-                        $namespace_classes = $namespace_row['classes'];
 
-                        foreach ($namespace_classes as $class_row) {
+                        foreach ($namespace_row['classes'] as $class_row) {
                             if ($isHooks) {
                                 $hooks[] = $namespace.$class_row['name'];
                             } else {
@@ -381,7 +374,7 @@ class Addons {
     protected static function checkFile($dir, $filename)
     {
         $file = $dir.'/'.$filename.'.php';
-        return (!file_exists($file) ? null : $file);
+        return !file_exists($file) ? null : $file;
     }
 
     /**
@@ -492,7 +485,8 @@ class Addons {
         $cache = Gdn::cache('system');
         // load config.
         if (!$cache->get('config-autoload')) {
-            if($config_path = val(self::K_CONFIG, $addon)) {
+            $config_path = val(self::K_CONFIG, $addon);
+            if ($config_path) {
                 Config::load($addon_key, $config_path, true);
             }
         }
@@ -505,7 +499,8 @@ class Addons {
         }
 
         // Run the class' bootstrap.
-        if ($bootstrap_path = val(self::K_BOOTSTRAP, $addon)) {
+        $bootstrap_path = val(self::K_BOOTSTRAP, $addon);
+        if ($bootstrap_path) {
             include_once $bootstrap_path;
         }
 

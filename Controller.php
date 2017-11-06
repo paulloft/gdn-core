@@ -186,7 +186,6 @@ class Controller {
     /**
      * Return lazyload Smarty object
      * @return \Smarty
-     * @throws Exception\Client
      */
     public function smarty()
     {
