@@ -49,6 +49,7 @@ abstract class Database {
      *
      * @param   string   $name    instance name
      * @param   array    $config  configuration parameters
+     * @throws Exception\Error
      * @return  Database
      */
     public static function instance($name = NULL, array $config = NULL) 
@@ -67,7 +68,7 @@ abstract class Database {
             $driver = val('driver', $config);
 
             if (!$driver) {
-                throw new Exception\Custom('Database driver not defined in %s configuration', array($name));
+                throw new Exception\Error("Database driver not defined in $name configuration");
             }
 
             // Set the driver class name

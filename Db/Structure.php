@@ -174,7 +174,6 @@ abstract class Structure {
      * @param bool $drop If TRUE, and the table specified with $this->table() already exists, this
      * method will drop the table before attempting to re-create it.
      * @return mixed
-     * @throws Exception\Custom
      */
     public function set($explicit = false, $drop = false)
     {
@@ -189,11 +188,11 @@ abstract class Structure {
         try {
             // Make sure that table and columns have been defined
             if ($this->_table == '') {
-                throw new Exception\Custom(t('You must specify a table before calling DatabaseStructure::Set()'));
+                throw new Exception\Error('You must specify a table before calling DatabaseStructure::Set()');
             }
 
             if (count($this->_columns) == 0) {
-                throw new Exception\Custom(t('You must provide at least one column before calling DatabaseStructure::Set()'));
+                throw new Exception\Error('You must provide at least one column before calling DatabaseStructure::Set()');
             }
 
             if ($this->tableExists()) {
@@ -211,7 +210,7 @@ abstract class Structure {
                 // If it doesn't already exist, go into create mode.
                 return $this->create();
             }
-        } catch (Exception\Custom $ex) {
+        } catch (Exception\Error $ex) {
             $this->reset();
             throw $ex;
         }

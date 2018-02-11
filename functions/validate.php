@@ -29,9 +29,14 @@ function validate_required($value, $params)
     return validate_not_empty($value, $params);
 }
 
-function validate_not_value($value, $params)
+function validate_not_in($value, $params)
 {
-    return !in_array($value, $params);
+    return !in_arrayf($value, $params);
+}
+
+function validate_in($value, $params)
+{
+    return in_arrayf($value, $params);
 }
 
 function validate_min_length($value, $params)
@@ -59,6 +64,16 @@ function validate_numeric($value, $params)
     return is_numeric($value);
 }
 
+function validate_min_value($value, $params)
+{
+    return (int)$value >= $params;
+}
+
+function validate_max_value($value, $params)
+{
+    return (int)$value <= $params;
+}
+
 function validate_regexp($value, $params)
 {
     return preg_match($params, (string)$value);
@@ -69,10 +84,9 @@ function validate_sql_date($value)
     $date = "/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/";
     $datetime = "/^(\\d{4})-(\\d{2})-(\\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/";
 
-    return preg_match($date, $value, $matches)
-        && checkdate($matches[2], $matches[3], $matches[1])
-        || preg_match($datetime, $value, $matches)
-        && checkdate($matches[2], $matches[3], $matches[1]);
+    return (preg_match($date, $value, $matches) && checkdate($matches[2], $matches[3], $matches[1]))
+        ||
+        (preg_match($datetime, $value, $matches) && checkdate($matches[2], $matches[3], $matches[1]));
 }
 
 function validate_min_date($value, $params)

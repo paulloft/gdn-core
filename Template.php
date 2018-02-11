@@ -11,6 +11,15 @@ class Template extends Controller {
     protected $meta = [];
 
     /**
+     * Set page title
+     * @param string $title
+     */
+    public function title($title)
+    {
+        $this->setData('title', t($title));
+    }
+
+    /**
      * Add js library to template
      * @param string $src path to js file
      * @param string $addon addon name

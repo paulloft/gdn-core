@@ -18,7 +18,7 @@ abstract class Cache implements Interfaces\Cache
      * get singletone cache class
      * @param string $driver driver name
      * @return self
-     * @throws Exception\Custom
+     * @throws Exception\Error
      */
     public static function instance($driver = null, $config = false)
     {
@@ -34,7 +34,7 @@ abstract class Cache implements Interfaces\Cache
             $driverClass = 'Garden\Cache\\' . ucfirst($driver);
 
             if (!class_exists($driverClass)) {
-                throw new Exception\Custom('Cache driver "%s" not found', [$driver]);
+                throw new Exception\Error("Cache driver \"$driver\" not found");
             }
 
             $config = $config ?: val($driver, $options);

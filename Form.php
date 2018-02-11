@@ -51,15 +51,10 @@ class Form
     /**
      * set form model
      * @param Model $model table model
-     * @param array|\stdClass $dataset
      */
-    public function setModel($model, $dataset = false)
+    public function setModel($model)
     {
         $this->model = $model;
-
-        if ($dataset !== false) {
-            $this->setData($dataset);
-        }
     }
 
     /**
@@ -563,6 +558,10 @@ class Form
     {
         if ($forceValue === false && $this->submitted()) {
             $value = $this->getFormValue($name, $value);
+        }
+
+        if ($value !== null) {
+            $this->data[$name] = $value;
         }
 
         $this->hiddenInputs[$name] = $value;

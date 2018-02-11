@@ -48,8 +48,8 @@ class Controller {
      */
     public function setData($key, $value = null)
     {
-        if (is_array($key)) {
-            foreach ($key as $k => $v) {
+        if (\is_array($key)) {
+            foreach ((array)$key as $k => $v) {
                 $this->_data[$k] = $v;
             }
         } else {
@@ -66,15 +66,6 @@ class Controller {
     public function data($key, $default = false)
     {
         return val($key, $this->_data, $default);
-    }
-
-    /**
-     * Set page title
-     * @param string $title
-     */
-    public function title($title)
-    {
-        $this->setData('title', t($title));
     }
 
     /**
@@ -118,6 +109,7 @@ class Controller {
      * @param string $addonName addon name
      * @return string html
      * @throws Exception\NotFound
+     * @throws Exception\Error
      */
     public function fetchView($view, $controllerName = false, $addonName = false)
     {
@@ -129,10 +121,14 @@ class Controller {
         }
 
         if (str_ends($realPath, '.'.$this->_viewExt)) {
-            $smarty = $this->smarty();
-            $smarty->setTemplateDir(PATH_ROOT.'/'.$this->_templateBaseDir);
-            $smarty->assign($this->_data);
-            $view = $smarty->fetch($realPath);
+            try {
+                $smarty = $this->smarty();
+                $smarty->setTemplateDir(PATH_ROOT.'/'.$this->_templateBaseDir);
+                $smarty->assign($this->_data);
+                $view = $smarty->fetch($realPath);
+            } catch (\Exception $e) {
+                throw new Exception\Error($e);
+            }
         } else {
             $view = \getInclude($realPath, $this->_data);
         }
@@ -178,9 +174,9 @@ class Controller {
         $filename = val('filename', $pathinfo, 'index');
         $ext = val('extension', $pathinfo, $this->_viewExt);
 
-        $this->_templateBaseDir = $addonFolder.'/Views/'.strtolower($controllerName).'/';
+        $this->_templateBaseDir = $addonFolder.'/Views/'.strtolower($controllerName).'/'.$dir;
 
-        return $this->_templateBaseDir.$dir.'/'.$filename.'.'.$ext;
+        return $this->_templateBaseDir.'/'.$filename.'.'.$ext;
     }
 
     /**
@@ -237,11 +233,12 @@ class Controller {
      */
     public function form($model = false, $data = false)
     {
-        $tablename = is_string($model) ? $model : false;
+        $tablename = \is_string($model) ? $model : false;
         $this->form = new Form($tablename);
 
         if ($model instanceof Model) {
-            $this->form->setModel($model, $data);
+            $this->form->setModel($model);
+            $this->form->setData($data);
         } elseif ($data !== false) {
             $this->form->setData($data);
         }
@@ -266,13 +263,13 @@ class Controller {
      */
     protected function controllerInfo($key = false, $default = false)
     {
-        $className = get_called_class();
+        $className = static::class;
 
         if (!$result = Gdn::dirtyCache()->get($className)) {
             $space = explode('\\', $className);
 
             $result = false;
-            if (count($space) >= 3) {
+            if (\count($space) >= 3) {
                 $result = [
                     'addon' => $space[1],
                     'folder' => strtolower($space[0]).'/'.$space[1],

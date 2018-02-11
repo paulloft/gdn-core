@@ -111,12 +111,17 @@ class MySQLi extends SQL {
         return $status;
     }
 
+    /**
+     * @param string $charset
+     * @throws Exception\Error
+     * @throws \Exception
+     */
     public function set_charset($charset)
     {
         // Make sure the database is connected
         $this->_connection or $this->connect();
 
-        if (MySQLi::$_set_names === TRUE) {
+        if (self::$_set_names === TRUE) {
             // PHP is compiled against MySQL 4.x
             $status = (bool)$this->_connection->query('SET NAMES ' . $this->quote($charset));
         } else {
@@ -125,7 +130,7 @@ class MySQLi extends SQL {
         }
 
         if ($status === FALSE) {
-            throw new \Exception($this->_connection->error, $this->_connection->errno);
+            throw new Exception\Error($this->_connection->error, $this->_connection->errno);
         }
     }
 
@@ -136,7 +141,7 @@ class MySQLi extends SQL {
 
         // Execute the query
         if (($result = $this->_connection->query($sql)) === FALSE) {
-            throw new Exception\Custom('%s [ %s ]', array($this->_connection->error, $sql), $this->_connection->errno);
+            throw new Exception\Error("{$this->_connection->error} [$sql]", $this->_connection->errno);
         }
 
         // Set the last query
@@ -145,16 +150,18 @@ class MySQLi extends SQL {
         if ($type === Database::SELECT) {
             // Return an iterator of results
             return new MySQLi\Result($result, $sql, $as_object, $params);
-        } elseif ($type === Database::INSERT) {
+        }
+
+        if ($type === Database::INSERT) {
             // Return a list of insert id and rows created
             return array(
                 $this->_connection->insert_id,
                 $this->_connection->affected_rows,
             );
-        } else {
-            // Return the number of rows affected
-            return $this->_connection->affected_rows;
         }
+
+        // Return the number of rows affected
+        return $this->_connection->affected_rows;
     }
 
     /**

@@ -52,6 +52,7 @@ class Resource extends \Garden\Route {
      * @return mixed Returns the result from the controller method.
      * @throws Exception\NotFound Throws a 404 when the path doesn't map to a controller action.
      * @throws Exception\MethodNotAllowed Throws a 405 when the http method does not map to a controller action,
+     * @throws Exception\Pass
      * but other methods do.
      */
     public function dispatch(Request $request, array &$args) {
@@ -148,9 +149,21 @@ class Resource extends \Garden\Route {
      * @param bool $special Whether or not to blacklist the special methods.
      * @return string Returns the name of the action method or an empty string if it doesn't exist.
      */
-    protected function actionExists($object, $action, $method = '', $special = false) {
-        // p($object, $action);
+    protected function actionExists($object, $action, $method = '', $special = false)
+    {
         if ($special && in_array($action, self::$specialActions)) {
+            return '';
+        }
+
+        $reserved = [];
+
+        if ($object instanceof \Garden\Template) {
+            $reserved = get_class_methods(\Garden\Template::class);
+        } elseif ($object instanceof \Garden\Controller) {
+            $reserved = get_class_methods(\Garden\Controller::class);
+        }
+
+        if (in_arrayf($action, $reserved)) {
             return '';
         }
 
@@ -228,7 +241,7 @@ class Resource extends \Garden\Route {
         $regex = $this->getPatternRegex($this->pattern());
 
         $action = false;
-        $printArgs = array();
+        $printArgs = [];
 
         if (preg_match($regex, $path, $matches)) {
             $args = [];
@@ -265,14 +278,14 @@ class Resource extends \Garden\Route {
             return null;
         }
 
-        $result = array(
+        $result = [
             'controller' => $classname,
             'action'     => $action,
             'method'     => $request->getMethod(),
             'path'       => $path,
             'args'       => $args,
             'query'      => $request->getQuery()
-        );
+        ];
         return $result;
     }
 

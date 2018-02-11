@@ -23,6 +23,11 @@ class Memcached extends \Garden\Cache {
      */
     public $cache;
 
+    /**
+     * Memcached constructor.
+     * @param array $config
+     * @throws Exception\Error
+     */
     public function __construct(array $config = [])
     {
         $this->lifetime = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
@@ -40,11 +45,14 @@ class Memcached extends \Garden\Cache {
         $this->connect();
     }
 
+    /**
+     * @throws Exception\Error
+     */
     protected function connect()
     {
         if (!$this->cache) {
             if (!class_exists('Memcached')) {
-                throw new Exception\Custom('Memcached extention not found');
+                throw new Exception\Error('Memcached extention not found');
             }
 
             $this->cache = new \Memcached($this->persistent);

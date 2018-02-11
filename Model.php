@@ -49,6 +49,7 @@ class Model {
     public $fieldUserInserted = 'userInserted';
 
     public $DBinstance;
+    public $triggers = true;
 
     private static $instances;
 
@@ -56,13 +57,13 @@ class Model {
      * Returns the application singleton or null if the singleton has not been created yet.
      * @return $this
      */
-    public static function instance($table = null) {
+    public static function instance($table = null, $primaryKey = null) {
         $class_name = get_called_class();
 
         $instance = $class_name === self::class && $table ? $table : $class_name;
 
         if (!self::$instances[$instance]) {
-            self::$instances[$instance] = new $class_name($table);
+            self::$instances[$instance] = new $class_name($table, $primaryKey);
         }
 
         return self::$instances[$instance];
@@ -207,7 +208,7 @@ class Model {
      *
      * @return array
      */
-    public function getFields()
+    public function getAllowedFields()
     {
         return val($this->table, $this->_allowedFields, []);
     }
@@ -233,7 +234,13 @@ class Model {
             ->values($data)
             ->execute($this->DBinstance);
 
-        return val(0, $query);
+        $id = val(0, $query);
+
+        if ($this->triggers) {
+            Event::fire('gdn_model_insert', $this, $id, $data);
+        }
+
+        return $id;
     }
 
     /**
@@ -257,6 +264,10 @@ class Model {
             ->where($this->primaryKey, '=', $id)
             ->execute($this->DBinstance);
 
+        if ($this->triggers) {
+            Event::fire('gdn_model_update', $this, $id, $data);
+        }
+
         return (int)$rows;
     }
 
@@ -277,6 +288,11 @@ class Model {
         $this->_where($where);
 
         $rows = $this->_query->execute($this->DBinstance);
+
+        if ($this->triggers) {
+            Event::fire('gdn_model_updateWhere', $this, $where, $data);
+        }
+
         return (int)$rows;
     }
 
@@ -309,7 +325,7 @@ class Model {
      */
     public function fixPostData(array $post)
     {
-        $fields = $this->getFields() ?: $this->getTableFields();
+        $fields = $this->getAllowedFields() ?: $this->getTableFields();
         $post = $this->checkArray($post, $fields);
         $post = $this->setNullValues($post);
 
@@ -365,6 +381,10 @@ class Model {
      */
     public function delete(array $where)
     {
+        if ($this->triggers) {
+            Event::fire('gdn_model_deleteWhere', $this, $where);
+        }
+
         $this->_query = DB::delete($this->table);
         $this->_where($where);
         $rows = $this->_query->execute($this->DBinstance);

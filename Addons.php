@@ -125,7 +125,7 @@ class Addons {
      * Start up the addon framework.
      *
      * @param array $enabled_addons An array of enabled addons.
-     * @throws Exception\Client
+     * @throws Exception\Error
      * @throws \InvalidArgumentException
      */
     public static function bootstrap($enabled_addons = null) {
@@ -169,7 +169,7 @@ class Addons {
      * @param string $classname An optional class name to get the path of.
      * @return array Returns an array in the form `[fullClassname, classPath]`.
      * If no {@link $classname} is passed then the entire class map is returned.
-     * @throws Exception\Client Throws an exception if the class map is corrupt.
+     * @throws Exception\Error Throws an exception if the class map is corrupt.
      */
     public static function classMap($classname = null) {
         if (self::$classMap === null) {
@@ -215,14 +215,14 @@ class Addons {
      * @param string $addon_key If you supply an addon key then only that addon will be returned.
      * @param string $key Supply one of the Addons::K_* constants to get a specific key from the addon.
      * @return array Returns the addon with the given key or all enabled addons if no key is passed.
-     * @throws Exception\Client Throws an exception if {@link Addons::bootstrap()} hasn't been called yet.
+     * @throws Exception\Error Throws an exception if {@link Addons::bootstrap()} hasn't been called yet.
      */
     public static function enabled($addon_key = null, $key = null) {
         // Lazy build the enabled array.
         if (self::$enabled === null) {
             // Make sure the enabled addons have been added first.
             if (self::$enabledKeys === null) {
-                throw new Exception\Client('Addons::boostrap() must be called before Addons::enabled() can be called.', 500);
+                throw new Exception\Error('Addons::boostrap() must be called before Addons::enabled() can be called.', 500);
             }
 
             if (self::$all !== null || self::$sharedEnvironment) {
@@ -265,7 +265,7 @@ class Addons {
      *
      * @param string $addon_key The addon key.
      * @return array|null Returns the addon's info array or null if the addon wasn't found.
-     * @throws Exception\Client
+     * @throws Exception\Error
      */
     public static function info($addon_key) {
         $addon_key = strtolower($addon_key);
@@ -474,7 +474,7 @@ class Addons {
      *
      * @param string $addon_key The key of the addon to enable.
      * @return bool Returns true if the addon was enabled. False otherwise.
-     * @throws Exception\Client
+     * @throws Exception\Error
      */
     public static function startAddon($addon_key) {
         $addon = static::enabled($addon_key);

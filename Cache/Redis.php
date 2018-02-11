@@ -24,6 +24,11 @@ class Redis extends \Garden\Cache
 
     private $_igbinary;
 
+    /**
+     * Redis constructor.
+     * @param $config
+     * @throws Exception\Error
+     */
     public function __construct($config)
     {
         $this->lifetime = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
@@ -40,21 +45,24 @@ class Redis extends \Garden\Cache
         $this->salt = c('main.hashsalt', 'gdn');
         $this->dirty = \Garden\Gdn::dirtyCache();
 
-        $this->_igbinary = function_exists('igbinary_serialize');
+        $this->_igbinary = \function_exists('igbinary_serialize');
 
         $this->connect();
     }
 
+    /**
+     * @throws Exception\Error
+     */
     protected function connect()
     {
         if (!$this->cache) {
             if (!class_exists('Redis')) {
-                throw new Exception\Custom('Redis extention not found');
+                throw new Exception\Error('Redis extention not found');
             }
 
             $this->cache = new \Redis();
             if (!$this->cache->connect($this->host, $this->port, $this->timeout, $this->reserved, $this->retry_interval)) {
-                throw new Exception\Custom($this->cache->getLastError());
+                throw new Exception\Error($this->cache->getLastError());
             }
         }
     }

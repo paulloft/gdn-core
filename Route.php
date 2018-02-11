@@ -70,6 +70,9 @@ abstract class Route {
      * @param Request $request The current request we are dispatching against.
      * @param array &$args The args to pass to the dispatch.
      * These are the arguments returned from {@link Route::matches()}.
+     * @throws Exception\NotFound Throws a 404 when the path doesn't map to a controller action.
+     * @throws Exception\MethodNotAllowed Throws a 405 when the http method does not map to a controller action,
+     * @throws Exception\Pass
      */
     abstract public function dispatch(Request $request, array &$args);
 

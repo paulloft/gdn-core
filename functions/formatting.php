@@ -80,7 +80,7 @@ function format_filesize($bytes, $precision = 1) {
 /**
  * Unformat a file size that was formatted using {@link format_filesize()}.
  *
- * @param $str The formatted file suze to unformat.
+ * @param string $str The formatted file suze to unformat.
  * @return int Returns the file size in bytes.
  */
 function unformat_filesize($str) {
@@ -127,7 +127,9 @@ function format_form($string)
 
 function format_declension($num, $exp)
 {
-    if(count($exp) <3) return false;
+    if(count($exp) <3) {
+        return false;
+    }
     $num = (($num < 0) ? $num-$num*2 : $num)%100;
     $dig = ($num > 20) ? $num%10 : $num;
 

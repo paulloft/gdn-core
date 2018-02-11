@@ -25,7 +25,7 @@ class Error extends \ErrorException {
      * @param int $context The currently defined variables when the error occured.
      * @param array $backtrace A debug backtrace from when the error occurred.
      */
-    public function __construct($message, $number, $filename, $line, $context, $backtrace = []) {
+    public function __construct($message, $number = 500, $filename = __FILE__, $line = __LINE__, $context = '', $backtrace = []) {
         parent::__construct($message, $number, 0, $filename, $line);
         $this->context = $context;
         $this->backtrace = $backtrace;

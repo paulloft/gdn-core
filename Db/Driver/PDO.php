@@ -125,6 +125,15 @@ class PDO extends SQL {
         $this->_connection->exec('SET NAMES ' . $this->quote($charset));
     }
 
+    /**
+     * @param int $type
+     * @param string $sql
+     * @param bool $as_object
+     * @param array|NULL $params
+     * @return array|Database\Result\Cached|object
+     * @throws Exception\Error
+     * @throws \Exception
+     */
     public function query($type, $sql, $as_object = FALSE, array $params = NULL)
     {
         // Make sure the database is connected
@@ -134,7 +143,7 @@ class PDO extends SQL {
             $result = $this->_connection->query($sql);
         } catch (\Exception $e) {
             // Convert the exception in a database exception
-            throw new Exception\Custom("%s \n[ %s ]", array($e->getMessage(), $sql));
+            throw new Exception\Error("{$e->getMessage()} \n[$sql ]");
         }
 
         // Set the last query

@@ -232,7 +232,7 @@ class Application {
         if ($result instanceof \Exception) {
             $response->flushHeaders();
             $handler = Event::fire('exception', $result);
-            if($handler) {
+            if ($handler) {
                 $response->data($handler);
             } else {
                 throw $result;

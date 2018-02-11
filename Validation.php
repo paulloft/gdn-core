@@ -188,14 +188,14 @@ class Validation
                     break;
 
                 case 'double':
-                    if (!$this->isEmpty($value) && !is_float($value)) {
+                    if (!is_float($value) && !$this->isEmpty($value)) {
                         $this->errors[$field][] = t('validate_double');
                         continue 2;
                     }
                     break;
 
                 case 'float':
-                    if (!$this->isEmpty($value) && !is_numeric($value)) {
+                    if (!is_numeric($value) && !$this->isEmpty($value)) {
                         $this->errors[$field][] = t('validate_float');
                         continue 2;
                     }
@@ -225,7 +225,7 @@ class Validation
         }
 
         foreach ($this->rule as $field => $rules) {
-            foreach ($rules as $opt) {
+            foreach ((array)$rules as $opt) {
                 $type    = val('type', $opt);
                 $message = val('message', $opt);
                 $params  = val('params', $opt);
@@ -233,10 +233,12 @@ class Validation
                 $value = val($field, $this->data);
                 $value = is_array($value) ? array_map('trim', $value): trim($value);
 
-                if(is_array($type)) {
+                if (is_array($type)) {
                     $ruleFunc = [$type[0], $type[1]];
                     $type = $type[1];
-                } else {
+                } elseif ($type instanceof \Closure) {
+                    $ruleFunc = $type;
+                }else {
                     $ruleFunc = 'validate_' . $type;
                 }
 
