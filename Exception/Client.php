@@ -71,9 +71,11 @@ class Client extends \Exception implements \JsonSerializable {
             'message' => $this->getMessage(),
             'status' => $this->getCode()
         ];
+
         if ($this->getDescription()) {
             $result['description'] = $this->getDescription();
         }
+
         return $result;
     }
 }

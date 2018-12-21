@@ -24,7 +24,8 @@ class Application {
 
     /// Methods ///
 
-    public function __construct($name = 'default') {
+    public function __construct($name = 'default')
+    {
         $this->routes = [];
 
         self::$instances[$name] = $this;
@@ -34,10 +35,12 @@ class Application {
      * @param string $name
      * @return self
      */
-    public static function instance($name = 'default') {
+    public static function instance($name = 'default'): self
+    {
         if (!isset(self::$instances[$name])) {
             self::$instances[$name] = new Application($name);
         }
+
         return self::$instances[$name];
     }
 
@@ -47,16 +50,38 @@ class Application {
      * @param Request $request The {@link Request} to match against.
      * @return array An array of arrays corresponding to matching routes and their args.
      */
-    public function matchRoutes(Request $request) {
+    public function matchRoutes(Request $request): array
+    {
         $result = [];
 
         foreach ($this->routes as $route) {
-            $matches = $route->matches($request, $this);
+            $matches = $route->matches($request);
             if ($matches) {
                 $result[] = [$route, $matches];
             }
         }
+
         return $result;
+    }
+
+    /**
+     * Get matched route for a request.
+     *
+     * @return Route
+     * @throws Exception\NotFound() Throws a 404 when the path doesn't map to a controller action.
+     */
+    public function findRoute(): Route
+    {
+        /**
+         * @var $route Route
+         */
+        foreach ($this->routes as $route) {
+            if ($route->match($this->request)) {
+                return $route;
+            }
+        }
+
+        throw new Exception\NotFound();
     }
 
     /**
@@ -68,10 +93,11 @@ class Application {
      * @return Route Returns the route that was added.
      * @throws \InvalidArgumentException Throws an exceptio if {@link $path} isn't a string or {@link Route}.
      */
-    public function route($pathOrRoute, $callback = null) {
-        if (is_object($pathOrRoute) && $pathOrRoute instanceof Route) {
+    public function route($pathOrRoute, $callback = null): Route
+    {
+        if ($pathOrRoute instanceof Route) {
             $route = $pathOrRoute;
-        } elseif (is_string($pathOrRoute) && $callback !== null) {
+        } elseif (\is_string($pathOrRoute) && $callback !== null) {
             $route = Route::create($pathOrRoute, $callback);
         } else {
             throw new \InvalidArgumentException("Argument #1 must be either a Garden\\Route or a string.", 500);
@@ -88,8 +114,9 @@ class Application {
      * @throws \InvalidArgumentException
      * @return Route Returns the new route.
      */
-    public function get($pattern, callable $callback) {
-        return $this->route($pattern, $callback)->methods('GET');
+    public function get($pattern, callable $callback): Route
+    {
+        return $this->route($pattern, $callback)->methods(['GET']);
     }
 
     /**
@@ -100,8 +127,9 @@ class Application {
      * @throws \InvalidArgumentException
      * @return Route Returns the new route.
      */
-    public function post($pattern, callable $callback) {
-        return $this->route($pattern, $callback)->methods('POST');
+    public function post($pattern, callable $callback): Route
+    {
+        return $this->route($pattern, $callback)->methods(['POST']);
     }
 
     /**
@@ -112,8 +140,9 @@ class Application {
      * @throws \InvalidArgumentException
      * @return Route Returns the new route.
      */
-    public function put($pattern, callable $callback) {
-        return $this->route($pattern, $callback)->methods('PUT');
+    public function put($pattern, callable $callback): Route
+    {
+        return $this->route($pattern, $callback)->methods(['PUT']);
     }
 
     /**
@@ -124,8 +153,9 @@ class Application {
      * @throws \InvalidArgumentException
      * @return Route Returns the new route.
      */
-    public function patch($pattern, callable $callback) {
-        return $this->route($pattern, $callback)->methods('PATCH');
+    public function patch($pattern, callable $callback): Route
+    {
+        return $this->route($pattern, $callback)->methods(['PATCH']);
     }
 
     /**
@@ -136,134 +166,62 @@ class Application {
      * @throws \InvalidArgumentException
      * @return Route Returns the new route.
      */
-    public function delete($pattern, callable $callback) {
-        return $this->route($pattern, $callback)->methods('DELETE');
+    public function delete($pattern, callable $callback): Route
+    {
+        return $this->route($pattern, $callback)->methods(['DELETE']);
     }
 
     /**
      * Run the application against a {@link Request}.
      *
-     * @param Request|null $request A {@link Request} to run the application against or null to run against a request
+     * @param Request $request A {@link Request} to run the application against or null to run against a request
      * on the current environment.
      * @throws \Exception
-     * @return mixed Returns a response appropriate to the request's ACCEPT header.
      */
-    public function run(Request $request = null) {
-        if ($request === null) {
-            $request = new Request();
-        }
-        $this->request = $request;
-        $requestBak = Request::current($request);
+    public function run(Request $request = null)
+    {
+        $this->request = Request::current($request ?: new Request());
 
-        // Grab all of the matched routes.
-        $routes = $this->matchRoutes($this->request);
-
-        // Try all of the matched routes in turn.
-        $dispatched = false;
-        $result = null;
         Event::fire('dispatch_before');
+
         try {
-            foreach ($routes as $route_args) {
-                /**
-                 * @var $route Route
-                 */
-                list($route, $args) = $route_args;
-
-                try {
-                    // Dispatch the first matched route.
-                    ob_start();
-                    Event::fire('dispatch', $request, $args);
-                    $response = $route->dispatch($request, $args);
-                    $body = ob_get_clean();
-
-                    $result = [
-                        'routing' => $args,
-                        'response' => $response,
-                        'body' => $body
-                    ];
-
-                    // Once a route has been successfully dispatched we break and don't dispatch anymore.
-                    $dispatched = true;
-                    break;
-                } catch (Exception\Pass $pex) {
-                    ob_end_clean();
-                    // If the route throws a pass then continue on to the next route.
-                    continue;
-                } catch (\Exception $ex) {
-                    ob_end_clean();
-                    throw $ex;
-                }
-            }
-
-            if (!$dispatched) {
-                throw new Exception\NotFound();
-            }
+            $route = $this->findRoute();
+            $args = $route->getMathedArguments();
+            Event::fire('dispatch', $request, $args);
+            $response = $route->dispatch($this->request);
         } catch (\Exception $ex) {
-            $result = $ex;
+            $response = Response::create($ex);
+            ob_start();
+            $handled = Event::fire('exception', $ex);
+            $response->setBody(ob_get_clean());
+
+            if (!$handled) {
+                throw $ex;
+            }
         }
 
-        Event::fire('dispatch_before');
-        $result = $this->finalize($result);
-        Request::current($requestBak);
+        Event::fire('dispatch_after');
 
-        return $result;
+        $this->finalize($response);
     }
 
     /**
      * Finalize the result from a dispatch.
      *
      * @param mixed $result The result of the dispatch.
-     * @return mixed Returns relevant debug data or processes the response.
      * @throws \Exception Throws an exception when finalizing internal content types and the result is an exception.
      */
-    protected function finalize($result) {
-        $response = Response::create($result);
-        $response->meta(['request' => $this->request], true);
-        $response->contentTypeFromAccept($this->request->getEnv('HTTP_ACCEPT'));
-        $response->contentAsset($this->request->getEnv('HTTP_X_ASSET'));
+    protected function finalize(Response $response)
+    {
+        $response->setMeta(['request' => $this->request], true);
+        $response->setContentTypeFromAccept($this->request->getEnvKey('HTTP_ACCEPT'));
 
-        $contentType = $response->contentType();
+        $response->flushHeaders();
 
         if ($this->request->getMethod() === Request::METHOD_HEAD) {
-            $response->flushHeaders();
-            return null;
+            return;
         }
 
-        if ($result instanceof \Exception) {
-            $response->flushHeaders();
-            $handler = Event::fire('exception', $result);
-            if ($handler) {
-                $response->data($handler);
-            } else {
-                throw $result;
-            }
-        }
-
-        // Check for known response types.
-        switch ($contentType) {
-            case 'application/internal':
-                if ($response->contentAsset() === 'response') {
-                    return $response;
-                }
-
-                return $response->jsonSerialize();
-                // No break because everything returns.
-//            case 'application/json':
-//                $response->flushHeaders();
-//                echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-//                break;
-            default:
-                $data = $response->data();
-                if (is_string($data)) {
-                    $response->flushHeaders();
-                    echo $data;
-                } else {
-                    $response->status(415);
-                    $response->flushHeaders();
-                    echo "Unsupported response type: $contentType";
-                }
-                break;
-        }
-        return null;
+        echo $response->body();
     }
 }

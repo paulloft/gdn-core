@@ -105,7 +105,7 @@ function validate_unique($value, $params)
      * @var $model \Garden\Model
      */
     list($id, $field, $model) = $params;
-    $count = $model->getCount([$field => $value, $model->primaryKey.'!=' => $id]);
+    $count = $model->getCount([$field => $value, $model->getPrimaryKey() . '!=' => $id]);
 
     return !$count;
 }

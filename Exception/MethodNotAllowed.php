@@ -16,10 +16,9 @@ class MethodNotAllowed extends Client {
      * Initialize the {@link MethodNotAllowed}.
      *
      * @param string $method The http method that's not allowed.
-     * @param array|string $allow An array http methods that are allowed.
+     * @param array $allow An array http methods that are allowed.
      */
-    public function __construct($method, $allow = []) {
-        $allow = (array)$allow;
+    public function __construct($method, array $allow = []) {
         $message = sprintf('%s not allowed.', strtoupper($method));
         parent::__construct($message, 405, ['HTTP_ALLOW' => strtoupper(implode(', ', $allow))]);
     }

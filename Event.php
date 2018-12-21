@@ -64,13 +64,13 @@ class Event {
         // Figure out the event name from the callback.
         $event_name = static::getEventname($callback);
         if (!$event_name) {
-            return call_user_func_array($callback, $args);
+            return \call_user_func_array($callback, $args);
         }
 
         // The events could have different args because the event handler can take the object as the first parameter.
         $event_args = $args;
         // If the callback is an object then it gets passed as the first argument.
-        if (is_array($callback) && is_object($callback[0])) {
+        if (\is_array($callback) && \is_object($callback[0])) {
             array_unshift($event_args, $callback[0]);
         }
 
@@ -83,7 +83,7 @@ class Event {
             $result = static::fireArray($event_name, $event_args);
         } else {
             // The callback was not overridden so just call the passed callback.
-            $result = call_user_func_array($callback, $args);
+            $result = \call_user_func_array($callback, $args);
         }
 
         // Fire after events.
@@ -131,7 +131,7 @@ class Event {
         $method_names = get_class_methods($class);
 
         // Grab an instance of the class so there is something to bind to.
-        if (is_string($class)) {
+        if (\is_string($class)) {
             if (method_exists($class, 'instance')) {
                 $instance = $class::instance();
             } else {
@@ -160,6 +160,7 @@ class Event {
                     $event_name = implode('_', $parts);
                     break;
             }
+
             // Bind the event if we have one.
             if ($event_name) {
                 static::bind($event_name, [$instance, $method_name], $priority);
@@ -189,6 +190,7 @@ class Event {
      * Fire an event.
      *
      * @param string $event The name of the event.
+     * @param mixed ...$args
      * @return mixed Returns the result of the last event handler.
      */
     public static function fire($event, ...$args) {
@@ -238,7 +240,7 @@ class Event {
             return $value;
         }
 
-        $args = array_slice(func_get_args(), 1);
+        $args = \array_slice(\func_get_args(), 1);
         foreach ($handlers as $callbacks) {
             foreach ($callbacks as $callback) {
                 $value = $callback(...$args);
@@ -257,7 +259,7 @@ class Event {
      * @see http://ca1.php.net/manual/en/function.function-exists.php
      */
     public static function functionExists($function_name, $only_events = false) {
-        if (!$only_events && function_exists($function_name)) {
+        if (!$only_events && \function_exists($function_name)) {
             return true;
         }
         return static::hasHandler($function_name);
@@ -270,14 +272,14 @@ class Event {
      * @return string The name of the callback.
      */
     protected static function getEventname($callback) {
-        if (is_string($callback)) {
+        if (\is_string($callback)) {
             return strtolower($callback);
         }
-        if (is_array($callback)) {
-            if (is_string($callback[0])) {
+        if (\is_array($callback)) {
+            if (\is_string($callback[0])) {
                 $classname = $callback[0];
             } else {
-                $classname = get_class($callback[0]);
+                $classname = \get_class($callback[0]);
             }
             $eventclass = trim(strrchr($classname, '\\'), '\\');
             if (!$eventclass) {

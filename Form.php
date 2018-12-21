@@ -63,7 +63,7 @@ class Form
      */
     public function primaryKey()
     {
-        return $this->model ? val('primaryKey', $this->model) : false;
+        return $this->model ? $this->model->getPrimaryKey() : false;
     }
 
     /**
@@ -72,13 +72,13 @@ class Form
      */
     public function setData($data)
     {
-        if (is_object($data)) {
+        if (\is_object($data)) {
             if ($data instanceof Db\Database\Result) {
                 $this->data = $data->current();
             } elseif ($data instanceof \stdClass) {
                 $this->data = (array)$data;
             }
-        } elseif (is_array($data)) {
+        } elseif (\is_array($data)) {
             $this->data = $data;
         }
 
@@ -122,7 +122,7 @@ class Form
     {
         if (!$this->_validation) {
             if ($this->model && $this->model instanceof Model) {
-                $this->_validation = $this->model->validation();
+                $this->_validation = $this->model->validation($this);
                 $this->model->initFormValidation($this);
             } else {
                 $this->_validation = new Validation($this->model);
@@ -141,7 +141,7 @@ class Form
         $method = strtoupper($this->method);
 
         if ($method === Request::METHOD_GET) {
-            return (bool)$this->getFormValue('form-submitted', 0);
+            return (bool)Request::current()->getQuery('form-submitted', 0);
         }
 
         return Gdn::request()->getMethod() == $method;
@@ -167,7 +167,7 @@ class Form
      */
     public function getFormValues($force = false)
     {
-        if ($force || !is_array($this->formValues)) {
+        if ($force || !\is_array($this->formValues)) {
             $this->magicQuotes = get_magic_quotes_gpc();
 
             $this->formValues = [];
@@ -234,7 +234,7 @@ class Form
                 $this->addError(t('Form session timeout'));
             }
 
-            $this->_valid = $this->validation()->validate($data) && !count($this->errors);
+            $this->_valid = $this->validation()->validate($data) && !\count($this->errors);
         }
 
         return $this->_valid;
@@ -263,8 +263,8 @@ class Form
 
         $html = [];
         foreach ($errors as $field => $fieldErrors) {
-            foreach ($fieldErrors as $error) {
-                if (is_array($error)) {
+            foreach ((array)$fieldErrors as $error) {
+                if (\is_array($error)) {
                     $errField = val(0, $error);
                     $error = val(1, $error);
                 } else {
@@ -301,7 +301,7 @@ class Form
             $post = $this->getFormValues();
 
             if ($this->model && $this->model instanceof Model) {
-                $id = array_extract($this->model->primaryKey, $post);
+                $id = array_extract($this->model->getPrimaryKey(), $post);
                 $post = $this->fixPostData($post);
                 try {
                     $result = $this->model->save($post, $id);
@@ -412,7 +412,9 @@ class Form
             $return .= $this->input($name, 'hidden', ['value' => $value]);
         }
 
-        $return .= $this->input('secureKey', 'hidden', ['value' => $this->generateSecureKey($this->inputs)]);
+        if ($this->protection) {
+            $return .= $this->input('secureKey', 'hidden', ['value' => $this->generateSecureKey($this->inputs)]);
+        }
         $this->inputs = [];
 
         $return .= '</form>';
@@ -441,7 +443,7 @@ class Form
 
         if ($type == 'radio' || $type == 'checkbox') {
             $value = $this->getValue($correctName);
-            $checked = is_array($value) ? in_array($inputValue, $value) : (string)$inputValue == (string)$value;
+            $checked = \is_array($value) ? in_arrayf($inputValue, $value) : (string)$inputValue == (string)$value;
             if ($inputValue !== false && $checked) {
                 array_touch('checked', $attributes, 'checked');
             }
@@ -538,7 +540,7 @@ class Form
             $optionValue = $keyName && $keyValue ? val($keyValue, $option) : $key;
             $optionName = $keyName && $keyValue ? val($keyName, $option) : $option;
 
-            $selected = is_array($fieldValue) ? in_array($optionValue, $fieldValue) : (string)$optionValue == (string)$fieldValue;
+            $selected = \is_array($fieldValue) ? in_arrayf($optionValue, $fieldValue) : (string)$optionValue == (string)$fieldValue;
 
             $html .= '<option value="' . $optionValue . '"' . ($selected ? ' selected' : '') . '>' . $optionName . '</option>';
         }
@@ -574,10 +576,10 @@ class Form
 
     /**
      * return generated html attributes
-     * @param $attributes
+     * @param array $attributes
      * @return string
      */
-    protected function attrToString($attributes)
+    protected function attrToString(array $attributes)
     {
         foreach ($attributes as $attr => $value) {
             if ($attributes[$attr] === false) {
@@ -625,16 +627,16 @@ class Form
      */
     protected function clearFormData($formData, $protected = false)
     {
-        unset($formData['secureKey']);
+        unset($formData['secureKey'], $formData['form-submitted']);
 
         $secureFileds = $protected ? $this->getSecureFields() : [];
 
         foreach ($formData as $name => $value) {
-            if ($protected && !in_array($name, $secureFileds)) {
+            if ($protected && !in_arrayf($name, $secureFileds)) {
                 unset($formData[$name]);
                 continue;
             }
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 $formData[$name] = $this->clearFormData($value);
             } else {
                 $value = trim($value);

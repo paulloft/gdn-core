@@ -30,15 +30,6 @@ class Response implements JsonSerializable {
     protected $cookies = [];
 
     /**
-     * An array of global cookie sets.
-     *
-     * This array is for code the queue up cookie changes before the response has been created.
-     *
-     * @var array An array of cookies.
-     */
-    protected static $globalCookies;
-
-    /**
      * @var Response The current response.
      */
     protected static $current;
@@ -52,11 +43,6 @@ class Response implements JsonSerializable {
      * @var array An array of response data.
      */
     protected $data = [];
-
-    /**
-     * @var string The asset that should be rendered.
-     */
-    protected $contentAsset;
 
     /**
      * @var string The default cookie domain.
@@ -74,14 +60,24 @@ class Response implements JsonSerializable {
     protected $headers = [];
 
     /**
-     * @var array An array of global http headers.
-     */
-    protected static $globalHeaders;
-
-    /**
      * @var int HTTP status code
      */
     protected $status = 200;
+
+    /**
+     * @var string body of response
+     */
+    protected $body = '';
+
+    /**
+     * @var array
+     */
+    protected static $specialHeaders = [
+        'etag' => 'ETag',
+        'p3p' => 'P3P',
+        'www-authenticate' => 'WWW-Authenticate',
+        'x-ua-compatible' => 'X-UA-Compatible'
+    ];
 
     /**
      * @var array HTTP response codes and messages.
@@ -146,11 +142,12 @@ class Response implements JsonSerializable {
      * @param Response|null $response Set a new response or pass null to get the current response.
      * @return Response Returns the current response.
      */
-    public static function current(Response $response = null) {
+    public static function current(Response $response = null): Response
+    {
         if ($response !== null) {
             self::$current = $response;
         } elseif (self::$current === null) {
-            self::$current = new Response();
+            self::$current = new self();
         }
 
         return self::$current;
@@ -162,101 +159,87 @@ class Response implements JsonSerializable {
      * @param mixed $result The result to create the response from.
      * @return Response Returns a {@link Response} object.
      */
-    public static function create($result = false) {
-        if ($result instanceof Response) {
+    public static function create($result): self
+    {
+        if ($result instanceof self) {
             return $result;
         }
+
         if ($result instanceof Exception\Response) {
-            /* @var Exception\Response $result */
             return $result->getResponse();
         }
 
-        $response = new Response();
+        $response = new self();
 
         if ($result instanceof Exception\Client) {
-            /* @var Exception\Client $cex */
-            $cex = $result;
-            $response->status($cex->getCode());
-            $response->headers($cex->getHeaders());
-            $response->data($cex->jsonSerialize());
+            $response->setStatus($result->getCode());
+            $response->setHeaders($result->getHeaders());
+            $response->setData($result->jsonSerialize());
         } elseif ($result instanceof \Exception) {
-            /* @var \Exception $ex */
-            $ex = $result;
-            $response->status($ex->getCode());
-            $response->data([
-                'exception' => $ex->getMessage(),
-                'code' => $ex->getCode()
+            $response->setStatus($result->getCode());
+            $response->setData([
+                'exception' => $result->getMessage(),
+                'code' => $result->getCode()
             ]);
-        } elseif (is_array($result)) {
-            if (count($result) === 3 && isset($result[0], $result[1], $result[2])) {
-                // This is a rack style response in the form [code, headers, body].
-                $response->status($result[0]);
-                $response->headers($result[1]);
-                $response->data($result[2]);
-            } elseif (array_key_exists('response', $result)) {
-                $resultResponse = $result['response'];
-                if (!$resultResponse) {
-                    $response->data($result['body']);
-                } else {
-                    // This is a dispatched response.
-                    $response = static::create($resultResponse);
-                    if(isset($result['body'])) {
-                        $response->data($result['body']);
-                    }
-                }
-
-                // Set the rest of the result to the response context.
-                unset($result['response']);
-                $response->meta($result, true);
-            } else {
-                $response->data($result);
-            }
         } else {
-            $response->status(422);
-            $response->data([
+            $response->setStatus(422);
+            $response->setData([
                 'exception' => 'Unknown result type for response.',
                 'code' => $response->status()
             ]);
         }
+
         return $response;
     }
 
     /**
-     * Gets or sets the content type.
+     * Sets a body of response
      *
-     * @param string|null $value The new content type or null to get the current content type.
-     * @return Response|string Returns the current content type or `$this` for fluent calls.
+     * @param string $body
      */
-    public function contentType($value = null) {
-        if ($value === null) {
-            return $this->headers('Content-Type');
-        }
-
-        return $this->headers('Content-Type', $value);
+    public function setBody(string $body)
+    {
+        $this->body = $body;
     }
 
     /**
-     * Gets or sets the asset that will be rendered in the response.
+     * Gets a body of response
      *
-     * @param string $asset Set a new value or pass `null` to get the current value.
-     * @return Response|string Returns the current content asset or `$this` when settings.
+     * @return string
      */
-    public function contentAsset($asset = null) {
-        if ($asset !== null) {
-            $this->contentAsset = $asset;
-            return $this;
-        }
+    public function body(): string
+    {
+        return $this->body;
+    }
 
-        return $this->contentAsset;
+    /**
+     * Get the current content type
+     *
+     * @return string
+     */
+    public function contentType(): string
+    {
+        return $this->header('Content-Type');
+    }
+
+    /**
+     * Set the content type.
+     *
+     * @param string $value The new content type
+     */
+    public function setContentType(string $value)
+    {
+        $this->setHeader('Content-Type', $value);
     }
 
     /**
      * Set the content type from an accept header.
      *
      * @param string $accept The value of the accept header.
-     * @return bool|Response $this Returns `$this` for fluent calls.
+     * @return bool
      */
-    public function contentTypeFromAccept($accept) {
+    public function setContentTypeFromAccept(string $accept): bool
+    {
         if (!empty($this->headers['Content-Type'])) {
             return false;
         }
@@ -266,15 +249,16 @@ class Response implements JsonSerializable {
             list($contentType) = explode(';', $accept);
         } elseif (strpos($accept, 'text/html') !== false) {
             $contentType = 'text/html';
-        } elseif (strpos($accept, 'application/rss+xml' !== false)) {
+        } elseif (strpos($accept, 'application/rss+xml') !== false) {
             $contentType = 'application/rss+xml';
         } elseif (strpos($accept, 'text/plain')) {
             $contentType = 'text/plain';
         } else {
             $contentType = 'text/html';
         }
-        $this->contentType($contentType);
-        return $this;
+        $this->setContentType($contentType);
+
+        return true;
     }
 
     /**
@@ -284,209 +268,148 @@ class Response implements JsonSerializable {
      * @param bool $header Whether or not the result should be in a form that can be passed to {@link header}.
      * @return string Returns the status message corresponding to {@link $code}.
      */
-    public static function statusMessage($statusCode, $header = false) {
+    public static function statusMessage($statusCode, $header = false): string
+    {
         $message = val($statusCode, self::$messages, 'Unknown');
 
         if ($header) {
             return "HTTP/1.1 $statusCode $message";
         }
+
         return $message;
     }
 
     /**
-     * Gets or sets a cookie.
+     * Set cookie value
      *
-     * @param string $name The name of the cookie.
-     * @param bool $value The value of the cookie. This value is stored on the clients computer; do not store sensitive information.
-     * @param int $expires The time the cookie expires. This is a Unix timestamp so is in number of seconds since the epoch.
-     * @param string $path The path on the server in which the cookie will be available on.
-     * If set to '/', the cookie will be available within the entire {@link $domain}.
-     * @param string $domain The domain that the cookie is available to.
-     * @param bool $secure Indicates that the cookie should only be transmitted over a secure HTTPS connection from the client.
-     * @param bool $httponly When TRUE the cookie will be made accessible only through the HTTP protocol.
-     * @return $this|mixed Returns the cookie settings at {@link $name} or `$this` when setting a cookie for fluent calls.
+     * @param string $name
+     * @param string $value
+     * @param int $lifetime
+     * @param array $options ['path' => ..., 'domain' => ..., 'secure' => ..., 'httponly' => ...]
      */
-    public function cookies($name, $value = false, $expires = 0, $path = null, $domain = null, $secure = false, $httponly = false) {
-        if ($value === false) {
-            return val($name, $this->cookies);
-        }
-
-        $this->cookies[$name] = [$value, $expires, $path, $domain, $secure, $httponly];
-        return $this;
+    public function cookie($name, $value, $lifetime, array $options = [])
+    {
+        $this->cookies[$name] = [
+            $value,
+            $lifetime > 0 ? time() + $lifetime : 0,
+            val('path', $options, $this->defaultCookiePath),
+            val('domain', $options, $this->defaultCookieDomain),
+            val('secure', $options),
+            val('httponly', $options)
+        ];
     }
 
     /**
-     * Gets or sets a global cookie.
+     * Delete cookie
      *
-     * Global cookies are used when you want to set a cookie, but a {@link Response} has not been created yet.
-     *
-     * @param string $name The name of the cookie.
-     * @param bool $value The value of the cookie. This value is stored on the clients computer; do not store sensitive information.
-     * @param int $expires The time the cookie expires. This is a Unix timestamp so is in number of seconds since the epoch.
-     * @param string $path The path on the server in which the cookie will be available on.
-     * If set to '/', the cookie will be available within the entire {@link $domain}.
-     * @param string $domain The domain that the cookie is available to.
-     * @param bool $secure Indicates that the cookie should only be transmitted over a secure HTTPS connection from the client.
-     * @param bool $httponly When TRUE the cookie will be made accessible only through the HTTP protocol.
-     * @return mixed|null Returns the cookie settings at {@link $name} or `null` when setting a cookie.
+     * @param string $name
      */
-    public static function globalCookies($name = null, $value = false, $expires = 0, $path = null, $domain = null, $secure = false, $httponly = false) {
-        if (self::$globalCookies === null) {
-            self::$globalCookies = [];
-        }
-
-        if ($name === null) {
-            return self::$globalCookies;
-        }
-
-        if ($value === false) {
-            return val($name, self::$globalCookies);
-        }
-
-        self::$globalCookies[$name] = [$value, $expires, $path, $domain, $secure, $httponly];
-        return null;
+    public function deleteCookie(string $name)
+    {
+        $this->cookie($name, null, -1);
     }
 
     /**
-     * Get or set the meta data for the response.
-     *
+     * Get the meta data for the response.
      * The meta is an array of data that is unrelated to the response data.
      *
-     * @param array|null $meta Pass a new meta data value or `null` to get the current meta array.
-     * @param bool $merge Whether or not to merge new data with the current data when setting.
-     * @return $this|array Returns either the meta or `$this` when setting the meta data.
+     * @return array Returns either the meta
      */
-    public function meta($meta = null, $merge = false) {
-        if ($meta !== null) {
-            if ($merge) {
-                $this->meta = array_merge($this->meta, $meta);
-            } else {
-                $this->meta = $meta;
-            }
-            return $this;
-        }
-
+    public function meta(): array
+    {
         return $this->meta;
     }
 
     /**
-     * Get or set the data for the response.
+     * Set the meta data for the response.
+     * The meta is an array of data that is unrelated to the response data.
      *
-     * @param array|null $data Pass a new data value or `null` to get the current data array.
+     * @param array $meta Pass a new meta data value
      * @param bool $merge Whether or not to merge new data with the current data when setting.
+     */
+    public function setMeta(array $meta, $merge = false)
+    {
+        $this->meta = $merge ? array_merge($this->meta, $meta) : $meta;
+    }
+
+    /**
+     * Get the data for the response.
+     *
      * @return Response|array Returns either the data or `$this` when setting the data.
      */
-    public function data($data = null, $merge = false) {
-        if ($data !== null) {
-            if ($merge) {
-                $this->data = array_merge($this->data, $data);
-            } else {
-                $this->data = $data;
-            }
-            return $this;
-        }
+    public function data()
+    {
         return $this->data;
     }
 
     /**
-     * Gets or sets headers.
+     * Set the data for the response.
      *
-     * @param string|array $name The name of the header or an array of headers.
-     * @param string|null $value A new value for the header or null to get the current header.
-     * @param bool $replace Whether or not to replace the current header or append.
-     * @return Response|string Returns the value of the header or `$this` for fluent calls.
+     * @param array $data Pass a new data value
+     * @param bool $merge Whether or not to merge new data with the current data when setting.
      */
-    public function headers($name, $value = null, $replace = true) {
-        $headers = static::splitHeaders($name, $value);
+    public function setData(array $data, $merge = false)
+    {
+        $this->data = $merge ? array_merge($this->data, $data) : $data;
+    }
 
-        if (is_string($headers)) {
-            return val($headers, $this->headers);
+    /**
+     * Gets headers.
+     *
+     * @return array
+     */
+    public function headers(): array
+    {
+        return $this->headers;
+    }
+
+    /**
+     * Get header.
+     *
+     * @param string $name The name of the header or an array of headers.
+     * @return string
+     */
+    public function header($name): string
+    {
+        return val($name, $this->headers, null);
+    }
+
+    /**
+     * Set header
+     *
+     * @param string $name The name of the header or an array of headers.
+     * @param string $value A new value for the header or null to get the current header.
+     */
+    public function setHeader($name, $value = null)
+    {
+        if (strpos($name, ':') !== false) {
+            // The name is in the form Header: value.
+            list($name, $value) = explode(':', $name, 2);
         }
 
+        $this->headers[static::normalizeHeader($name)] = trim($value);
+    }
+
+    /**
+     * Sets headers.
+     *
+     * @param array $headers array of headers
+     * @param bool $replace Whether or not to replace the current header or append.
+     */
+    public function setHeaders(array $headers, $replace = true)
+    {
         foreach ($headers as $name => $value) {
+            if (is_numeric($name)) {
+                // $value should be a header in the form Header: value.
+                list($name, $value) = explode(':', $value, 2);
+            }
+
+            $name = static::normalizeHeader($name);
+
             if ($replace || !isset($this->headers[$name])) {
-                $this->headers[$name] = $value;
-            } else {
-                $this->headers[$name] = array_merge((array)$this->headers, [$value]);
+                $this->headers[$name] = trim($value);
             }
         }
-        return $this;
-    }
-
-    /**
-     * Gets or sets global headers.
-     *
-     * The global headers exist to allow code to queue up headers before the response has been constructed.
-     *
-     * @param string|array|null $name The name of the header or an array of headers.
-     * @param string|null $value A new value for the header or null to get the current header.
-     * @param bool $replace Whether or not to replace the current header or append.
-     * @return string|array Returns one of the following:
-     * - string|array: Returns the current value of the header at {@link $name}.
-     * - array: Returns the entire global headers array when {@link $name} is not passed.
-     * - null: Returns `null` when setting a global header.
-     */
-    public static function globalHeaders($name = null, $value = null, $replace = true) {
-        if (self::$globalHeaders === null) {
-            self::$globalHeaders = [
-                'P3P' => 'CP="CAO PSA OUR"'
-            ];
-        }
-
-        if ($name === null) {
-            return self::$globalHeaders;
-        }
-
-        $headers = static::splitHeaders($name, $value);
-
-        if (is_string($headers)) {
-            return val($headers, self::$globalHeaders);
-        }
-
-        foreach ($headers as $name => $value) {
-            if ($replace || !isset(self::$globalHeaders[$name])) {
-                self::$globalHeaders[$name] = $value;
-            } else {
-                self::$globalHeaders[$name] = array_merge((array)self::$globalHeaders, [$value]);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Split and normalize headers into a form appropriate for {@link $headers} or {@link $globalHeaders}.
-     *
-     * @param string|array $name The name of the header or an array of headers.
-     * @param string|null $value The header value if {@link $name} is a string.
-     * @return array|string Returns one of the following:
-     * - array: An array of headers.
-     * - string: The header name if just a name was passed.
-     * @throws \InvalidArgumentException Throws an exception if {@link $name} is not a valid string or array.
-     */
-    protected static function splitHeaders($name, $value = null) {
-        if (is_string($name)) {
-            if (strpos($name, ':') !== false) {
-                // The name is in the form Header: value.
-                list($name, $value) = explode(':', $name, 2);
-                return [static::normalizeHeader(trim($name)) => trim($value)];
-            }
-            if ($value !== null) {
-                return [static::normalizeHeader($name) => $value];
-            }
-            return static::normalizeHeader($name);
-        }
-        if (is_array($name)) {
-            $result = [];
-            foreach ($name as $key => $value) {
-                if (is_numeric($key)) {
-                    // $value should be a header in the form Header: value.
-                    list($key, $value) = explode(':', $value, 2);
-                }
-                $result[static::normalizeHeader(trim($key))] = trim($value);
-            }
-            return $result;
-        }
-        throw new \InvalidArgumentException('Argument #1 to splitHeaders() was not valid.', 422);
     }
 
     /**
@@ -503,43 +426,50 @@ class Response implements JsonSerializable {
      * @param string $name The name of the header.
      * @return string Returns the normalized header name.
      */
-    public static function normalizeHeader($name) {
-        static $special = [
-            'etag' => 'ETag', 'p3p' => 'P3P', 'www-authenticate' => 'WWW-Authenticate',
-            'x-ua-compatible' => 'X-UA-Compatible'
-        ];
-
+    public static function normalizeHeader(string $name): string
+    {
         $name = str_replace(['-', '_'], ' ', strtolower($name));
-        if (isset($special[$name])) {
-            $name = $special[$name];
-        } else {
-            $name = str_replace(' ', '-', ucwords($name));
+
+        if (isset(self::$specialHeaders[$name])) {
+            return self::$specialHeaders[$name];
         }
-        return $name;
+
+        return str_replace(' ', '-', ucwords($name));
     }
 
     /**
      * Gets/sets the http status code.
      *
-     * @param int $value The new value if setting the http status code.
      * @return int The current http status code.
-     * @throws \InvalidArgumentException The new status is not a valid http status number.
      */
-    public function status($value = null) {
-        if ($value !== null) {
-            if (!isset(self::$messages[$value])) {
-                $this->headers('X-Original-Status', $value);
-                $value = 500;
-            }
-            $this->status = (int)$value;
+    public function status(): int
+    {
+        return $this->status;
+    }
+
+    /**
+     * Sets the http status code.
+     *
+     * @param int $value The new value if setting the http status code.
+     * @return int current status
+     */
+    public function setStatus(int $value): int
+    {
+        if (!isset(self::$messages[$value])) {
+            $this->setHeader('X-Original-Status', $value);
+            $value = 500;
         }
+
+        $this->status = $value;
+
         return $this->status;
     }
 
     /**
      * Flush the response to the client.
      */
-    public function flush() {
+    public function flush()
+    {
         $this->flushHeaders();
 
         echo json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
@@ -548,43 +478,27 @@ class Response implements JsonSerializable {
     /**
      * Flush the headers to the browser.
      *
-     * @param bool $global Whether or not to merge the global headers with this response.
      */
-    public function flushHeaders($global = true) {
+    public function flushHeaders()
+    {
         if (headers_sent()) {
             return;
         }
 
-        if ($global) {
-            $cookies = array_replace(static::globalCookies(), $this->cookies);
-            $headers = array_replace(static::globalHeaders(), $this->headers);
-        } else {
-            $cookies = $this->cookies;
-            $headers = $this->headers;
-        }
-
         // Set the cookies first.
-        foreach ($cookies as $name => $value) {
-            setcookie(
-                $name,
-                $value[0],
-                $value[1],
-                $value[2] !== null ? $value[2] : $this->defaultCookiePath,
-                $value[3] !== null ? $value[3] : $this->defaultCookieDomain,
-                $value[4],
-                $value[5]
-            );
+        foreach ($this->cookies as $name => $params) {
+            setcookie($name, ...$params);
         }
 
         // Set the response code.
         header(static::statusMessage($this->status, true), true, $this->status);
 
-        $headers = array_filter($headers);
+        $headers = array_filter($this->headers);
 
         // The content type is a special case.
         if (isset($headers['Content-Type'])) {
             $contentType = (array)$headers['Content-Type'];
-            header('Content-Type: '.reset($contentType).'; charset=utf-8', true);
+            header('Content-Type: ' . reset($contentType) . '; charset=utf-8');
             unset($headers['Content-Type']);
         }
 
@@ -603,32 +517,8 @@ class Response implements JsonSerializable {
      * @return mixed data which can be serialized by <b>json_encode</b>,
      * which is a value of any type other than a resource.
      */
-    public function jsonSerialize() {
-        $asset = (string)$this->contentAsset();
-
-        if ($asset) {
-            // A specific asset was specified.
-            if (strpos($asset, '.') !== false) {
-                list($group, $key) = explode('.', $asset, 2);
-                switch ($group) {
-                    case 'meta':
-                        return val($key, $this->meta);
-                    case 'data':
-                        return val($key, $this->data);
-                    default:
-                        return null;
-                }
-            } else {
-                switch ($asset) {
-                    case 'data':
-                        return $this->data;
-                    case 'meta':
-                        return $this->meta;
-                    default:
-                        return null;
-                }
-            }
-        }
+    public function jsonSerialize()
+    {
         return $this->data;
     }
 }

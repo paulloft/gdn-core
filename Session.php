@@ -52,21 +52,16 @@ class Session
     {
         $salt = c('main.hashsalt');
         $lifetime = c('session.lifetime');
-        $sessionID = md5($salt.$userID.session_id());
+        $sessionID = md5($salt.$userID.session_id().time());
 
-        $data = [
+        $this->model->insert([
             'sessionID' => $sessionID,
             'userID' => $userID,
             'expire' => date_sql(time() + ($remember ? $lifetime : (60*60*8))),
             'lastActivity' => DB::expr('now()'),
-            'userAgent' => Gdn::request()->getEnv('HTTP_USER_AGENT')
-        ];
-
-        if ($this->model->getID($sessionID)) {
-            $this->model->update($sessionID, $data);
-        } else {
-            $this->model->insert($data);
-        }
+            'userAgent' => Gdn::request()->getEnvKey('HTTP_USER_AGENT'),
+            'ip' => Gdn::request()->getIP()
+        ]);
 
         $this->setCookie('sessionid', $sessionID, ($remember ? $lifetime : 0));
 
@@ -119,6 +114,19 @@ class Session
         }
 
         return $userID;
+    }
+
+    public function update()
+    {
+        $sessionID = $this->getCookie('sessionid');
+        if (!$sessionID) {
+            return;
+        }
+
+        $this->model->update($sessionID, [
+            'lastActivity' => DB::expr('now()'),
+            'lastIP' => Gdn::request()->getIP()
+        ]);
     }
 
     /**

@@ -143,6 +143,17 @@ class Template extends Controller {
         Event::fire('render_after');
     }
 
+    protected function getCacheVersion()
+    {
+        $version = Gdn::cache()->get('assetsVersion');
+        if (!$version) {
+            $version = md5(time());
+            Gdn::cache()->set('assetsVersion', $version, 0);
+        }
+
+        return $version;
+    }
+
     /**
      * @param $resource
      * @param $src
@@ -151,14 +162,14 @@ class Template extends Controller {
      */
     protected function getResourcePath($resource, $src, $addon = null)
     {
-        $addon = $addon !== null ? $addon : strtolower($this->getAddonName());
+        $addon = $addon ?? strtolower($this->getAddonName());
         $local = is_local_url($src);
-        $version = (strpos($src, '?') === false ? '?': '&').'v='.APP_VERSION;
-        if ($local && $addon && file_exists(GDN_ADDONS.'/'.ucfirst($addon).'/Assets/'.$resource.'/'.$src)) {
+        $version = (strpos($src, '?') === false ? '?' : '&') . 'v=' . $this->getCacheVersion();
+        if ($local && $addon && file_exists(GDN_ADDONS . '/' . ucfirst($addon) . '/Assets/' . $resource . '/' . $src)) {
             return "/assets/$addon/$resource/$src$version";
         }
 
-        if (!$local || file_exists(PATH_PUBLIC.'/'.$src)) {
+        if (!$local || file_exists(PATH_PUBLIC . '/' . $src)) {
             return $src.$version;
         }
 

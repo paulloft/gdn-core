@@ -24,7 +24,7 @@ class Request implements JsonSerializable {
     const METHOD_OPTIONS = 'OPTIONS';
 
     const RENDER_VIEW = 'view';
-    const RENDER_ALL  = 'all';
+    const RENDER_ALL = 'all';
     const RENDER_JSON = 'json';
 
     public $allowRenderJson = false;
@@ -32,10 +32,9 @@ class Request implements JsonSerializable {
     /// Properties ///
 
     /**
-     *
      * @var array The data in this request.
      */
-    protected $env;
+    protected $env = [];
 
     /**
      * @var Request The currently dispatched request.
@@ -45,7 +44,24 @@ class Request implements JsonSerializable {
     /**
      * @var array The default environment for constructed requests.
      */
-    protected static $defaultEnv;
+    protected static $defaultEnv = [
+        'REQUEST_METHOD' => 'GET',
+        'X_REWRITE' => true,
+        'SCRIPT_NAME' => '',
+        'PATH_INFO' => '/',
+        'EXT' => '',
+        'QUERY' => [],
+        'SERVER_NAME' => 'localhost',
+        'SERVER_PORT' => 80,
+        'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8',
+        'HTTP_ACCEPT_CHARSET' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'HTTP_USER_AGENT' => 'Garden/0.1 (Howdy stranger)',
+        'REMOTE_ADDR' => '127.0.0.1',
+        'URL_SCHEME' => 'http',
+        'INPUT' => [],
+        'COOKIE' => []
+    ];
 
     protected static $knownExtensions = [
         '.html' => 'text/html',
@@ -84,15 +100,16 @@ class Request implements JsonSerializable {
      * @param string $method The request method.
      * @param mixed $data The request data. This is the query string for GET requests or the body for other requests.
      */
-    public function __construct($url = '', $method = '', $data = null) {
+    public function __construct($url = '', $method = '', $data = null)
+    {
         if ($url) {
-            $this->env = (array)static::defaultEnvironment();
+            $this->env = static::defaultEnvironment();
             // Instantiate the request from the url.
             $this->setUrl($url);
             if ($method) {
                 $this->setMethod($method);
             }
-            if (is_array($data)) {
+            if (\is_array($data)) {
                 $this->setData($data);
             }
         } else {
@@ -101,7 +118,7 @@ class Request implements JsonSerializable {
             if ($method) {
                 $this->setMethod($method);
             }
-            if (is_array($data)) {
+            if (\is_array($data)) {
                 $this->setData($data);
             }
         }
@@ -114,7 +131,8 @@ class Request implements JsonSerializable {
      *
      * @return string Returns the url of the request.
      */
-    public function __toString() {
+    public function __toString()
+    {
         return $this->getUrl();
     }
 
@@ -124,84 +142,52 @@ class Request implements JsonSerializable {
      * @param Request $request Pass a request object to set the current request.
      * @return Request Returns the current request if {@link Request} is null or the previous request otherwise.
      */
-    public static function current(Request $request = null) {
+    public static function current(Request $request = null)
+    {
         if ($request !== null) {
-            $bak = self::$current;
             self::$current = $request;
-            return $bak;
+        } elseif(self::$current === null) {
+            self::$current = new self();
         }
+
         return self::$current;
     }
 
     /**
-     * Gets or updates the default environment.
+     * Gets the default environment.
      *
-     * @param string|array|null $key Specifies a specific key in the environment array.
-     * If you pass an array for this parameter then you can set the default environment.
-     * @param bool $merge Whether or not to merge the new value.
-     * @return array|mixed Returns the value at {@link $key} or the entire environment array.
-     * @throws \InvalidArgumentException Throws an exception when {@link $key} is not valid.
+     * @return array Returns the value at {@link $key} or the entire environment array.
      */
-    public static function defaultEnvironment($key = null, $merge = false) {
-        if (self::$defaultEnv === null) {
-            self::$defaultEnv = [
-                'REQUEST_METHOD' => 'GET',
-                'X_REWRITE' => true,
-                'SCRIPT_NAME' => '',
-                'PATH_INFO' => '/',
-                'EXT' => '',
-                'QUERY' => [],
-                'SERVER_NAME' => 'localhost',
-                'SERVER_PORT' => 80,
-                'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8',
-                'HTTP_ACCEPT_CHARSET' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-                'HTTP_USER_AGENT' => 'Garden/0.1 (Howdy stranger)',
-                'REMOTE_ADDR' => '127.0.0.1',
-                'URL_SCHEME' => 'http',
-                'INPUT' => []
-            ];
-        }
+    public static function defaultEnvironment(): array
+    {
+        return self::$defaultEnv;
+    }
 
-        if ($key === null) {
-            return self::$defaultEnv;
-        }
-
-        if (is_array($key)) {
-            self::$defaultEnv = $key;
-
-            if ($merge) {
-                self::$defaultEnv = array_merge(self::$defaultEnv, $key);
-            }
-            return self::$defaultEnv;
-        }
-        if (is_string($key)) {
-            return val($key, self::$defaultEnv);
-        }
-
-        throw new \InvalidArgumentException('Argument #1 for Request::globalEnvironment() is invalid.', 422);
+    /**
+     * Gets the key from default environment.
+     *
+     * @param string $key
+     * @return mixed
+     */
+    public function getEnvironmentKey(string $key)
+    {
+        return val($key, self::$defaultEnv);
     }
 
     /**
      * Parse request information from the current environment.
-     *
      * The environment contains keys based on the Rack protocol (see http://rack.rubyforge.org/doc/SPEC.html).
      *
-     * @param mixed $key The environment variable to look at.
-     * - null: Return the entire environment.
-     * - true: Force a re-parse of the environment and return the entire environment.
-     * - string: One of the environment variables.
-     * @return array|string Returns the global environment or the value at {@link $key}.
+     * @param bool $force Force a re-parse of the environment and return the entire environment.
+     * @return array Returns the global environment or the value at {@link $key}.
      */
-    public static function globalEnvironment($key = null) {
+    public static function globalEnvironment($force = false): array
+    {
         // Check to parse the environment.
-        if ($key === true || !isset(self::$globalEnv)) {
+        if ($force === true || self::$globalEnv === null) {
             self::$globalEnv = static::parseServerVariables();
         }
 
-        if ($key) {
-            return val($key, self::$globalEnv);
-        }
         return self::$globalEnv;
     }
 
@@ -211,7 +197,8 @@ class Request implements JsonSerializable {
      * @return array Returns an array suitable to be used as the {@see Request::$globalEnv}.
      * @see Request::globalEnvironment().
      */
-    protected static function parseServerVariables() {
+    protected static function parseServerVariables(): array
+    {
         $env = static::defaultEnvironment();
 
         // REQUEST_METHOD.
@@ -222,9 +209,10 @@ class Request implements JsonSerializable {
         $env['SCRIPT_NAME'] = rtrim($script_name, '/');
 
         // PATH_INFO.
-        $path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        $path = val('REQUEST_URI', $_SERVER, '');
+        $qpos = strpos($path, '?');
 
-        if ($qpos = strpos($path, '?')) {
+        if ($qpos) {
             $path = substr($path, 0, $qpos);
         }
 
@@ -234,14 +222,10 @@ class Request implements JsonSerializable {
         $env['EXT'] = $ext;
 
         // QUERY.
-        $get = $_GET;
-        $env['QUERY'] = $get;
+        $env['QUERY'] = $_GET;
 
         // SERVER_NAME.
-        $host = array_select(
-            ['HTTP_X_FORWARDED_HOST', 'HTTP_HOST', 'SERVER_NAME'],
-            $_SERVER
-        );
+        $host = array_select(['HTTP_X_FORWARDED_HOST', 'HTTP_HOST', 'SERVER_NAME'], $_SERVER);
         list($host) = explode(':', $host, 2);
         $env['SERVER_NAME'] = $host;
 
@@ -251,9 +235,10 @@ class Request implements JsonSerializable {
         // URL_SCHEME.
         $url_scheme = 'http';
         // Web server-originated SSL.
-        if (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') {
+        if (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) === 'on') {
             $url_scheme = 'https';
         }
+
         $url_scheme = array_select([
             'HTTP_X_ORIGINALLY_FORWARDED_PROTO', // varnish modifies the scheme
             'HTTP_X_FORWARDED_PROTO' // load balancer-originated (and terminated) ssl
@@ -261,8 +246,7 @@ class Request implements JsonSerializable {
         $env['URL_SCHEME'] = $url_scheme;
 
         // SERVER_PORT.
-        $server_port = (int)val('SERVER_PORT', $_SERVER, $url_scheme === 'https' ? 443 :80);
-        $env['SERVER_PORT'] = $server_port;
+        $env['SERVER_PORT'] = (int)val('SERVER_PORT', $_SERVER, $url_scheme === 'https' ? 443 : 80);
 
         // INPUT: The entire input.
         // Input stream (readable one time only; not available for multipart/form-data requests)
@@ -285,6 +269,8 @@ class Request implements JsonSerializable {
             '127.0.0.1'
         );
         $env['REMOTE_ADDR'] = force_ipv4($ip);
+        $env['COOKIE'] = $_COOKIE;
+
         return $env;
     }
 
@@ -293,8 +279,9 @@ class Request implements JsonSerializable {
      *
      * @param array &$env The environment to override.
      */
-    protected static function overrideEnvironment(&$env) {
-        $get =& $env['QUERY'];
+    protected static function overrideEnvironment(array &$env)
+    {
+        $get = &$env['QUERY'];
 
         // Check to override the method.
         if (isset($get['x-method'])) {
@@ -303,7 +290,7 @@ class Request implements JsonSerializable {
             $getMethods = [self::METHOD_GET, self::METHOD_HEAD, self::METHOD_OPTIONS];
 
             // Don't allow get style methods to be overridden to post style methods.
-            if (!in_array($env['REQUEST_METHOD'], $getMethods) || in_array($method, $getMethods)) {
+            if (!\in_array($env['REQUEST_METHOD'], $getMethods) || \in_array($method, $getMethods)) {
                 static::replaceEnv($env, 'REQUEST_METHOD', $method);
             } else {
                 $env['X_METHOD_BLOCKED'] = true;
@@ -331,35 +318,36 @@ class Request implements JsonSerializable {
     /**
      * Get a value from the environment or the entire environment.
      *
-     * @param string|null $key The key to get or null to get the entire environment.
+     * @param string $key The key to get or null to get the entire environment.
      * @param mixed $default The default value if {@link $key} is not found.
      * @return mixed|array Returns the value at {@link $key}, {$link $default} or the entire environment array.
      * @see Request::setEnv()
      */
-    public function getEnv($key = null, $default = null) {
-        if ($key === null) {
-            return $this->env;
-        }
+    public function getEnvKey(string $key, $default = null)
+    {
         return val(strtoupper($key), $this->env, $default);
+    }
+
+    /**
+     * @return array
+     */
+    public function getEnv(): array
+    {
+        return $this->env;
     }
 
     /**
      * Set a value from the environment or the entire environment.
      *
-     * @param string|array $key The key to set or an array to set the entire environment.
+     * @param string $key The key to set or an array to set the entire environment.
      * @param mixed $value The value to set.
      * @return Request Returns $this for fluent calls.
-     * @throws \InvalidArgumentException Throws an exception when {@link $key} is invalid.
-     * @see Request::getEnv()
+     * @see Request::getEnvKey()
      */
-    public function setEnv($key, $value = null) {
-        if (is_string($key)) {
-            $this->env[strtoupper($key)] = $value;
-        } elseif (is_array($key)) {
-            $this->env = $key;
-        } else {
-            throw new \InvalidArgumentException('Argument 1 must be either a string or array.', 422);
-        }
+    public function setEnv(string $key, $value = null)
+    {
+        $this->env[strtoupper($key)] = $value;
+
         return $this;
     }
 
@@ -371,15 +359,18 @@ class Request implements JsonSerializable {
      * @param mixed $value The new environment value.
      * @return mixed Returns the old value or null if there was no old value.
      */
-    public static function replaceEnv(&$env, $key, $value) {
+    public static function replaceEnv(array &$env, string $key, $value)
+    {
         $key = strtoupper($key);
 
         $result = null;
         if (isset($env[$key])) {
             $result = $env[$key];
-            $env[$key.'_RAW'] = $result;
+            $env[$key . '_RAW'] = $result;
         }
+
         $env[$key] = $value;
+
         return $result;
     }
 
@@ -390,17 +381,20 @@ class Request implements JsonSerializable {
      * @param string $key The environment key.
      * @return mixed Returns the current environment value.
      */
-    public static function restoreEnv(&$env, $key) {
+    public static function restoreEnv(array &$env, string $key)
+    {
         $key = strtoupper($key);
 
-        if (isset($env[$key.'_RAW'])) {
-            $env[$key] = $env[$key.'_RAW'];
-            unset($env[$key.'_RAW']);
+        if (array_key_exists($key . '_RAW', $env)) {
+            $env[$key] = $env[$key . '_RAW'];
+            unset($env[$key . '_RAW']);
             return $env[$key];
         }
+
         if (isset($env[$key])) {
             return $env[$key];
         }
+
         return null;
     }
 
@@ -410,18 +404,20 @@ class Request implements JsonSerializable {
      * @param array $arr The array to extract.
      * @return array The extracted headers.
      */
-    public static function extractHeaders($arr) {
+    public static function extractHeaders($arr): array
+    {
         $result = [];
 
         foreach ($arr as $key => $value) {
             $key = strtoupper($key);
-            if (strpos($key, 'X_') === 0 || strpos($key, 'HTTP_') === 0 || in_array($key, static::$specialHeaders)) {
+            if (strpos($key, 'X_') === 0 || strpos($key, 'HTTP_') === 0 || \in_array($key, static::$specialHeaders)) {
                 if ($key === 'HTTP_CONTENT_TYPE' || $key === 'HTTP_CONTENT_LENGTH') {
                     continue;
                 }
                 $result[$key] = $value;
             }
         }
+
         return $result;
     }
 
@@ -431,7 +427,8 @@ class Request implements JsonSerializable {
      * @return array Returns an associative array of the message's headers.
      * Each key represents a header name, and each value is an array of strings.
      */
-    public function getHeaders() {
+    public function getHeaders(): array
+    {
         $result = [];
 
         foreach ($this->env as $key => $value) {
@@ -440,6 +437,7 @@ class Request implements JsonSerializable {
                 $result[$headerKey][] = $value;
             }
         }
+
         return $result;
     }
 
@@ -448,8 +446,9 @@ class Request implements JsonSerializable {
      *
      * @return string Returns the host.
      */
-    public function getHost() {
-        return (string)$this->env['SERVER_NAME'];
+    public function getHost(): string
+    {
+        return (string)$this->getEnvKey('SERVER_NAME');
     }
 
     /**
@@ -458,7 +457,8 @@ class Request implements JsonSerializable {
      * @param string $host The hostname.
      * @return Request Returns $this for fluent calls.
      */
-    public function setHost($host) {
+    public function setHost($host)
+    {
         $this->env['SERVER_NAME'] = $host;
         return $this;
     }
@@ -470,17 +470,19 @@ class Request implements JsonSerializable {
      * @see Request::getHost()
      * @see Request::getPort()
      */
-    public function getHostAndPort() {
+    public function getHostAndPort(): string
+    {
         $host = $this->getHost();
         $port = $this->getPort();
 
         // Only append the port if it is non-standard.
-        if (($port == 80 && $this->getScheme() === 'http') || ($port == 443 && $this->getScheme() === 'https')) {
+        if (($port === 80 && $this->getScheme() === 'http') || ($port === 443 && $this->getScheme() === 'https')) {
             $port = '';
         } else {
-            $port = ':'.$port;
+            $port = ':' . $port;
         }
-        return $host.$port;
+
+        return $host . $port;
     }
 
     /**
@@ -488,7 +490,8 @@ class Request implements JsonSerializable {
      *
      * @return string Returns the current ip address.
      */
-    public function getIP() {
+    public function getIP(): string
+    {
         return (string)$this->env['REMOTE_ADDR'];
     }
 
@@ -498,7 +501,8 @@ class Request implements JsonSerializable {
      * @param string $ip The new ip address.
      * @return Request Returns $this for fluent calls.
      */
-    public function setIP($ip) {
+    public function setIP($ip)
+    {
         $this->env['REMOTE_ADDR'] = $ip;
         return $this;
     }
@@ -508,7 +512,8 @@ class Request implements JsonSerializable {
      *
      * @return bool Returns true if this is a DELETE request, false otherwise.
      */
-    public function isDelete() {
+    public function isDelete(): bool
+    {
         return $this->getMethod() === self::METHOD_DELETE;
     }
 
@@ -517,7 +522,8 @@ class Request implements JsonSerializable {
      *
      * @return bool Returns true if this is a GET request, false otherwise.
      */
-    public function isGet() {
+    public function isGet(): bool
+    {
         return $this->getMethod() === self::METHOD_GET;
     }
 
@@ -526,7 +532,8 @@ class Request implements JsonSerializable {
      *
      * @return bool Returns true if this is a HEAD request, false otherwise.
      */
-    public function isHead() {
+    public function isHead(): bool
+    {
         return $this->getMethod() === self::METHOD_HEAD;
     }
 
@@ -535,7 +542,8 @@ class Request implements JsonSerializable {
      *
      * @return bool Returns true if this is an OPTIONS request, false otherwise.
      */
-    public function isOptions() {
+    public function isOptions(): bool
+    {
         return $this->getMethod() === self::METHOD_OPTIONS;
     }
 
@@ -544,7 +552,8 @@ class Request implements JsonSerializable {
      *
      * @return bool Returns true if this is a PATCH request, false otherwise.
      */
-    public function isPatch() {
+    public function isPatch(): bool
+    {
         return $this->getMethod() === self::METHOD_PATCH;
     }
 
@@ -553,7 +562,8 @@ class Request implements JsonSerializable {
      *
      * @return bool Returns true if this is a POST request, false otherwise.
      */
-    public function isPost() {
+    public function isPost(): bool
+    {
         return $this->getMethod() === self::METHOD_POST;
     }
 
@@ -562,7 +572,8 @@ class Request implements JsonSerializable {
      *
      * @return bool Returns true if this is a PUT request, false otherwise.
      */
-    public function isPut() {
+    public function isPut(): bool
+    {
         return $this->getMethod() === self::METHOD_PUT;
     }
 
@@ -571,7 +582,8 @@ class Request implements JsonSerializable {
      *
      * @return string Returns the http method of the request.
      */
-    public function getMethod() {
+    public function getMethod(): string
+    {
         return (string)$this->env['REQUEST_METHOD'];
     }
 
@@ -581,7 +593,8 @@ class Request implements JsonSerializable {
      * @param string $method The new request method.
      * @return Request Returns $this for fluent calls.
      */
-    public function setMethod($method) {
+    public function setMethod($method)
+    {
         $this->env['REQUEST_METHOD'] = strtoupper($method);
         return $this;
     }
@@ -594,7 +607,8 @@ class Request implements JsonSerializable {
      *
      * @return string Returns the request path.
      */
-    public function getPath() {
+    public function getPath(): string
+    {
         return (string)$this->env['PATH_INFO'];
     }
 
@@ -604,7 +618,8 @@ class Request implements JsonSerializable {
      * @param string $path The path to set.
      * @return Request Returns $this for fluent calls.
      */
-    public function setPath($path) {
+    public function setPath($path)
+    {
         $this->env['PATH_INFO'] = (string)$path;
         return $this;
     }
@@ -614,7 +629,8 @@ class Request implements JsonSerializable {
      *
      * @return string Returns the file extension.
      */
-    public function getExt() {
+    public function getExt(): string
+    {
         return (string)$this->env['EXT'];
     }
 
@@ -624,12 +640,14 @@ class Request implements JsonSerializable {
      * @param string $ext The file extension to set.
      * @return Request Returns $this for fluent calls.
      */
-    public function setExt($ext) {
+    public function setExt($ext)
+    {
         if ($ext) {
-            $this->env['EXT'] = '.'.ltrim($ext, '.');
+            $this->env['EXT'] = '.' . ltrim($ext, '.');
         } else {
             $this->env['EXT'] = '';
         }
+
         return $this;
     }
 
@@ -639,8 +657,9 @@ class Request implements JsonSerializable {
      * @return string Returns the path and file extension.
      * @see Request::setPathExt()
      */
-    public function getPathExt() {
-        return $this->env['PATH_INFO'].$this->env['EXT'];
+    public function getPathExt(): string
+    {
+        return $this->env['PATH_INFO'] . $this->env['EXT'];
     }
 
     /**
@@ -650,7 +669,8 @@ class Request implements JsonSerializable {
      * @return Request Returns $this for fluent calls.
      * @see Request::getPathExt()
      */
-    public function setPathExt($path) {
+    public function setPathExt($path)
+    {
         // Strip the extension from the path.
         if (substr($path, -1) !== '/' && ($pos = strrpos($path, '.')) !== false) {
             $ext = substr($path, $pos);
@@ -670,8 +690,9 @@ class Request implements JsonSerializable {
      *
      * @return string Returns the full path.
      */
-    public function getFullPath() {
-        return $this->getRoot().$this->getPathExt();
+    public function getFullPath(): string
+    {
+        return $this->getRoot() . $this->getPathExt();
     }
 
     /**
@@ -684,17 +705,18 @@ class Request implements JsonSerializable {
      * @param string $fullPath The full path to set.
      * @return Request Returns $this for fluent calls.
      */
-    public function setFullPath($fullPath) {
-        $fullPath = '/'.ltrim($fullPath, '/');
+    public function setFullPath($fullPath)
+    {
+        $fullPath = '/' . ltrim($fullPath, '/');
 
         // Try stripping the root out of the path first.
         $root = (string)$this->getRoot();
 
         if ($root &&
             strpos($fullPath, $root) === 0 &&
-            (strlen($fullPath) === strlen($root) || substr($fullPath, strlen($root), 1) === '/')) {
-
-            $this->setPathExt(substr($fullPath, strlen($root)));
+            (\strlen($fullPath) === \strlen($root) || substr($fullPath, \strlen($root), 1) === '/')
+        ) {
+            $this->setPathExt(substr($fullPath, \strlen($root)));
         } else {
             $this->setRoot('');
             $this->setPathExt($fullPath);
@@ -709,7 +731,8 @@ class Request implements JsonSerializable {
      * @param string $name The header name to normalize.
      * @return string Returns the normalized header name.
      */
-    public static function normalizeHeaderName($name) {
+    public static function normalizeHeaderName($name)
+    {
         $result = str_replace(' ', '-', ucwords(str_replace(['-', '_'], ' ', strtolower($name))));
         return $result;
     }
@@ -719,8 +742,9 @@ class Request implements JsonSerializable {
      *
      * @return int Returns the port.
      */
-    public function getPort() {
-        return (int)$this->env['SERVER_PORT'];
+    public function getPort(): int
+    {
+        return (int)$this->getEnvKey('SERVER_PORT');
     }
 
     /**
@@ -731,7 +755,8 @@ class Request implements JsonSerializable {
      * @param int $port The port to set.
      * @return Request Returns $this for fluent calls.
      */
-    public function setPort($port) {
+    public function setPort($port)
+    {
         $this->env['SERVER_PORT'] = $port;
 
         // Override the scheme for standard ports.
@@ -750,47 +775,70 @@ class Request implements JsonSerializable {
      * @param string|null $key Either a string key or null to get the entire array.
      * @param mixed|null $default The default to return if {@link $key} is not found.
      * @return string|array|null Returns the query string value or the query string itself.
-     * @see Request::setQuery()
+     * @see Request::setQueryData()
      */
-    public function getQuery($key = null, $default = null) {
+    public function getQuery($key = null, $default = null)
+    {
         if ($key === null) {
             return $this->env['QUERY'];
         }
-        return isset($this->env['QUERY'][$key]) ? $this->env['QUERY'][$key] : $default;
+
+        return val($key, $this->env['QUERY'], $default);
     }
 
     /**
      * Set an item from the query string array.
      *
-     * @param string|array $key Either a string key or an array to set the entire query string.
-     * @param mixed|null $value The value to set.
+     * @param array $data array to set the entire query string.
      * @return Request Returns $this for fluent call.
-     * @throws \InvalidArgumentException Throws an exception when {@link $key is invalid}.
      * @see Request::getQuery()
      */
-    public function setQuery($key, $value = null) {
-        if (is_string($key)) {
-            $this->env['QUERY'][$key] = $value;
-        } elseif (is_array($key)) {
-            $this->env['QUERY'] = $key;
-        } else {
-            throw new \InvalidArgumentException('Argument 1 must be a string or array.', 422);
-        }
+    public function setQueryData(array $data)
+    {
+        $this->env['QUERY'] = $data;
+
+        return $this;
+    }
+
+    /**
+     * Set an item from the query string array.
+     *
+     * @param string $key Either a string key to set the entire query string.
+     * @param mixed|null $value The value to set.
+     * @return Request Returns $this for fluent call.
+     * @see Request::getQuery()
+     */
+    public function setQuery(string $key, $value = null)
+    {
+        $this->env['QUERY'][$key] = $value;
+
         return $this;
     }
 
     /**
      * Get an item from the input array.
      *
-     * @param string|null $key Either a string key or null to get the entire array.
+     * @param string $key Either a string key or null to get the entire array.
      * @param mixed|null $default The default to return if {@link $key} is not found.
-     * @return string|array|null Returns the query string value or the input array itself.
+     * @return mixed Returns the query string value or the input array itself.
      */
-    public function getInput($key = null, $default = null) {
+    public function getInput(string $key, $default = null)
+    {
         if ($key === null) {
             return $this->env['INPUT'];
         }
-        return isset($this->env['INPUT'][$key]) ? $this->env['INPUT'][$key] : $default;
+
+        return val($key, $this->env['INPUT'], $default);
+    }
+
+    /**
+     * Get the input array.
+     *
+     * @return array Returns the query string value or the input array itself.
+     */
+    public function getInputData()
+    {
+        return $this->env['INPUT'];
     }
 
     /**
@@ -801,7 +849,8 @@ class Request implements JsonSerializable {
      * @return Request Returns $this for fluent call.
      * @throws \InvalidArgumentException Throws an exception when {@link $key is invalid}.
      */
-    public function setInput($key, $value = null) {
+    public function setInput($key, $value = null)
+    {
         if (is_string($key)) {
             $this->env['INPUT'][$key] = $value;
         } elseif (is_array($key)) {
@@ -815,7 +864,7 @@ class Request implements JsonSerializable {
     /**
      * Gets the query on input depending on the http method.
      *
-     * @param string|null $key Either a string key or null to get the entire array.
+     * @param string $key Either a string key or null to get the entire array.
      * @param mixed|null $default The default to return if {@link $key} is not found.
      * @return mixed|array Returns the value at {@link $key} or the entire array.
      * @see Request::setData()
@@ -823,11 +872,31 @@ class Request implements JsonSerializable {
      * @see Request::getQuery()
      * @see Request::hasInput()
      */
-    public function getData($key = null, $default = null) {
+    public function getDataKey(string $key, $default = null)
+    {
         if ($this->hasInput()) {
             return $this->getInput($key, $default);
         }
+
         return $this->getQuery($key, $default);
+    }
+
+    /**
+     * Gets the query on input depending on the http method.
+     *
+     * @return mixed|array Returns the value at {@link $key} or the entire array.
+     * @see Request::setData()
+     * @see Request::getInput()
+     * @see Request::getQuery()
+     * @see Request::hasInput()
+     */
+    public function getData()
+    {
+        if ($this->hasInput()) {
+            return $this->getInputData();
+        }
+
+        return $this->getQuery();
     }
 
     /**
@@ -836,12 +905,13 @@ class Request implements JsonSerializable {
      * @param string|array $key Either a string key or an array to set the entire data.
      * @param mixed|null $value The value to set.
      * @return Request Returns $this for fluent call.
-     * @see Request::getData()
+     * @see Request::getDataKey()
      * @see Request::setInput()
-     * @see Request::setQuery()
+     * @see Request::setQueryData()
      * @see Request::hasInput()
      */
-    public function setData($key, $value = null) {
+    public function setData($key, $value = null)
+    {
         if ($this->hasInput()) {
             $this->setInput($key, $value);
         } else {
@@ -856,7 +926,8 @@ class Request implements JsonSerializable {
      * @param string $method The http method to test.
      * @return bool Returns true if the http method has input, false otherwise.
      */
-    public function hasInput($method = '') {
+    public function hasInput($method = ''): bool
+    {
         if (!$method) {
             $method = $this->getMethod();
         }
@@ -877,7 +948,8 @@ class Request implements JsonSerializable {
      * @return string Returns the root directory of the request as a string.
      * @see Request::setRoot()
      */
-    public function getRoot() {
+    public function getRoot(): string
+    {
         return (string)$this->env['SCRIPT_NAME'];
     }
 
@@ -891,10 +963,11 @@ class Request implements JsonSerializable {
      * @return Request Returns $this for fluent calls.
      * @see Request::getRoot()
      */
-    public function setRoot($root) {
+    public function setRoot($root)
+    {
         $value = trim($root, '/');
         if ($value) {
-            $value = '/'.$value;
+            $value = '/' . $value;
         }
         $this->env['SCRIPT_NAME'] = $value;
         return $this;
@@ -908,7 +981,8 @@ class Request implements JsonSerializable {
      * @return string Retuns the scheme.
      * @see Request::setScheme()
      */
-    public function getScheme() {
+    public function getScheme(): string
+    {
         return (string)$this->env['URL_SCHEME'];
     }
 
@@ -921,7 +995,8 @@ class Request implements JsonSerializable {
      * @return Request Returns $this for fluent calls.
      * @see Request::getScheme()
      */
-    public function setScheme($scheme) {
+    public function setScheme($scheme)
+    {
         $this->env['URL_SCHEME'] = $scheme;
         return $this;
     }
@@ -932,15 +1007,16 @@ class Request implements JsonSerializable {
      * @return string Returns the full url of the request.
      * @see Request::setUrl()
      */
-    public function getUrl() {
+    public function getUrl(): string
+    {
         $query = $this->getQuery();
         return
-            $this->getScheme().
-            '://'.
-            $this->getHostAndPort().
-            $this->getRoot().
-            $this->getPath().
-            (!empty($query) ? '?'.http_build_query($query) : '');
+            $this->getScheme() .
+            '://' .
+            $this->getHostAndPort() .
+            $this->getRoot() .
+            $this->getPath() .
+            (!empty($query) ? '?' . http_build_query($query) : '');
     }
 
     /**
@@ -950,7 +1026,8 @@ class Request implements JsonSerializable {
      * @return Request $this Returns $this for fluent calls.
      * @see Request::getUrl()
      */
-    public function setUrl($url) {
+    public function setUrl($url)
+    {
         // Parse the url and set the individual components.
         $url_parts = parse_url($url);
 
@@ -975,7 +1052,7 @@ class Request implements JsonSerializable {
         if (isset($url_parts['query'])) {
             parse_str($url_parts['query'], $query);
             if (is_array($query)) {
-                $this->setQuery($query);
+                $this->setQueryData($query);
             }
         }
         return $this;
@@ -994,7 +1071,8 @@ class Request implements JsonSerializable {
      * - /: Just the path will be returned.
      * @return string Returns the url.
      */
-    public function makeUrl($path, $domain = false) {
+    public function makeUrl($path, $domain = false): string
+    {
         if (!$path) {
             $path = $this->getPath();
         }
@@ -1007,16 +1085,16 @@ class Request implements JsonSerializable {
         }
 
         if ($domain === true) {
-            $prefix = $scheme.'://'.$this->getHostAndPort().$this->getRoot();
+            $prefix = $scheme . '://' . $this->getHostAndPort() . $this->getRoot();
         } elseif ($domain === false) {
             $prefix = $this->getRoot();
         } elseif ($domain === '//') {
-            $prefix = '//'.$this->getHostAndPort().$this->getRoot();
+            $prefix = '//' . $this->getHostAndPort() . $this->getRoot();
         } else {
             $prefix = '';
         }
 
-        return $prefix.'/'.ltrim($path, '/');
+        return $prefix . '/' . ltrim($path, '/');
     }
 
     /**
@@ -1025,7 +1103,8 @@ class Request implements JsonSerializable {
      * @param string $path The path to split.
      * @return array Returns an array in the form `['path', 'ext']`.
      */
-    protected static function splitPathExt($path) {
+    protected static function splitPathExt(string $path): array
+    {
         if (substr($path, -1) !== '/' && ($pos = strrpos($path, '.')) !== false) {
             $ext = substr($path, $pos);
             $path = substr($path, 0, $pos);
@@ -1041,7 +1120,8 @@ class Request implements JsonSerializable {
      * @return mixed data which can be serialized by <b>json_encode</b>,
      * which is a value of any type other than a resource.
      */
-    public function jsonSerialize() {
+    public function jsonSerialize()
+    {
         return $this->env;
     }
 
@@ -1050,15 +1130,15 @@ class Request implements JsonSerializable {
      *
      * @return string
      */
-    public function renderType()
+    public function renderType(): string
     {
         $type = strtolower(val('renderType', $_REQUEST, 'all'));
 
-        if($type === self::RENDER_VIEW) {
+        if ($type === self::RENDER_VIEW) {
             return self::RENDER_VIEW;
         }
 
-        if ($type === self::RENDER_JSON && $this->allowRenderJson){
+        if ($type === self::RENDER_JSON && $this->allowRenderJson) {
             return self::RENDER_JSON;
         }
 

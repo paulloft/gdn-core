@@ -44,7 +44,7 @@ class Gdn {
     }
 
     /**
-     * @return Cache\Dirty
+     * @return Cache
      */
     public static function dirtyCache()
     {
@@ -59,52 +59,44 @@ class Gdn {
         return Session::instance();
     }
 
+    /**
+     * @return Response
+     */
     public static function response()
     {
         return Response::current();
     }
 
+    /**
+     * @return Request
+     */
     public static function request()
     {
-        if (!Request::current()) {
-            $request = new Request();
-            Request::current($request);
-        }
         return Request::current();
     }
 
     /**
-     * @return \Addons\Dashboard\Models\Permission|bool
+     * @return \Addons\Dashboard\Models\Permission
      */
     public static function permission()
     {
-
-        return self::getClass('Addons\\Dashboard\\Models\\Permission');
+        return \Addons\Dashboard\Models\Permission::instance();
     }
 
     /**
-     * @return \Addons\Dashboard\Models\Auth|bool
+     * @return \Addons\Dashboard\Models\Auth
      */
     public static function auth()
     {
-        return self::getClass('Addons\\Dashboard\\Models\\Auth');
+        return \Addons\Dashboard\Models\Auth::instance();
     }
 
     /**
-     * @return \Addons\Dashboard\Models\Users|bool
+     * @return \Addons\Dashboard\Models\Users
      */
     public static function users()
     {
-        return self::getClass('Addons\\Dashboard\\Models\\Users');
-    }
-
-    /**
-     * @param string
-     * @return bool|Model
-     */
-    private static function getClass($className)
-    {
-        return class_exists($className) ? $className::instance() : false;
+        return \Addons\Dashboard\Models\Users::instance();
     }
 
     /**

@@ -2,7 +2,10 @@
 
 namespace Garden\Interfaces;
 
-
+/**
+ * Cache drivers interface
+ * @package Garden\Interfaces
+ */
 interface Cache
 {
     /**
@@ -22,7 +25,7 @@ interface Cache
      * @param   integer $lifetime lifetime in seconds
      * @return  boolean
      */
-    public function set($id, $data, $lifetime = 3600);
+    public function set($id, $data, $lifetime = 3600): bool;
 
     /**
      * Add a value to cache if a key doesn`t exists
@@ -32,7 +35,7 @@ interface Cache
      * @param   integer $lifetime lifetime in seconds
      * @return  boolean
      */
-    public function add($id, $data, $lifetime = 3600);
+    public function add($id, $data, $lifetime = 3600): bool;
 
     /**
      * Check exists cache id
@@ -40,7 +43,7 @@ interface Cache
      * @param   string $id id of cache entry
      * @return  boolean
      */
-    public function exists($id);
+    public function exists($id): bool;
 
     /**
      * Delete a cache entry based on id
@@ -48,7 +51,7 @@ interface Cache
      * @param   string $id id to remove from cache
      * @return  boolean
      */
-    public function delete($id);
+    public function delete($id): bool;
 
     /**
      * Delete all cache entries.
@@ -60,5 +63,5 @@ interface Cache
      *
      * @return  boolean
      */
-    public function deleteAll();
+    public function deleteAll(): bool;
 }

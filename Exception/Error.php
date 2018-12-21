@@ -11,8 +11,8 @@ namespace Garden\Exception;
  * An exception for php errors that also includes the error context and a backtrace.
  */
 class Error extends \ErrorException {
-    protected $context;
 
+    protected $context;
     protected $backtrace;
 
     /**
@@ -20,12 +20,12 @@ class Error extends \ErrorException {
      *
      * @param string $message The error message.
      * @param int $number The error number.
-     * @param int $filename The file where the error occurred.
-     * @param string $line The line number in the file.
-     * @param int $context The currently defined variables when the error occured.
+     * @param string $filename The file where the error occurred.
+     * @param int $line The line number in the file.
+     * @param array $context The currently defined variables when the error occured.
      * @param array $backtrace A debug backtrace from when the error occurred.
      */
-    public function __construct($message, $number = 500, $filename = __FILE__, $line = __LINE__, $context = '', $backtrace = []) {
+    public function __construct($message, $number = 500, $filename = __FILE__, $line = __LINE__, $context = [], $backtrace = []) {
         parent::__construct($message, $number, 0, $filename, $line);
         $this->context = $context;
         $this->backtrace = $backtrace;
@@ -52,7 +52,7 @@ class Error extends \ErrorException {
     /**
      * Get the error context.
      *
-     * @return int
+     * @return array
      */
     public function getContext() {
         return $this->context;

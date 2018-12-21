@@ -92,7 +92,7 @@ class Controller {
         Event::fire('render_before');
 
         if ($this->renderType() === Request::RENDER_JSON) {
-            Response::current()->headers('Content-Type', 'application/json');
+            Response::current()->setHeader('Content-Type', 'application/json');
             echo json_encode($this->_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         } else {
             $view = $view ?: $this->callerMethod();
@@ -186,18 +186,7 @@ class Controller {
     public function smarty()
     {
         if ($this->_smarty === null) {
-            $this->_smarty = new \Smarty();
-
-            $config = c('smarty');
-            $this->_smarty->caching = val('caching', $config);
-            $this->_smarty
-                ->setCompileDir( val('compile_dir', $config, GDN_CACHE.'/smarty/') )
-                ->setCacheDir( val('cache_dir', $config, GDN_CACHE.'/smarty/') )
-                ->setPluginsDir( val('plugins_dir', $config) );
-
-            if (Cache::$clear) {
-                $this->_smarty->clearAllCache();
-            }
+            $this->_smarty = new Smarty();
         }
 
         return $this->_smarty;
@@ -253,7 +242,7 @@ class Controller {
      */
     protected function callerMethod()
     {
-        return Request::current()->getEnv('action');
+        return Request::current()->getEnvKey('action');
     }
 
     /**

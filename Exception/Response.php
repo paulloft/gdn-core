@@ -15,7 +15,7 @@ namespace Garden\Exception;
  */
 class Response {
     /**
-     * @var Response The response for this exception.
+     * @var \Garden\Response The response for this exception.
      */
     protected $response;
 
@@ -24,16 +24,18 @@ class Response {
      *
      * @param Response $response The response the exception will serve.
      */
-    public function __construct(Response $response) {
+    public function __construct(Response $response)
+    {
         $this->response = $response;
     }
 
     /**
      * Get the {@link Response} corresponding to this exception.
      *
-     * @return Response
+     * @return \Garden\Response
      */
-    public function getResponse() {
+    public function getResponse(): \Garden\Response
+    {
         return $this->response;
     }
 }

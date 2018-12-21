@@ -34,7 +34,7 @@ abstract class Database {
     /**
      * @var  array  Database instances
      */
-    public static $instances = array();
+    public static $instances = [];
 
     /**
      * Get a singleton Database instance. If configuration is not specified,
@@ -50,19 +50,19 @@ abstract class Database {
      * @param   string   $name    instance name
      * @param   array    $config  configuration parameters
      * @throws Exception\Error
-     * @return  Database
+     * @return  self
      */
     public static function instance($name = NULL, array $config = NULL) 
     {
         if ($name === NULL) {
             // Use the default instance name
-            $name = Database::$default;
+            $name = self::$default;
         }
 
-        if ( !isset(Database::$instances[$name])) {
+        if ( !isset(self::$instances[$name])) {
             if ($config === NULL) {
                 // Load the configuration for this database
-                $config = config('database');
+                $config = \Garden\Config::get('database');
             }
 
             $driver = val('driver', $config);
@@ -78,10 +78,10 @@ abstract class Database {
             $driver = new $driver($name, $config);
 
             // Store the database instance
-            Database::$instances[$name] = $driver;
+            self::$instances[$name] = $driver;
         }
 
-        return Database::$instances[$name];
+        return self::$instances[$name];
     }
 
     /**
@@ -171,7 +171,7 @@ abstract class Database {
      */
     public function disconnect()
     {
-        unset(Database::$instances[$this->_instance]);
+        unset(self::$instances[$this->_instance]);
 
         return TRUE;
     }
@@ -263,7 +263,7 @@ abstract class Database {
         // Quote the table name
         $table = $this->quote_table($table);
 
-        return $this->query(Database::SELECT, 'SELECT COUNT(*) AS total_row_count FROM '.$table, FALSE)
+        return $this->query(self::SELECT, 'SELECT COUNT(*) AS total_row_count FROM '.$table)
             ->get('total_row_count');
     }
 

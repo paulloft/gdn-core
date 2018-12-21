@@ -12,8 +12,8 @@ namespace Garden;
  */
 class Model {
 
-    public $table;
-    public $primaryKey = 'id';
+    protected $table;
+    protected $primaryKey = 'id';
     public $allowedFields = [];
 
     /**
@@ -113,6 +113,11 @@ class Model {
     public function setTable($table = null)
     {
         $this->table = $table;
+    }
+
+    public function getPrimaryKey()
+    {
+        return $this->primaryKey;
     }
 
     public function setPrimaryKey($primaryKey)

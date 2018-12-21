@@ -175,7 +175,7 @@ abstract class Structure {
      * method will drop the table before attempting to re-create it.
      * @return mixed
      */
-    public function set($explicit = false, $drop = false)
+    public function set($explicit = true, $drop = false)
     {
         /// Throw an event so that the structure can be overridden.
         \Garden\Event::fire('structure_before_set', $explicit, $drop);

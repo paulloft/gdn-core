@@ -8,7 +8,7 @@ class Dirty extends \Garden\Cache
     protected $config;
     protected $data = [];
 
-    public function __construct($config = false){
+    public function __construct(array $config = []){
         $this->config = $config;
     }
 
@@ -17,13 +17,13 @@ class Dirty extends \Garden\Cache
         return val($id, $this->data, $default);
     }
     
-    public function set($id, $data, $lifetime = 3600)
+    public function set($id, $data, $lifetime = 3600): bool
     {
         $this->data[$id] = $data;
         return true;
     }
 
-    public function add($id, $data, $lifetime = 3600)
+    public function add($id, $data, $lifetime = 3600): bool
     {
         if(!isset($this->data[$id])) {
             $this->data[$id] = $data;
@@ -33,19 +33,21 @@ class Dirty extends \Garden\Cache
         return false;
     }
 
-    public function exists($id)
+    public function exists($id): bool
     {
         return isset($this->data[$id]);
     }
 
-    public function delete($id)
+    public function delete($id): bool
     {
         unset($this->data[$id]);
+        return true;
     }
 
-    public function deleteAll()
+    public function deleteAll(): bool
     {
         $this->data = [];
+        return true;
     }
 
     public function cacheGet($key, callable $cache_cb) {

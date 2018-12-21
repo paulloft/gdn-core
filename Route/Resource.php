@@ -6,10 +6,12 @@
  */
 
 namespace Garden\Route;
+
 use Garden\Exception;
 use Garden\Request;
 use Garden\Addons;
 use Garden\Event;
+use Garden\Response;
 
 /**
  * Maps paths to controllers that act as RESTful resources.
@@ -27,6 +29,24 @@ class Resource extends \Garden\Route {
      * @var array An array of controller method names that can't be dispatched to by name.
      */
     public static $specialActions = ['index', 'initialize', 'post'];
+    public static $defaultActons = [
+        Request::METHOD_GET => 'index',
+        Request::METHOD_POST => 'index',
+        Request::METHOD_OPTIONS => 'options_index',
+        Request::METHOD_DELETE => 'delete_index',
+        Request::METHOD_PUT => 'put_index'
+    ];
+
+    /**
+     * @var string controller name for dispatching
+     */
+    protected $controller;
+
+    /**
+     * @var string action name for dispatching
+     */
+    protected $action;
+
 
     /**
      * Initialize an instance of the {@link ResourceRoute} class.
@@ -35,8 +55,9 @@ class Resource extends \Garden\Route {
      * @param string $controllerPattern A pattern sui table for {@link sprintf} that will map
      * a path to a controller object name.
      */
-    public function __construct($root = '', $controllerPattern = null) {
-        $this->pattern($root);
+    public function __construct($root = '', $controllerPattern = null)
+    {
+        $this->setPattern($root);
 
         if ($controllerPattern !== null) {
             $this->controllerPattern = $controllerPattern;
@@ -44,56 +65,152 @@ class Resource extends \Garden\Route {
     }
 
     /**
+     * Try matching a route to a request.
+     *
+     * @param Request $request The request to match the route with.
+     * @return bool return true if the route matched
+     */
+    public function match(Request $request): bool
+    {
+        if (!$this->matchesMethods($request)) {
+            return false;
+        }
+
+        try {
+            list($this->arguments, $sysArgs, $printArgs) = $this->getArgs($request);
+            $this->controller = $this->getClassName($printArgs);
+        } catch (Exception\Pass $ex) {
+            return false;
+        }
+
+        $method = $request->getMethod();
+        $action = $sysArgs['action'] ?? false;
+
+        // Special actions should not be considered.
+        if (\in_array($action, self::$specialActions, true)) {
+            return false;
+        }
+
+        if ($action) {
+            $this->action = $this->actionExists($this->controller, $action, $method);
+        } else {
+            $this->action = $this->actionExists($this->controller, self::$defaultActons[$method]);
+        }
+
+        return $this->action && \is_callable([$this->controller, $this->action]);
+    }
+
+    /**
      * Dispatch the route.
      *
      * @param Request $request The current request we are dispatching against.
-     * @param array &$args The args to pass to the dispatch.
-     * These are the arguments returned from {@link Route::matches()}.
-     * @return mixed Returns the result from the controller method.
-     * @throws Exception\NotFound Throws a 404 when the path doesn't map to a controller action.
-     * @throws Exception\MethodNotAllowed Throws a 405 when the http method does not map to a controller action,
-     * @throws Exception\Pass
-     * but other methods do.
+     * @return Response
+     * @throws \Exception
      */
-    public function dispatch(Request $request, array &$args) {
-        $controller = new $args['controller']();
-        $method = strtolower($args['method']);
-        $actionArgs = $args['args'];
-        $action = $args['action'];
-        $actions = ['get' => 'index', 'post' => 'index', 'options' => 'options_index', 'delete' => 'delete_index', 'put' => 'put_index'];
+    public function dispatch(Request $request): Response
+    {
+        $controller = new $this->controller();
+        $actionArgs = $this->getActionArguments($controller, $request);
 
-        $initialize = method_exists($controller, 'initialize');
+        $request->setEnv('ACTION', $this->action);
+        $request->setEnv('CONTROLLER', $this->controller);
 
-        if (!isset($actions[$method])) {
-            // The http method isn't allowed.
-            $allowed = array_keys($actions);
-            throw new Exception\MethodNotAllowed($method, $allowed);
+        $response = new \Garden\Response;
+        \Garden\Response::current($response);
+
+        ob_start();
+
+        if (method_exists($controller, 'initialize')) {
+            $initArgs = array_merge(['action' => $this->action], $actionArgs);
+            Event::callUserFuncArray([$controller, 'initialize'], $initArgs);
         }
-        if (!$action) {
-            $action = $this->actionExists($controller, $actions[$method]);
+
+        Event::callUserFuncArray([$controller, $this->action], $actionArgs);
+
+        $response->setBody(ob_get_clean());
+
+        return $response;
+    }
+
+    /**
+     * Gets corrected
+     *
+     * @param Request $request
+     * @return array
+     * @throws Exception\Pass
+     */
+    protected function getArgs(Request $request): array
+    {
+        if ($this->getMatchFullPath()) {
+            $path = $request->getFullPath();
         } else {
-            $action = $this->actionExists($controller, $action, $method, true);
+            $path = $request->getPathExt();
         }
 
-        if(!$action) {
-            $allowed = $this->allowedMethods($controller, $action);
-            if (!empty($allowed)) {
-                // At least one method was allowed for this action so throw an exception.
-                throw new Exception\MethodNotAllowed($method, $allowed);
+        $regex = $this->getPatternRegex();
+
+        if (!preg_match($regex, $path, $matchesArgs)) {
+            throw new Exception\Pass();
+        }
+
+        $args = $sysArgs = $printArgs = [];
+
+        foreach ($matchesArgs as $arg => $value) {
+            if (is_numeric($arg)) {
+                continue;
+            }
+
+            if ($arg === 'addon' || $arg === 'controller' || $arg === 'action') {
+                $sysArgs[$arg] = $value;
             } else {
-                // not found
-                throw new Exception\Pass;
+                $args[$arg] = $value;
+            }
+
+            $printArgs[] = ucfirst($value);
+        }
+
+        return [$args, $sysArgs, $printArgs];
+    }
+
+    /**
+     * @param array $args
+     * @return string
+     * @throws Exception\Pass
+     */
+    protected function getClassName(array $args): string
+    {
+        $basename = vsprintf($this->controllerPattern, $args);
+
+        if (class_exists('\Garden\Addons', false)) {
+            list($classname) = Addons::classMap($basename);
+
+            if ($classname) {
+                return $classname;
             }
         }
 
-        // Make sure the number of action arguments match the action method.
-        $actionMethod = new \ReflectionMethod($controller, $action);
-        $action = $actionMethod->getName(); // make correct case.
-        $actionParams = $actionMethod->getParameters();
-
-        if(!$actionMethod->isPublic()) {
-            throw new Exception\Pass;
+        if (class_exists($basename)) {
+            return $basename;
         }
+
+        throw new Exception\Pass();
+    }
+
+    /**
+     * @param $controller
+     * @param Request $request
+     * @return array
+     * @throws Exception\InvalidArgument
+     * @throws \ReflectionException
+     */
+    protected function getActionArguments($controller, Request $request): array
+    {
+        $actionArgs = $this->arguments;
+
+        // Make sure the number of action arguments match the action method.
+        $actionMethod = new \ReflectionMethod($controller, $this->action);
+        $this->action = $actionMethod->getName(); // make correct case.
+        $actionParams = $actionMethod->getParameters();
 
         // Fill in missing default parameters.
         foreach ($actionParams as $i => $param) {
@@ -106,187 +223,56 @@ class Resource extends \Garden\Route {
                 if ($param->isDefaultValueAvailable()) {
                     $actionArgs[$paramName] = $param->getDefaultValue();
                 } else {
-                    throw new Exception\NotFound("Missing argument $i for {$args['controller']}::$action().");
+                    throw new Exception\InvalidArgument("Missing argument $i for {$this->controller}::{$this->action}().");
                 }
             } elseif ($this->failsCondition($paramName, $actionArgs[$paramName])) {
-                throw new Exception\NotFound("Invalid argument '{$actionArgs[$paramName]}' for {$paramName}.");
+                throw new Exception\InvalidArgument("Invalid argument '{$actionArgs[$paramName]}' for {$paramName}.");
             }
         }
 
-        $request->setEnv('ACTION', $action);
-        $request->setEnv('CONTROLLER', $args['controller']);
-
-        \Garden\Response::create();
-
-        if ($initialize) {
-            $initArgs = array_merge(['action' => $action], $actionArgs);
-            Event::callUserFuncArray([$controller, 'initialize'], $initArgs);
-        }
-
-        $result = Event::callUserFuncArray([$controller, $action], $actionArgs);
-        return $result ?: \Garden\Response::current();
-    }
-
-    /**
-     * Tests whether or not a string is a valid identifier.
-     *
-     * @param string $str The string to test.
-     * @return bool Returns true if {@link $str} can be used as an identifier.
-     */
-    protected function isIdentifier($str) {
-        if (preg_match('`[_a-zA-Z][_a-zA-Z0-9]{0,30}`i', $str)) {
-            return true;
-        }
-        return false;
+        return $actionArgs;
     }
 
     /**
      * Tests whether a controller action exists.
      *
-     * @param object $object The controller object that the method should be on.
+     * @param string $controller The controller object that the method should be on.
      * @param string $action The name of the action.
      * @param string $method The http method.
-     * @param bool $special Whether or not to blacklist the special methods.
      * @return string Returns the name of the action method or an empty string if it doesn't exist.
      */
-    protected function actionExists($object, $action, $method = '', $special = false)
+    protected function actionExists($controller, $action, $method = ''): string
     {
-        if ($special && in_array($action, self::$specialActions)) {
-            return '';
-        }
-
         $reserved = [];
 
-        if ($object instanceof \Garden\Template) {
+        if ($controller instanceof \Garden\Template) {
             $reserved = get_class_methods(\Garden\Template::class);
-        } elseif ($object instanceof \Garden\Controller) {
+        } elseif ($controller instanceof \Garden\Controller) {
             $reserved = get_class_methods(\Garden\Controller::class);
         }
 
-        if (in_arrayf($action, $reserved)) {
+        if (\in_array($action, $reserved, true)) {
             return '';
         }
 
         // Short circuit on a badly named action.
-        if (!$this->isIdentifier($action)) {
+        if (!preg_match('`[_a-zA-Z][_a-zA-Z0-9]{0,30}`i', $action)) {
             return '';
         }
 
-        if ($method && $method !== $action) {
-            $calledAction = $method.'_'.$action;
-            if (Event::methodExists($object, $calledAction)) {
+        if ($method) {
+            $method = strtolower($method);
+            $calledAction = $method . '_' . $action;
+            if ($method !== $action && Event::methodExists($controller, $calledAction)) {
                 return $calledAction;
             }
         }
-        $calledAction = $action;
-        if (Event::methodExists($object, $calledAction)) {
-            return $calledAction;
+
+        if (Event::methodExists($controller, $action)) {
+            return $action;
         }
+
         return '';
-    }
-
-    /**
-     * Find the allowed http methods on a controller object.
-     *
-     * @param object $object The object to test.
-     * @param string $action The action to test.
-     * @return array Returns an array of allowed http methods.
-     */
-    protected function allowedMethods($object, $action) {
-        $allMethods = [
-            Request::METHOD_GET, Request::METHOD_POST, Request::METHOD_DELETE,
-            Request::METHOD_PATCH, Request::METHOD_PUT,
-            Request::METHOD_HEAD, Request::METHOD_OPTIONS
-        ];
-
-        // Special actions should not be considered.
-        if (in_array($action, self::$specialActions)) {
-            return [];
-        }
-
-        if (Event::methodExists($object, $action)) {
-            // The controller has the named action and thus supports all methods.
-            return $allMethods;
-        }
-
-        // Loop through all the methods and check to see if they exist in the form $method.'_'.$action.
-        $allowed = [];
-        foreach ($allMethods as $method) {
-            if (Event::methodExists($object, $method.'_'.$action)) {
-                $allowed[] = $method;
-            }
-        }
-        return $allowed;
-    }
-
-    /**
-     * Try matching a route to a request.
-     *
-     * @param Request $request The request to match the route with.
-     * @param \Garden\Application $app The application instantiating the route.
-     * @return array|null Whether or not the route matches the request.
-     * If the route matches an array of args is returned, otherwise the function returns null.
-     */
-    public function matches(Request $request, \Garden\Application $app) {
-        if (!$this->matchesMethods($request)) {
-            return null;
-        }
-
-        if ($this->getMatchFullPath()) {
-            $path = $request->getFullPath();
-        } else {
-            $path = $request->getPathExt();
-        }
-
-        $regex = $this->getPatternRegex($this->pattern());
-
-        $action = false;
-        $printArgs = [];
-
-        if (preg_match($regex, $path, $matches)) {
-            $args = [];
-            foreach ($matches as $key => $value) {
-                if ($key === 'addon' || $key === 'controller' || $key === 'action') {
-                    $$key = $value;
-                    $printArgs[] = ucfirst($value);
-                } elseif (!is_numeric($key)) {
-                    $args[$key] = $value;
-                    $printArgs[] = ucfirst($value);
-                }
-            }
-        } else {
-            return null;
-        }
-
-
-        // Check to see if a class exists with the desired controller name.
-        // If a controller is found then it is responsible for the route, regardless of any other parameters.
-        $basename = vsprintf($this->controllerPattern, $printArgs);
-        if (class_exists('\Garden\Addons', false)) {
-            list($classname) = Addons::classMap($basename);
-
-            if (!$classname && class_exists($basename)) {
-                $classname = $basename;
-            }
-        } elseif (class_exists($basename)) {
-            $classname = $basename;
-        } else {
-            $classname = '';
-        }
-
-        if (!$classname) {
-            return null;
-        }
-
-        $result = [
-            'controller' => $classname,
-            'action'     => $action,
-            'method'     => $request->getMethod(),
-            'path'       => $path,
-            'args'       => $args,
-            'query'      => $request->getQuery()
-        ];
-        return $result;
     }
 
     /**
@@ -297,10 +283,11 @@ class Resource extends \Garden\Route {
      * @return bool|null Returns one of the following:
      * - true: The condition fails.
      * - false: The condition passes.
-     * - null: There is no condition.
      */
-    protected function failsCondition($name, $value) {
+    protected function failsCondition($name, $value)
+    {
         $name = strtolower($name);
+
         if (isset($this->conditions[$name])) {
             $regex = $this->conditions[$name];
             return !preg_match("`^$regex$`", $value);
@@ -311,6 +298,6 @@ class Resource extends \Garden\Route {
             return !preg_match("`^$regex$`", $value);
         }
 
-        return null;
+        return false;
     }
 }

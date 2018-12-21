@@ -6,22 +6,22 @@
  */
 
 namespace Garden\Route;
+
+use Garden\Event;
+use Garden\Exception;
 use Garden\Request;
-use Garden\Application;
+use Garden\Response;
 
 /**
  * A route that maps urls to callbacks.
  */
 class Callback extends \Garden\Route {
-    /// Properties ///
 
     /**
-     *
      * @var callable The callback to call on a matching pattern.
      */
     protected $callback;
 
-    /// Methods ///
 
     /**
      * Initialize an instance of the {@link CallbackRoute} class.
@@ -29,56 +29,142 @@ class Callback extends \Garden\Route {
      * @param string $pattern The pattern to match to.
      * @param callable $callback The callback to call when the url matches.
      */
-    public function __construct($pattern, callable $callback) {
-        $this->pattern($pattern);
-        $this->setCallback($callback);
+    public function __construct($pattern, callable $callback)
+    {
+        $this->setPattern($pattern);
+        $this->callback = $callback;
+    }
+
+    /**
+     * Try matching a route to a request.
+     *
+     * @param Request $request The request to match the route with.
+     * @return bool return true if the route matched
+     */
+    public function match(Request $request): bool
+    {
+        if (!$this->matchesMethods($request)) {
+            return false;
+        }
+
+        try {
+            $this->arguments = $this->getArgs($request);
+        } catch (Exception\Pass $ex) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * Dispatch the matched route and call its callback.
      *
      * @param Request $request The request to dispatch.
-     * @param array &$args The arguments returned from {@link CallbackRoute::dispatch()}.
-     * @return mixed Returns the result of the callback.
+     * @return Response
+     * @throws \Exception
      */
-    public function dispatch(Request $request, array &$args) {
-        $callback = $args['callback'];
-        $callback_args = reflect_args($callback, $args['args']);
+    public function dispatch(Request $request): Response
+    {
+        $response = new \Garden\Response;
+        \Garden\Response::current($response);
 
-        return $callback(...$callback_args);
+        ob_start();
+
+        $callArgs = $this->getCallArguments($this->callback);
+        if (\is_array($this->callback) && method_exists($this->callback[0], 'initialize')) {
+            Event::callUserFuncArray([$this->callback[0], 'initialize'], $callArgs);
+        }
+
+        Event::callUserFuncArray($this->callback, $callArgs);
+
+        $response->setBody(ob_get_clean());
+
+        return $response;
     }
 
     /**
-     * {@inheritdoc}
+     * @param Request $request
+     * @return array
+     * @throws Exception\Pass
      */
-    public function matches(Request $request, Application $app) {
-        if (!$this->matchesMethods($request)) {
-            return null;
-        }
-
+    protected function getArgs(Request $request): array
+    {
         if ($this->getMatchFullPath()) {
             $path = $request->getFullPath();
         } else {
-            $path = $request->getPath();
+            $path = $request->getPathExt();
         }
-        $regex = $this->getPatternRegex($this->pattern());
 
-        if (preg_match($regex, $path, $matches)) {
-            // This route matches so extract the args.
-            $args = array();
-            foreach ($matches as $key => $value) {
-                if (!is_numeric($key)) {
-                    $args[$key] = $value;
-                }
-            }
-            $result = array(
-                'callback' => $this->callback,
-                'args' => $args,
-                );
-            return $result;
-        } else {
-            return null;
+        $regex = $this->getPatternRegex();
+
+        if (!preg_match($regex, $path, $matchesArgs)) {
+            throw new Exception\Pass();
         }
+
+        $args = [];
+
+        foreach ($matchesArgs as $arg => $value) {
+            if (is_numeric($arg)) {
+                continue;
+            }
+
+            $args[$arg] = $value;
+        }
+
+        return $args;
+    }
+
+    /**
+     * @param $callback
+     * @return array
+     * @throws Exception\InvalidArgument
+     * @throws \ReflectionException
+     */
+    protected function getCallArguments($callback): array
+    {
+        if ($callback instanceof \Closure || \is_string($callback)) {
+            $method = new \ReflectionFunction($callback);
+            $methodName = $method;
+        } else {
+            $method = new \ReflectionMethod($callback[0], $callback[1]);
+            if (\is_string($callback[0])) {
+                $methodName = $callback[0] . '::' . $method->getName();
+            } else {
+                $methodName = \get_class($callback[0]) . '->' . $method->getName();
+            }
+        }
+
+        $params = $method->getParameters();
+        $missArgs = $callArgs = [];
+
+        // Set all of the parameters.
+        foreach ($params as $index => $param) {
+            $paramName = $param->getName();
+            $paramNamel = strtolower($paramName);
+
+            if (isset($args[$paramNamel])) {
+                $paramValue = $this->arguments[$paramNamel];
+            } elseif (isset($args[$index])) {
+                $paramValue = $this->arguments[$index];
+            } elseif ($param->isDefaultValueAvailable()) {
+                $paramValue = $param->getDefaultValue();
+            } else {
+                $paramValue = null;
+                $missArgs[] = '$' . $paramName;
+            }
+
+            $callArgs[$paramName] = $paramValue;
+        }
+
+        if (\count($missArgs) > 0) {
+            throw new Exception\InvalidArgument("$methodName() expects the following parameters: " . implode(', ', $missArgs) . '.', $missArgs);
+        }
+
+        for ($index = \count($callArgs); array_key_exists($index, $this->arguments); $index++) {
+            $callArgs[$index] = $this->arguments[$index];
+        }
+
+        return $callArgs;
     }
 
     /**
@@ -86,19 +172,9 @@ class Callback extends \Garden\Route {
      *
      * @return callable Returns the current callback.
      */
-    public function getCallback() {
+    public function getCallback()
+    {
         return $this->callback;
-    }
-
-    /**
-     * Set the callback for the route.
-     *
-     * @param callable $callback The new callback to set.
-     * @return CallbackRoute Retuns $this for fluent calls.
-     */
-    public function setCallback(callable $callback) {
-        $this->callback = $callback;
-        return $this;
     }
 }
 

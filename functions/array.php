@@ -16,7 +16,8 @@
  * @param mixed $default The default value for unspecified keys.
  * @return array Returns the array converted to long syntax.
  */
-function array_quick(array $array, $default) {
+function array_quick(array $array, $default)
+{
     $result = [];
     foreach ($array as $key => $value) {
         if (is_int($key)) {
@@ -35,7 +36,8 @@ function array_quick(array $array, $default) {
  * @param callable $callback The callback used to generate the default values.
  * @return array Returns the array converted to long syntax.
  */
-function array_uquick(array $array, callable $callback) {
+function array_uquick(array $array, callable $callback)
+{
     $result = [];
     foreach ($array as $key => $value) {
         if (is_int($key)) {
@@ -56,7 +58,8 @@ function array_uquick(array $array, callable $callback) {
  *
  * @category Array Functions
  */
-function array_load($path) {
+function array_load($path)
+{
     if (!file_exists($path)) {
         return [];
     }
@@ -86,8 +89,9 @@ function array_load($path) {
     return $loaded;
 }
 
-function array_export(array $array) {
-    $string = json_encode($array, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+function array_export(array $array)
+{
+    $string = json_encode($array, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     $string = str_replace(['{', '}', '": '], ['[', ']', '" => '], $string);
 
     return $string;
@@ -104,7 +108,8 @@ function array_export(array $array) {
  *
  * @category Array Functions
  */
-function array_save($data, $path) {
+function array_save($data, $path)
+{
     if (!is_array($data)) {
         throw new \InvalidArgumentException('Config::saveArray(): Argument #1 is not an array.', 500);
     }
@@ -123,7 +128,7 @@ function array_save($data, $path) {
             $result = file_put_contents($path, $json, LOCK_EX);
             break;
         case '.php':
-            $php = "<?php\nreturn ".array_export($data).";";
+            $php = "<?php\nreturn " . array_export($data) . ";";
             $result = file_put_contents($path, $php, LOCK_EX);
             break;
         case '.ser':
@@ -150,7 +155,8 @@ function array_save($data, $path) {
  * @param callable $cmp The comparison function to use in the search.
  * @return mixed|false Returns the found value or false if the value is not found.
  */
-function array_usearch($needle, array $haystack, callable $cmp) {
+function array_usearch($needle, array $haystack, callable $cmp)
+{
     $found = array_uintersect($haystack, [$needle], $cmp);
 
     if (empty($found)) {
@@ -169,7 +175,8 @@ function array_usearch($needle, array $haystack, callable $cmp) {
  * @return mixed Returns the first non-empty value of {@link $default} if none are found.
  * @category Array Functions
  */
-function array_select(array $keys, array $array, $default = null) {
+function array_select(array $keys, array $array, $default = null)
+{
     foreach ($keys as $key) {
         if (isset($array[$key]) && $array[$key]) {
             return $array[$key];
@@ -186,7 +193,8 @@ function array_select(array $keys, array $array, $default = null) {
  * @param mixed $default The default value to set if key does not exist.
  * @category Array Functions
  */
-function array_touch($key, array &$array, $default) {
+function array_touch($key, array &$array, $default)
+{
     if (!array_key_exists($key, $array)) {
         $array[$key] = $default;
     }
@@ -201,9 +209,10 @@ function array_touch($key, array &$array, $default) {
  *
  * @category Array Functions
  */
-function array_translate($array, array $mappings) {
+function array_translate($array, array $mappings)
+{
     $array = (array)$array;
-    $result = array();
+    $result = [];
     foreach ($mappings as $index => $value) {
         if (is_numeric($index)) {
             $key = $value;
@@ -232,7 +241,8 @@ function array_translate($array, array $mappings) {
  * @category Array Functions
  * @category String Functions
  */
-function implode_assoc($elemglue, $keyglue, array $pieces) {
+function implode_assoc($elemglue, $keyglue, array $pieces)
+{
     $result = '';
 
     foreach ($pieces as $key => $value) {
@@ -240,7 +250,7 @@ function implode_assoc($elemglue, $keyglue, array $pieces) {
             $result .= $elemglue;
         }
 
-        $result .= $key.$keyglue.$value;
+        $result .= $key . $keyglue . $value;
     }
     return $result;
 }
@@ -253,7 +263,7 @@ function implode_assoc($elemglue, $keyglue, array $pieces) {
  */
 function array_valuekey(array $array, $key)
 {
-    $result = array();
+    $result = [];
 
     foreach ($array as $item) {
         $key_value = val($key, $item);
@@ -275,7 +285,7 @@ function array_map_recursive($callbacks, array $array, $keys = NULL)
     foreach ($array as $key => $val) {
         if (is_array($val)) {
             $array[$key] = array_map_recursive($callbacks, $array[$key]);
-        } elseif ( ! is_array($keys) || in_array($key, $keys)) {
+        } elseif (!is_array($keys) || in_array($key, $keys)) {
             if (is_array($callbacks)) {
                 foreach ($callbacks as $cb) {
                     $array[$key] = $cb($array[$key]);
@@ -285,7 +295,7 @@ function array_map_recursive($callbacks, array $array, $keys = NULL)
             }
         }
     }
- 
+
     return $array;
 }
 
@@ -348,7 +358,7 @@ if (!function_exists('array_filter_keys')) {
  * @param string $key
  * @return array
  */
-function array_ucolumn($array, callable $callback, $key = false)
+function array_ucolumn(array $array, callable $callback, $key = false)
 {
     $result = [];
 
@@ -359,6 +369,27 @@ function array_ucolumn($array, callable $callback, $key = false)
     return $result;
 }
 
+if (!function_exists('array_group')) {
+    /**
+     * groups the array values by key
+     * @param array $array
+     * @param $groupKey
+     * @return array
+     */
+    function array_group(array $array, $groupKey, $saveKeys = false)
+    {
+        $result = [];
+        foreach ($array as $key => $item) {
+            if ($saveKeys) {
+                $result[$item[$groupKey]][$key] = $item;
+            } else {
+                $result[$item[$groupKey]][] = $item;
+            }
+        }
+
+        return $result;
+    }
+}
 /**
  * faster analog in_array function
  * @param $value

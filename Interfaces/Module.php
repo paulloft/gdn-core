@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden\Interfaces;
 
 interface Module

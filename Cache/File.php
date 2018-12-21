@@ -25,8 +25,9 @@ class File extends \Garden\Cache
 
         $this->cacheDir = $cacheDir ? realpath(PATH_ROOT . '/' . $cacheDir) : GDN_CACHE;
 
+        /** @see https://github.com/kalessil/phpinspectionsea/blob/master/docs/probable-bugs.md#mkdir-race-condition */
         if (!is_dir($this->cacheDir)) {
-            @mkdir($this->cacheDir, 0777, true);
+            mkdir($this->cacheDir, 0777, true) && is_dir($this->cacheDir);
         }
 
         $this->dirty = \Garden\Gdn::dirtyCache();
@@ -38,13 +39,13 @@ class File extends \Garden\Cache
      * @param   string $id id of cache to sanitize
      * @return  string
      */
-    protected function fixID($id)
+    protected function fixID($id): string
     {
         // Change slashes and spaces to underscores
         return str_replace(['/', '\\', ' '], '_', $id);
     }
 
-    protected function getFileName($id)
+    protected function getFileName($id): string
     {
         $id = $this->fixID($id);
         $salt = substr(md5($id), 0, 10);
@@ -91,7 +92,7 @@ class File extends \Garden\Cache
         return $data ?: $default;
     }
 
-    public function exists($id)
+    public function exists($id): bool
     {
         $file = $this->cacheDir . '/' . $this->getFileName($id);
 
@@ -106,7 +107,7 @@ class File extends \Garden\Cache
      * @param   integer $lifetime lifetime in seconds
      * @return  boolean
      */
-    public function set($id, $data, $lifetime = null)
+    public function set($id, $data, $lifetime = null): bool
     {
         if ($lifetime === null) {
             $lifetime = $this->lifetime;
@@ -130,7 +131,7 @@ class File extends \Garden\Cache
         return (bool)$result;
     }
 
-    public function add($id, $data, $lifetime = null)
+    public function add($id, $data, $lifetime = null): bool
     {
         if (!$this->exists($id)) {
             return $this->set($id, $data, $lifetime);
@@ -145,9 +146,12 @@ class File extends \Garden\Cache
      * @param   string  $id  id to remove from cache
      * @return  boolean
      */
-    public function delete($id)
+    public function delete($id): bool
     {
-        return unlink($this->cacheDir . '/' . $this->getFileName($id));
+        $return = unlink($this->cacheDir . '/' . $this->getFileName($id));
+        self::reset_opcache();
+
+        return $return;
     }
 
     /**
@@ -157,17 +161,20 @@ class File extends \Garden\Cache
      * using shared memory cache systems, as it will wipe every
      * entry within the system for all clients.
      *
-     *
-     * @return  void
+     * @return  bool
      */
-    public function deleteAll()
+    public function deleteAll(): bool
     {
         $files = glob($this->cacheDir . '/*' . $this->extention);
 
+        $deleted = 0;
         foreach ($files as $file) {
-            if (!is_dir($file)) {
-                unlink($file);
+            if (!is_dir($file) && unlink($file)) {
+                $deleted++;
             }
         }
+        self::reset_opcache();
+
+        return \count($files) === $deleted;
     }
 }

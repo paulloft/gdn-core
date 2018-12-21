@@ -1,5 +1,5 @@
 <?php
-define('APP_VERSION', '1.0');
+define('APP_VERSION', '1.1');
 define('GDN_SRC', dirname(__DIR__));
 
 

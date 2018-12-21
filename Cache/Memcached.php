@@ -60,7 +60,7 @@ class Memcached extends \Garden\Cache {
         }
     }
 
-    protected function fixID($id)
+    protected function fixID($id): string
     {
         return $this->prefix . md5($id . $this->salt);
     }
@@ -78,7 +78,7 @@ class Memcached extends \Garden\Cache {
         return $result ?: $default;
     }
 
-    public function set($id, $data, $lifetime = null)
+    public function set($id, $data, $lifetime = null): bool
     {
         if ($lifetime === null) {
             $lifetime = $this->lifetime;
@@ -90,7 +90,7 @@ class Memcached extends \Garden\Cache {
         return $this->cache->set($id, $data, (int)$lifetime);
     }
 
-    public function add($id, $data, $lifetime = null)
+    public function add($id, $data, $lifetime = null): bool
     {
         if ($lifetime === null) {
             $lifetime = $this->lifetime;
@@ -101,21 +101,21 @@ class Memcached extends \Garden\Cache {
         return $this->cache->add($id, $data, (int)$lifetime);
     }
 
-    public function exists($id)
+    public function exists($id): bool
     {
         return (bool)$this->get($id);
     }
 
-    public function delete($id)
+    public function delete($id): bool
     {
         $id = $this->fixID($id);
         $this->dirty->delete($id);
-        $this->cache->delete($id);
+        return $this->cache->delete($id);
     }
 
-    public function deleteAll()
+    public function deleteAll(): bool
     {
-        $this->cache->flush();
+        return $this->cache->flush();
     }
 
     public function getMessage()

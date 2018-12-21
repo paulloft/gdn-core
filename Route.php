@@ -5,7 +5,7 @@ abstract class Route {
 
     const MAP_QUERY = 'query'; // map to the querystring.
     const MAP_INPUT = 'input'; // map to the input (post).
-    const MAP_DATA = 'data'; // map to the querystring or input depending on the method.
+    const MAP_DATA = 'data';  // map to the querystring or input depending on the method.
 
     /// Properties ///
 
@@ -19,7 +19,7 @@ abstract class Route {
     /**
      * @var array An array of parameter conditions.
      */
-    protected $conditions;
+    protected $conditions = [];
 
     /**
      * @var array An array of global parameter conditions.
@@ -34,7 +34,7 @@ abstract class Route {
     /**
      * @var bool Whether or not to match the path with the file extension.
      */
-    protected $matchFullPath;
+    protected $matchFullPath = false;
 
     /**
      * @var array An array of global parameter mappings.
@@ -45,7 +45,30 @@ abstract class Route {
         'input' => Route::MAP_INPUT
     ];
 
+    /**
+     * @var array The args to pass to the dispatch.
+     */
+    protected $arguments;
+
     /// Methods ///
+
+    /**
+     * Dispatch the route.
+     *
+     * @param Request $request The current request we are dispatching against.
+     * These are the arguments returned from {@link Route::matches()}.
+     * @return Response dispatched response
+     * @throws \Exception
+     */
+    abstract public function dispatch(Request $request): Response;
+
+    /**
+     * Try matching a route to a request.
+     *
+     * @param Request $request The request to match the route with.
+     * @return bool return true if the route matched
+     */
+    abstract public function match(Request $request): bool;
 
     /**
      * Create and return a new route.
@@ -53,66 +76,74 @@ abstract class Route {
      * @param string $pattern The pattern for the route.
      * @param callable|string $callback Either a callback to map the route to or a string representing
      * a format for {@link sprintf()}.
-     * @return \Garden\Route Returns the new route.
+     * @return self Returns the new route.
      */
-    public static function create($pattern, $callback) {
-        if (is_callable($callback)) {
+    public static function create($pattern, $callback): self
+    {
+        if (\is_callable($callback)) {
             $route = new Route\Callback($pattern, $callback);
         } else {
             $route = new Route\Resource($pattern, $callback);
         }
+
         return $route;
     }
 
     /**
-     * Dispatch the route.
+     * Get matched argumenst
      *
-     * @param Request $request The current request we are dispatching against.
-     * @param array &$args The args to pass to the dispatch.
-     * These are the arguments returned from {@link Route::matches()}.
-     * @throws Exception\NotFound Throws a 404 when the path doesn't map to a controller action.
-     * @throws Exception\MethodNotAllowed Throws a 405 when the http method does not map to a controller action,
-     * @throws Exception\Pass
+     * @return array
      */
-    abstract public function dispatch(Request $request, array &$args);
+    public function getMathedArguments(): array
+    {
+        return $this->arguments;
+    }
 
     /**
      * Gets or sets the route's conditions.
      *
-     * @param array|null $conditions An array of conditions to set.
-     * @return Route|array
+     * @param array $conditions An array of conditions to set.
+     * @return self for fluent calls.
      */
-    public function conditions($conditions = null) {
-        if ($this->conditions === null) {
-            $this->conditions = [];
-        }
+    public function conditions(array $conditions): self
+    {
+        $conditions = array_change_key_case($conditions);
+        $this->conditions = array_replace($this->conditions, $conditions);
 
-        if (is_array($conditions)) {
-            $conditions = array_change_key_case($conditions);
+        return $this;
+    }
 
-            $this->conditions = array_replace(
-                $this->conditions,
-                $conditions
-            );
-            return $this;
-        }
-
+    /**
+     * Gets or sets the route's conditions.
+     *
+     * @return array
+     */
+    public function getConditions(): array
+    {
         return $this->conditions;
     }
 
     /**
      * Gets or sets the allowed http methods for this route.
      *
-     * @param array|string|null $methods Set a new set of allowed methods or pass null to get the current methods.
-     * @return Route|array Returns the current methods or `$this` for fluent calls.
+     * @param array $methods Set a new set of allowed methods or pass null to get the current methods.
+     * @return self for fluent calls.
      */
-    public function methods($methods = null) {
-        if ($methods === null) {
-            return $this->methods;
-        }
+    public function methods(array $methods): self
+    {
+        $this->methods = array_map('strtoupper', $methods);
 
-        $this->methods = array_map('strtoupper', (array)$methods);
         return $this;
+    }
+
+    /**
+     * Gets or sets the allowed http methods for this route.
+     *
+     * @return array Returns the current methods
+     */
+    public function getMethods(): array
+    {
+        return $this->methods;
     }
 
     /**
@@ -121,12 +152,13 @@ abstract class Route {
      * @param array|null $conditions An array of conditions to set.
      * @return array The current global conditions.
      */
-    public static function globalConditions($conditions = null) {
+    public static function globalConditions($conditions = null)
+    {
         if (self::$globalConditions === null) {
             self::$globalConditions = [];
         }
 
-        if (is_array($conditions)) {
+        if (\is_array($conditions)) {
             $conditions = array_change_key_case($conditions);
 
             self::$globalConditions = array_replace(
@@ -144,12 +176,13 @@ abstract class Route {
      * @param array|null $mappings An array of mappings to set.
      * @return Route|array Returns the current mappings or `$this` for fluent calls.
      */
-    public function mappings($mappings = null) {
+    public function mappings($mappings = null)
+    {
         if ($this->mappings === null) {
             $this->mappings = [];
         }
 
-        if (is_array($mappings)) {
+        if (\is_array($mappings)) {
             $mappings = array_change_key_case($mappings);
 
             $this->mappings = array_replace(
@@ -165,15 +198,12 @@ abstract class Route {
     /**
      * Gets or sets the global mappings array that maps parameter names to mappings.
      *
-     * @param array|null $mappings An array of mappings to set.
+     * @param array $mappings An array of mappings to set.
      * @return array Returns the current global mappings.
      */
-    public static function globalMappings($mappings = null) {
-        if (self::$globalMappings === null) {
-            self::$globalMappings = [];
-        }
-
-        if (is_array($mappings)) {
+    public static function globalMappings(array $mappings = null): array
+    {
+        if ($mappings !== null) {
             $mappings = array_change_key_case($mappings);
 
             self::$globalMappings = array_replace(
@@ -191,7 +221,8 @@ abstract class Route {
      * @param string $name The name of the parameter to check.
      * @return bool Returns true if the parameter is mapped, false otherwise.
      */
-    protected function isMapped($name) {
+    protected function isMapped($name): bool
+    {
         $name = strtolower($name);
         return isset($this->mappings[$name]) || isset(self::$globalMappings[$name]);
     }
@@ -203,7 +234,8 @@ abstract class Route {
      * @param Request $request The {@link Request} to get the data from.
      * @return array|null Returns the mapped data or null if there is no data.
      */
-    protected function mappedData($name, Request $request) {
+    protected function mappedData($name, Request $request)
+    {
         $name = strtolower($name);
 
         if (isset($this->mappings[$name])) {
@@ -219,7 +251,7 @@ abstract class Route {
                 $result = $request->getData();
                 break;
             case self::MAP_INPUT:
-                $result = $request->getInput();
+                $result = $request->getInputData();
                 break;
             case self::MAP_QUERY:
                 $result = $request->getQuery();
@@ -231,38 +263,37 @@ abstract class Route {
     }
 
     /**
-     * Try matching a route to a request.
-     *
-     * @param Request $request The request to match the route with.
-     * @param Application $app The application instantiating the route.
-     * @return array|null Whether or not the route matches the request.
-     * If the route matches an array of args is returned, otherwise the function returns null.
-     */
-    abstract public function matches(Request $request, Application $app);
-
-    /**
      * Tests whether or not a route matches the allowed methods for this route.
      *
      * @param Request $request The request to test.
      * @return bool Returns `true` if the route allows the method, otherwise `false`.
      */
-    protected function matchesMethods(Request $request) {
+    protected function matchesMethods(Request $request): bool
+    {
         if (empty($this->methods)) {
             return true;
         }
-        return in_array($request->getMethod(), $this->methods);
+
+        return \in_array($request->getMethod(), $this->methods, true);
     }
 
     /**
      * Gets or sets the route pattern.
      *
      * @param string|null $pattern The route pattern.
+     */
+    public function setPattern(string $pattern)
+    {
+        $this->pattern = '/' . ltrim($pattern, '/');
+    }
+
+    /**
+     * Gets the route pattern.
+     *
      * @return string Returns the pattern.
      */
-    public function pattern($pattern = null) {
-        if ($pattern !== null) {
-            $this->pattern = '/'.ltrim($pattern, '/');
-        }
+    public function getPattern(): string
+    {
         return $this->pattern;
     }
 
@@ -271,7 +302,8 @@ abstract class Route {
      *
      * @return boolean Returns **true** if the path should be matched with the file extension or **false** otherwise.
      */
-    public function getMatchFullPath() {
+    public function getMatchFullPath(): bool
+    {
         return $this->matchFullPath;
     }
 
@@ -281,7 +313,8 @@ abstract class Route {
      * @param boolean $matchFullPath The new value for the property.
      * @return Route Returns `$this` for fluent calls.
      */
-    public function setMatchFullPath($matchFullPath) {
+    public function setMatchFullPath(bool $matchFullPath): self
+    {
         $this->matchFullPath = $matchFullPath;
         return $this;
     }
@@ -290,11 +323,17 @@ abstract class Route {
      * Convert a path pattern into its regex.
      *
      * @param string $pattern The route pattern to convert into a regular expression.
+     * @throws \Exception
      * @return string Returns the regex pattern for the route.
      */
-    protected function getPatternRegex($pattern) {
-        $result = preg_replace_callback('`{([^}]+)}`i', function ($match) {
-            if (preg_match('`(.*?)([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(.*?)`', $match[1], $matches)) {
+    protected function getPatternRegex(string $pattern = null): string
+    {
+        if ($pattern === null) {
+            $pattern = $this->pattern;
+        }
+
+        $result = preg_replace_callback('/{([^}]+)}/', function ($match) {
+            if (preg_match('/(.*?)([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(.*?)/', $match[1], $matches)) {
                 $before = preg_quote($matches[1], '`');
                 $param = $matches[2];
                 $after = preg_quote($matches[3], '`');
@@ -302,11 +341,11 @@ abstract class Route {
                 throw new \Exception("Invalid route parameter: $match[1].", 500);
             }
 
-            $param_pattern = val($param, $this->conditions, val($param, self::$globalConditions, '[^/]+?'));
+            $patternParam = val($param, $this->conditions, val($param, self::$globalConditions, '[^/]+?'));
 
-            return "(?<$param>$before{$param_pattern}$after)";;
+            return "(?<$param>$before{$patternParam}$after)";
         }, $pattern);
 
-        return '`^'.$result.'$`i';
+        return '`^' . $result . '$`i';
     }
 }

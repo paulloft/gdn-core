@@ -1,14 +1,10 @@
 <?php
+
 namespace Garden;
 
-abstract class Cache implements Interfaces\Cache
-{
+abstract class Cache implements Interfaces\Cache {
     const DEFAULT_LIFETIME = 3600;
 
-    /**
-     * @var   string     default driver to use
-     */
-    public static $default = 'dirty';
     public static $instances = [];
     public static $clear = false;
 
@@ -17,28 +13,22 @@ abstract class Cache implements Interfaces\Cache
     /**
      * get singletone cache class
      * @param string $driver driver name
+     * @param array $options initial driver options
      * @return self
-     * @throws Exception\Error
      */
-    public static function instance($driver = null, $config = false)
+    public static function instance($driver = null, array $options = null): self
     {
-        $options = c('cache');
-
         self::flush();
 
-        if (!$driver) {
-            $driver = val('driver', $options, self::$default);
+        if ($driver === null) {
+            $driver = c('cache.driver', 'dirty');
         }
 
         if (!isset(self::$instances[$driver])) {
             $driverClass = 'Garden\Cache\\' . ucfirst($driver);
 
-            if (!class_exists($driverClass)) {
-                throw new Exception\Error("Cache driver \"$driver\" not found");
-            }
-
-            $config = $config ?: val($driver, $options);
-            self::$instances[$driver] = new $driverClass($config);
+            $options = $options ?: c("cache.$driver", []);
+            self::$instances[$driver] = new $driverClass($options);
         }
 
         if (self::$clear) {
@@ -54,7 +44,7 @@ abstract class Cache implements Interfaces\Cache
     public static function clear()
     {
         self::$clear = true;
-        self::_reset_opcache();
+        self::reset_opcache();
         touch(self::$clearFile);
     }
 
@@ -66,13 +56,13 @@ abstract class Cache implements Interfaces\Cache
             }
 
             self::$clear = true;
-            self::_reset_opcache();
+            self::reset_opcache();
         }
     }
 
-    protected static function _reset_opcache()
+    protected static function reset_opcache()
     {
-        if (extension_loaded('Zend OPcache')) {
+        if (\extension_loaded('Zend OPcache')) {
             opcache_reset();
         }
     }
