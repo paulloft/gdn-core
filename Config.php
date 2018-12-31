@@ -2,6 +2,8 @@
 
 namespace Garden;
 
+use Garden\Helpers\Arr;
+
 class Config {
 
     public static $cached = false;
@@ -60,7 +62,7 @@ class Config {
      */
     public static function load(string $group, string $path, $underlay = false)
     {
-        $loaded = array_load($path);
+        $loaded = Arr::load($path);
 
         if (empty($loaded)) {
             return;
@@ -96,7 +98,7 @@ class Config {
         if ($rewrite) {
             $config = $data;
         } else {
-            $config = array_load($path);
+            $config = Arr::load($path);
             $config = array_replace($config, $data);
         }
 
@@ -105,7 +107,7 @@ class Config {
             return $value !== null;
         });
 
-        $result = array_save($config, $path);
+        $result = Arr::save($config, $path);
 
         Cache::instance('system')->delete('config-autoload');
 

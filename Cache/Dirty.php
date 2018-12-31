@@ -1,5 +1,7 @@
 <?php
 namespace Garden\Cache;
+use Garden\Helpers\Arr;
+
 /**
 * 
 */
@@ -54,10 +56,10 @@ class Dirty extends \Garden\Cache
         $cache_path = GDN_CACHE."/$key.json";
         if(!$result = $this->get($key)) {
             if (file_exists($cache_path)) {
-                $result = array_load($cache_path);
+                $result = Arr::load($cache_path);
             } else {
                 $result = $cache_cb();
-                array_save($result, $cache_path);
+                Arr::save($result, $cache_path);
             }
             $this->add($key, $result);
         }

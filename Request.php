@@ -7,6 +7,7 @@
 
 namespace Garden;
 
+use Garden\Helpers\Arr;
 use JsonSerializable;
 
 /**
@@ -225,7 +226,7 @@ class Request implements JsonSerializable {
         $env['QUERY'] = $_GET;
 
         // SERVER_NAME.
-        $host = array_select(['HTTP_X_FORWARDED_HOST', 'HTTP_HOST', 'SERVER_NAME'], $_SERVER);
+        $host = Arr::select(['HTTP_X_FORWARDED_HOST', 'HTTP_HOST', 'SERVER_NAME'], $_SERVER);
         list($host) = explode(':', $host, 2);
         $env['SERVER_NAME'] = $host;
 
@@ -239,7 +240,7 @@ class Request implements JsonSerializable {
             $url_scheme = 'https';
         }
 
-        $url_scheme = array_select([
+        $url_scheme = Arr::select([
             'HTTP_X_ORIGINALLY_FORWARDED_PROTO', // varnish modifies the scheme
             'HTTP_X_FORWARDED_PROTO' // load balancer-originated (and terminated) ssl
         ], $_SERVER, $url_scheme);
@@ -263,7 +264,7 @@ class Request implements JsonSerializable {
 
         // IP Address.
         // Load balancers set a different ip address.
-        $ip = array_select(
+        $ip = Arr::select(
             ['HTTP_X_ORIGINALLY_FORWARDED_FOR', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'],
             $_SERVER,
             '127.0.0.1'

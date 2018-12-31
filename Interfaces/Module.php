@@ -2,6 +2,8 @@
 
 namespace Garden\Interfaces;
 
+use Garden\Exception\NotFound;
+
 interface Module
 {
     /**
@@ -15,6 +17,7 @@ interface Module
      * Rendering function
      * @param array $params
      * @return string
+     * @throws NotFound
      */
     public function render(array $params = []);
 }

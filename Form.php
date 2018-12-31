@@ -1,6 +1,8 @@
 <?php
 namespace Garden;
 
+use Garden\Helpers\Arr;
+
 class Form
 {
     /**
@@ -301,7 +303,7 @@ class Form
             $post = $this->getFormValues();
 
             if ($this->model && $this->model instanceof Model) {
-                $id = array_extract($this->model->getPrimaryKey(), $post);
+                $id = Arr::extract($this->model->getPrimaryKey(), $post);
                 $post = $this->fixPostData($post);
                 try {
                     $result = $this->model->save($post, $id);
@@ -387,8 +389,8 @@ class Form
     {
         $return = '<form ';
         $currentPath = Gdn::request()->getPath();
-        array_touch('action', $attributes, $currentPath);
-        array_touch('method', $attributes, $this->method);
+        Arr::touch('action', $attributes, $currentPath);
+        Arr::touch('method', $attributes, $this->method);
         $this->method = val('method', $attributes);
 
         $return .= $this->attrToString($attributes);
@@ -432,7 +434,7 @@ class Form
     public function input($name, $type = 'text', array $attributes = [])
     {
         if ($type !== 'radio' && $type !== 'checkbox' && $type !== 'hidden') {
-            array_touch('class', $attributes, $this->inputClass);
+            Arr::touch('class', $attributes, $this->inputClass);
         }
 
         $inputValue = val('value', $attributes);
@@ -445,7 +447,7 @@ class Form
             $value = $this->getValue($correctName);
             $checked = \is_array($value) ? in_arrayf($inputValue, $value) : (string)$inputValue == (string)$value;
             if ($inputValue !== false && $checked) {
-                array_touch('checked', $attributes, 'checked');
+                Arr::touch('checked', $attributes, 'checked');
             }
         } else {
             $attributes['value'] = $this->_value($correctName, $inputValue);
@@ -464,8 +466,8 @@ class Form
      */
     public function textarea($name, array $attributes = [])
     {
-        array_touch('class', $attributes, $this->inputClass);
-        array_touch('rows', $attributes, '5');
+        Arr::touch('class', $attributes, $this->inputClass);
+        Arr::touch('rows', $attributes, '5');
 
         $attributes['name'] = $name;
         $value = val('value', $attributes);
@@ -489,8 +491,8 @@ class Form
      */
     public function checkbox($name, array $attributes = [])
     {
-        array_touch('value', $attributes, 1);
-        $defaultValue = array_extract('defaultValue', $attributes, null);
+        Arr::touch('value', $attributes, 1);
+        $defaultValue = Arr::extract('defaultValue', $attributes, null);
 
         $html = '<input type="hidden" name="' . $name . '" value="' . $defaultValue . '" />';
         $html .= $this->input($name, 'checkbox', $attributes);
@@ -518,13 +520,13 @@ class Form
      */
     public function select($name, array $options = [], array $attributes = [])
     {
-        array_touch('class', $attributes, $this->inputClass);
+        Arr::touch('class', $attributes, $this->inputClass);
         $attributes['name'] = $name;
 
-        $defaultName = array_extract('default_name', $attributes);
-        $defaultValue = array_extract('default_value', $attributes);
-        $keyValue = array_extract('key_value', $attributes);
-        $keyName = array_extract('key_name', $attributes);
+        $defaultName = Arr::extract('default_name', $attributes);
+        $defaultValue = Arr::extract('default_value', $attributes);
+        $keyValue = Arr::extract('key_value', $attributes);
+        $keyName = Arr::extract('key_name', $attributes);
 
         $html = '<select ' . $this->attrToString($attributes) . '>';
 
@@ -587,7 +589,7 @@ class Form
             }
         }
 
-        return implode_assoc('" ', '="', $attributes) . '"';
+        return Arr::implodeAssoc('" ', '="', $attributes) . '"';
     }
 
     /**

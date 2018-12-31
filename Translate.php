@@ -1,6 +1,8 @@
 <?php
 namespace Garden;
 
+use Garden\Helpers\Arr;
+
 class Translate {
     public static $translations = [];
     public static $defaultExtension = 'php';
@@ -30,10 +32,7 @@ class Translate {
 
     public static function load($path, $underlay = false)
     {
-        $locale = c('main.locale', 'en_US');
-        $locale_path = "$path/$locale.".self::$defaultExtension;
-
-        $translations = array_load($path);
+        $translations = Arr::load($path);
 
         if ($translations) {
             if ($underlay) {

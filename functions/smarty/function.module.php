@@ -2,18 +2,18 @@
 use Garden\Interfaces\Module as ModuleInterface;
 
 function smarty_function_module($params, &$smarty) {
-    $path = explode('/', array_extract('name', $params), 2);
+    $path = explode('/', \Garden\Helpers\Arr::extract('name', $params), 2);
 
     if (count($path) == 2) {
         list($addon, $name) = $path;
     } else {
         list($name) = $path;
-        $addon = array_extract('addon', $params);
+        $addon = \Garden\Helpers\Arr::extract('addon', $params);
     }
     $name = ucfirst($name);
     $addon = ucfirst($addon);
 
-    $id = array_extract('id', $params, null);
+    $id = \Garden\Helpers\Arr::extract('id', $params, null);
     /**
      * @var ModuleInterface $moduleName
      */

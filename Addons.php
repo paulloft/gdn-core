@@ -8,6 +8,7 @@
 namespace Garden;
 
 use Garden\Exception;
+use Garden\Helpers\Arr;
 
 /**
  * Contains functionality that allows addons to enhance or change an application's functionality.
@@ -333,8 +334,8 @@ class Addons
             $info = [];
         }
 
-        array_touch('name', $info, $addon_key);
-        array_touch('version', $info, '0.0');
+        Arr::touch('name', $info, $addon_key);
+        Arr::touch('version', $info, '0.0');
 
         $bootstrap = self::checkFile($settings, self::K_BOOTSTRAP);
         $config = self::checkFile($settings, self::K_CONFIG);
