@@ -56,11 +56,14 @@ class Session
         $salt = c('main.hashsalt');
         $lifetime = c('session.lifetime');
         $sessionID = md5($salt.$userID.session_id().time());
+        $expireDate = Date::create()
+            ->addSeconds($remember ? $lifetime : 60*60*8)
+            ->toSql();
 
         $this->model->insert([
             'sessionID' => $sessionID,
             'userID' => $userID,
-            'expire' => Date::sql(time() + ($remember ? $lifetime : (60*60*8))),
+            'expire' => $expireDate,
             'lastActivity' => DB::expr('now()'),
             'userAgent' => Gdn::request()->getEnvKey('HTTP_USER_AGENT'),
             'ip' => Gdn::request()->getIP()

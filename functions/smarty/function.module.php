@@ -2,7 +2,7 @@
 
 use Garden\Interfaces\Module as ModuleInterface;
 
-function smarty_function_module($params, &$smarty)
+function smarty_function_module($params)
 {
     $path = explode('/', \Garden\Helpers\Arr::extract('name', $params), 2);
 

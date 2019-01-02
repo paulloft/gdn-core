@@ -203,31 +203,6 @@ class Arr {
     }
 
     /**
-     * Take all of the items in an array and make a new array with them specified by mappings.
-     *
-     * @param array $array The input array to translate.
-     * @param array $mappings The mappings to translate the array.
-     * @return array
-     *
-     * @category Array Functions
-     */
-    public static function translate(array $array, array $mappings): array
-    {
-        $result = [];
-        foreach ($mappings as $index => $value) {
-            if (is_numeric($index)) {
-                $key = $value;
-                $newKey = $value;
-            } else {
-                $key = $index;
-                $newKey = $value;
-            }
-            $result[$newKey] = $array[$key] ?? null;
-        }
-        return $result;
-    }
-
-    /**
      * Like {@link implode()}, but joins array keys and values.
      *
      * @param string $elemglue The string that separates each element of the array.

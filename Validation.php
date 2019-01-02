@@ -163,7 +163,7 @@ class Validation {
 
             $value = val($field, $this->data);
             if (\is_array($value)) {
-                $this->errors[$field][] = t('validate_wrong_type_data');
+                $this->errors[$field][] = Translate::get('validate_wrong_type_data');
                 continue;
             }
 
@@ -179,7 +179,7 @@ class Validation {
             }
 
             if (!$opt->autoIncrement && $opt->default === NULL && !$opt->allowNull && $this->isEmpty($value)) {
-                $this->errors[$field][] = t('validate_not_empty');
+                $this->errors[$field][] = Translate::get('validate_not_empty');
                 continue;
             }
 
@@ -187,21 +187,21 @@ class Validation {
                 case 'int':
                 case 'bigint':
                     if (!$this->isEmpty($value) && (filter_var($value, FILTER_VALIDATE_INT) === false)) {
-                        $this->errors[$field][] = t('validate_int');
+                        $this->errors[$field][] = Translate::get('validate_int');
                         continue 2;
                     }
                     break;
 
                 case 'double':
                     if (!\is_float($value) && !$this->isEmpty($value)) {
-                        $this->errors[$field][] = t('validate_double');
+                        $this->errors[$field][] = Translate::get('validate_double');
                         continue 2;
                     }
                     break;
 
                 case 'float':
                     if (!is_numeric($value) && !$this->isEmpty($value)) {
-                        $this->errors[$field][] = t('validate_float');
+                        $this->errors[$field][] = Translate::get('validate_float');
                         continue 2;
                     }
                     break;
@@ -209,8 +209,8 @@ class Validation {
                 case 'date':
                 case 'datetime':
                 case 'timestamp':
-                    if (!$this->isEmpty($value) && !validate_sql_date($value)) {
-                        $this->errors[$field][] = t('validate_sql_date');
+                    if (!$this->isEmpty($value) && !Validate::dateSql($value)) {
+                        $this->errors[$field][] = Translate::get('validate_sql_date');
                         continue 2;
                     }
                     break;
@@ -260,9 +260,12 @@ class Validation {
                     if (\is_array($message)) {
                         $field = val(0, $message);
                         $message = val(1, $message);
-                        $error = [t($field), vsprintf(t($message ?: 'validate_' . $type), $params)];
+                        $error = [
+                            Translate::get($field),
+                            vsprintf(Translate::get($message ?: 'validate_' . $type), $params)
+                        ];
                     } else {
-                        $error = vsprintf(t($message ?: 'validate_' . $type), $params);
+                        $error = vsprintf(Translate::get($message ?: 'validate_' . $type), $params);
                     }
                     $this->errors[$field][] = $error;
                 }

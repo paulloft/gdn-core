@@ -233,9 +233,9 @@ class Form
             $data = $this->fixPostData($data);
 
             if ($this->protection && !$this->getSecureKey()) {
-                $this->addError(t('Secure key is empty'));
+                $this->addError(Translate::get('Secure key is empty'));
             } elseif ($this->protection && empty($this->getSecureFields())) {
-                $this->addError(t('Form session timeout'));
+                $this->addError(Translate::get('Form session timeout'));
             }
 
             $this->_valid = $this->validation()->validate($data) && !\count($this->errors);
@@ -272,12 +272,12 @@ class Form
                     $errField = val(0, $error);
                     $error = val(1, $error);
                 } else {
-                    $errField = t(($this->model ? val('table', $this->model, 'form') : 'form') . '.' . $field, $field);
+                    $errField = Translate::get(($this->model ? val('table', $this->model, 'form') : 'form') . '.' . $field, $field);
                 }
                 if ($text) {
                     $html[] = $errField . ' ' . $error;
                 } else {
-                    $html[] = sprintf(t('form_html_error', '%s: %s'), $errField, $error);
+                    $html[] = Translate::getVsprintf('form_html_error', [$errField, $error], '%s: %s');
                 }
             }
         }
@@ -290,7 +290,7 @@ class Form
             return implode('; ', $html);
         }
 
-        return sprintf(t('form_html_error_wrapper', '%s'), implode('<br>', $html));
+        return Translate::getVsprintf('form_html_error_wrapper', [implode('<br>', $html)], '%s');
     }
 
     /**
@@ -607,12 +607,12 @@ class Form
                 if ($value && $options = val($field, $structure)) {
                     switch ($options->dataType) {
                         case 'time':
-                            $post[$field] = Date::convert($value, 'time');
+                            $post[$field] = Date::create($value)->format(Date::FORMAT_TIME);
                             break;
                         case 'date':
                         case 'datetime':
                         case 'timestamp':
-                            $post[$field] = Date::convert($value, 'sql');
+                            $post[$field] = Date::create($value)->toSql();
                             break;
                     }
                 } else {

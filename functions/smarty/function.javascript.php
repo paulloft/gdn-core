@@ -1,8 +1,8 @@
 <?php
 
-function smarty_function_javascript($Params, &$Smarty)
+function smarty_function_javascript($Params, Smarty_Internal_Template $template)
 {
-    $js = valr('gdn.value.js', $Smarty->tpl_vars, []);
+    $js = \Garden\Helpers\Arr::get('js', $template->getTemplateVars('gdn'));
 
     if (empty($js)) {
         return false;

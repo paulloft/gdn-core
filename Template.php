@@ -18,7 +18,7 @@ class Template extends Controller {
      */
     public function title($title)
     {
-        $this->setData('title', t($title));
+        $this->setData('title', Translate::get($title));
     }
 
     /**

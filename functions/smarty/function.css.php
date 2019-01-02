@@ -1,8 +1,8 @@
 <?php
 
-function smarty_function_css($Params, &$Smarty)
+function smarty_function_css($Params, Smarty_Internal_Template $template)
 {
-    $css = valr('gdn.value.css', $Smarty->tpl_vars);
+    $css = \Garden\Helpers\Arr::get('css', $template->getTemplateVars('gdn'));
 
     if(empty($css)) {
         return false;

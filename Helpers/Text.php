@@ -54,22 +54,22 @@ class Text {
     {
         if ($seconds < 1.0e-3) {
             $n = number_format($seconds * 1.0e6, 0);
-            $sx = t('microseconds', 'μs');
+            $sx = self::translate('microseconds', 'μs');
         } elseif ($seconds < 1) {
             $n = number_format($seconds * 1000, 0);
-            $sx = t('miliseconds', 'ms');
+            $sx = self::translate('miliseconds', 'ms');
         } elseif ($seconds < 60) {
             $n = number_format($seconds, 1);
-            $sx = t('seconds', 's');
+            $sx = self::translate('seconds', 's');
         } elseif ($seconds < 3600) {
             $n = number_format($seconds / 60, 1);
-            $sx = t('minutes', 'm');
+            $sx = self::translate('minutes', 'm');
         } elseif ($seconds < 86400) {
             $n = number_format($seconds / 3600, 1);
-            $sx = t('hours', 'h');
+            $sx = self::translate('hours', 'h');
         } else {
             $n = number_format($seconds / 86400, 1);
-            $sx = t('days', 'd');
+            $sx = self::translate('days', 'd');
         }
 
         return rtrim($n, '0.') . ' ' . $sx;
@@ -261,7 +261,7 @@ class Text {
      * @param string $ip The ip string to look at.
      * @return string|null The ipv4 address or null if {@link $ip} is empty.
      */
-    public static function ipv4($ip):string
+    public static function ipv4($ip): string
     {
         if (!$ip) {
             return null;
@@ -280,6 +280,20 @@ class Text {
             $ip = '0.0.0.0'; // unknown ip
         }
         return $ip;
+    }
+
+    /**
+     * @param $code
+     * @param string $default
+     * @return string
+     */
+    public static function translate($code, $default = null): string
+    {
+        if (class_exists('\\Garden\\Translate')) {
+            \Garden\Translate::get($code, $default);
+        }
+
+        return $default;
     }
 
 }

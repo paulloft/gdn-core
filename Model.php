@@ -538,7 +538,7 @@ class Model {
             $value = val($field, $post);
 
             if ($value !== false) {
-                $new = Date::convert($value, 'sql');
+                $new = Date::create($value)->toSql('sql');
                 $post[$field] = $new ?: null;
             }
         }

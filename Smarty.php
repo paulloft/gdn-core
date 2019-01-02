@@ -20,6 +20,7 @@ class Smarty extends \Smarty {
 
         $this->registerClass('Date', Date::class);
         $this->registerClass('Text', Text::class);
+        $this->registerPlugin('modifier', 'translate', [Translate::class, 'get']);
 
         if (Cache::$clear) {
             $this->clearAllCache();

@@ -1,10 +1,11 @@
 <?php
 
-function smarty_function_input($params, &$smarty) {
-    $form = \Garden\Helpers\Arr::path('gdn_form.value', $smarty->tpl_vars);
+function smarty_function_input($params, Smarty_Internal_Template $template)
+{
+    $form = $template->getTemplateVars('gdn_form');
 
     if (!$form) {
-        return '<div class="alert alert-danger">'.t('Form class not initialized').'</div>';
+        return '<div class="alert alert-danger">' . \Garden\Translate::get('Form class not initialized') . '</div>';
     }
 
     $name = \Garden\Helpers\Arr::extract('name', $params);

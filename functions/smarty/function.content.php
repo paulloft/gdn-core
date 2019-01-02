@@ -1,5 +1,5 @@
 <?php
 
-function smarty_function_content($Params, &$Smarty) {
-    return valr('gdn.value.content', $Smarty->tpl_vars, null);
+function smarty_function_content($Params, Smarty_Internal_Template $template) {
+    return \Garden\Helpers\Arr::get('content', $template->getTemplateVars('gdn'));
 }

@@ -6,126 +6,106 @@
 
 namespace Garden\Helpers;
 
+use DateTimeZone;
 
-class Date {
+class Date extends \DateTime {
+
+    const FORMAT_SQL = 'd-m-Y H:i:s';
+    const FORMAT_SQL_DATE = '%D-%M-%Y';
+    const FORMAT_DATE = '%D.%M.%Y';
+    const FORMAT_DATE_TIME = 'd.m.Y H:i';
+    const FORMAT_DATE_TIME_SEC = 'd.m.Y H:i:s';
+    const FORMAT_TIME = '%H:%I';
+    const FORMAT_TIME_SEC = '%H:%I:%S';
+
     /**
-     * @param int|string $date
-     * @param string $modifier
-     * @return string
+     * @param string $date
+     * @param null $timezone
+     * @return $this
+     * @throws \Exception
      */
-    public static function sql($date = null, $modifier = null): string
+    public static function create($date = 'now', $timezone = null): self
     {
-        if ($date === null) {
-            $date = time();
-        } elseif (is_string($date)) {
-            $date = (int)strtotime($date);
-        }
-
-        if ($modifier) {
-            $date = (int)strtotime($modifier, $date);
-        }
-
-        return date('Y-m-d H:i:s', $date);
+        return new self($date, $timezone);
     }
 
     /**
-     * @param int|string $date
-     * @param string $format
-     * @param string $modifier
-     * @return string
+     * Date constructor.
+     * @param string $time
+     * @param DateTimeZone|null $timezone
+     * @throws \Exception
      */
-    public static function convert($date, $format = 'indatetime', $modifier = null): string
+    public function __construct(string $time = 'now', DateTimeZone $timezone = null)
     {
-        if (empty($date)) {
-            return false;
-        }
-
-        $month = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
-
-        if (is_string($date)) {
-            $date = (int)strtotime($date);
-        }
-
-        if ($modifier) {
-            $date = (int)strtotime($modifier, $date);
-        }
-
-        switch ($format) {
-            case ('fullDate')       :
-                $date = date('j', $date) . ' ' . $month[date('m', $date) - 1] . ' ' . date('Y', $date);
-                break;
-            case ('fullDateTime')   :
-                $date = date('j', $date) . ' ' . $month[date('m', $date) - 1] . ' ' . date('Y в H:i', $date);
-                break;
-            case ('shortDateTime')  :
-                $date = date('j', $date) . ' ' . $month[date('m', $date) - 1] . ' ' . date(' в H:i', $date);
-                break;
-            case ('date')           :
-                $date = date('d.m.Y', $date);
-                break;
-            case ('time')           :
-                $date = date('H:i', $date);
-                break;
-            case ('timesec')           :
-                $date = date('H:i:s', $date);
-                break;
-            case ('datetime')       :
-                $date = date('d.m.Y H:i', $date);
-                break;
-            case ('datefulltime')   :
-                $date = date('d.m.Y H:i:s', $date);
-                break;
-
-            case ('indatetime')     :
-                $date = date('d.m.Y в H:i', $date);
-                break;
-            case ('indatefulltime') :
-                $date = date('d.m.Y в H:i:s', $date);
-                break;
-
-            case ('sql')            :
-                $date = date('Y-m-d H:i:s', $date);
-                break;
-            default                 :
-                $date = date($format, $date);
-                break;
-        }
-
-        return $date;
+        parent::__construct($time, $timezone);
     }
 
     /**
-     * Compare two dates formatted as either timestamps or strings.
-     *
-     * @param mixed $date1 The first date to compare expressed as an integer timestamp or a string date.
-     * @param mixed $date2 The second date to compare expressed as an integer timestamp or a string date.
-     * @return int Returns `1` if {@link $date1} > {@link $date2}, `-1` if {@link $date1} > {@link $date2},
-     * or `0` if the two dates are equal.
-     * @category Date/Time Functions
+     * To string conversion
+     * @return string
      */
-    public static function compare($date1, $date2 = false): int
+    public function __toString()
     {
-        if (!$date2) {
-            $date2 = time();
-        }
+        return $this->format(self::FORMAT_DATE_TIME_SEC);
+    }
 
-        if (is_string($date1)) {
-            $date1 = strtotime($date1);
-        }
+    /**
+     * Add seconds to current datetime
+     * @param int $seconds
+     * @return Date
+     */
+    public function addSeconds(int $seconds): self
+    {
+        return $this->add(new \DateInterval("PT{$seconds}S"));
+    }
 
-        if (is_string($date2)) {
-            $date2 = strtotime($date2);
-        }
+    /**
+     * @param string $intevalSpec
+     * @return Date
+     * @throws \Exception
+     */
+    public function addInterval(string $intevalSpec): self
+    {
+        return $this->add(new \DateInterval($intevalSpec));
+    }
 
-        if ($date1 > $date2) {
-            return 1;
-        }
+    /**
+     * returns date in sql format
+     * @param bool $time show time
+     * @return string
+     */
+    public function toSql($time = true): string
+    {
+        return $this->format($time ? self::FORMAT_SQL : self::FORMAT_SQL_DATE);
+    }
 
-        if ($date1 < $date2) {
-            return -1;
-        }
+    /**
+     * returns date string
+     * @return string
+     */
+    public function toDate(): string
+    {
+        return $this->format(self::FORMAT_DATE);
+    }
 
-        return 0; // $date1 === $date2
+    /**
+     * returns date and time
+     * @param bool $seconds show seconds
+     * @return string
+     */
+    public function toDateTime($seconds = false): string
+    {
+        return $this->format($seconds ? self::FORMAT_DATE_TIME_SEC : self::FORMAT_DATE_TIME);
+    }
+
+    /**
+     * returns only time
+     * @param bool $seconds show seconds
+     * @return string
+     */
+    public function toTime($seconds = false): string
+    {
+        return $this->format($seconds ? self::FORMAT_TIME_SEC : self::FORMAT_TIME);
     }
 
     /**
@@ -135,12 +115,9 @@ class Date {
      * @return string
      * @throws \Exception
      */
-    public static function getAges($birthday): string
+    public function getAges(): string
     {
-        $now = new \DateTime();
-        $age = $now->diff(new \DateTime($birthday));
-
-        return $age->format('%y');
+        return $this->diff(new \DateTime())->format('%y');
     }
 
     /**
@@ -148,42 +125,32 @@ class Date {
      * @param $date
      * @return string
      */
-    public static function passed($date)
+    public function passed()
     {
-        if (is_string($date)) {
-            $date = strtotime($date);
+        $diff = $this->diff(new \DateTime());
+
+        if ($diff->format('%r')) { // future
+            return $this->format(self::FORMAT_DATE_TIME);
         }
 
-        $diff = time() - $date;
         switch ($diff) {
-            case ($diff < 10):
-                return 'только что';
-                break;
-            case ($diff < 60):
-                return 'менее минуты';
-                break;
+            case $diff->m:
+                return $this->format(self::FORMAT_DATE_TIME);
 
-            case ($diff < 3600):
-                $tm = ceil($diff / 60);
-                $forms = ['минут', 'минута', 'минуты'];
-                return $tm . ' ' . Text::declension($tm, $forms) . ' назад';
-                break;
+            case ($diff->d > 0):
+                return $diff->format('%d days ago');
 
-            case ($diff < 86400):
-                $tm = ceil($diff / 3600);
-                $forms = ['часов', 'час', 'часа'];
-                return $tm . ' ' . Text::declension($tm, $forms) . ' назад';
-                break;
+            case ($diff->h > 0):
+                return $diff->format('%h hours ago');
 
-            case ($diff < 604800):
-                $tm = round($diff / 86400);
-                $forms = ['дней', 'день', 'дня'];
-                return $tm . ' ' . Text::declension($tm, $forms) . ' назад';
-                break;
+            case ($diff->i > 0):
+                return $diff->format('%i minutes ago');
+
+            case ($diff->s > 10):
+                return 'less than a minute ago';
 
             default:
-                return self::convert($date);
-                break;
+                return 'just now';
         }
     }
 }
