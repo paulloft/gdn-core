@@ -1,6 +1,8 @@
 <?php
 namespace Garden;
 
+use Garden\Helpers\Date;
+
 /**
  * Model base class
  *
@@ -536,7 +538,7 @@ class Model {
             $value = val($field, $post);
 
             if ($value !== false) {
-                $new = date_convert($value, 'sql');
+                $new = Date::convert($value, 'sql');
                 $post[$field] = $new ?: null;
             }
         }

@@ -8,6 +8,7 @@
 namespace Garden;
 
 use Garden\Helpers\Arr;
+use Garden\Helpers\Text;
 use JsonSerializable;
 
 /**
@@ -147,7 +148,7 @@ class Request implements JsonSerializable {
     {
         if ($request !== null) {
             self::$current = $request;
-        } elseif(self::$current === null) {
+        } elseif (self::$current === null) {
             self::$current = new self();
         }
 
@@ -206,7 +207,7 @@ class Request implements JsonSerializable {
         $env['REQUEST_METHOD'] = val('REQUEST_METHOD', $_SERVER) ?: 'CONSOLE';
 
         // SCRIPT_NAME: This is the root directory of the application.
-        $script_name = rtrim_substr($_SERVER['SCRIPT_NAME'], 'index.php');
+        $script_name = Text::rtrimSubstr($_SERVER['SCRIPT_NAME'], 'index.php');
         $env['SCRIPT_NAME'] = rtrim($script_name, '/');
 
         // PATH_INFO.
@@ -269,7 +270,7 @@ class Request implements JsonSerializable {
             $_SERVER,
             '127.0.0.1'
         );
-        $env['REMOTE_ADDR'] = force_ipv4($ip);
+        $env['REMOTE_ADDR'] = Text::ipv4($ip);
         $env['COOKIE'] = $_COOKIE;
 
         return $env;
@@ -433,7 +434,7 @@ class Request implements JsonSerializable {
         $result = [];
 
         foreach ($this->env as $key => $value) {
-            if (stripos($key, 'HTTP_') === 0 && !str_ends($key, '_RAW')) {
+            if (stripos($key, 'HTTP_') === 0 && !Text::strEnds($key, '_RAW')) {
                 $headerKey = static::normalizeHeaderName(substr($key, 5));
                 $result[$headerKey][] = $value;
             }
@@ -1072,10 +1073,12 @@ class Request implements JsonSerializable {
      * - /: Just the path will be returned.
      * @return string Returns the url.
      */
-    public function makeUrl($path, $domain = false): string
+    public function makeUrl($path = null, $domain = false): string
     {
         if (!$path) {
             $path = $this->getPath();
+            $query = $this->getQuery();
+            $path .= !empty($query) ? '?' . http_build_query($query) : '';
         }
 
         // Check for a specific scheme.

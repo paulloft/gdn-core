@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden;
 
 use Garden\Helpers\Arr;
@@ -13,7 +14,7 @@ class Translate {
      * @param string $default
      * @return string
      */
-    public static function get($code, $default = null)
+    public static function get($code, $default = null): string
     {
         if (strpos($code, '@') === 0) {
             return substr($code, 1);
@@ -28,6 +29,30 @@ class Translate {
         }
 
         return $code;
+    }
+
+    /**
+     * A version of {@link sprintf()} That translates the string format.
+     *
+     * @param string $code The format translation code.
+     * @param mixed ...$args The arguments to pass to {@link sprintf()}.
+     * @return string The translated string.
+     */
+    public static function getSprintf($code, ...$args): string
+    {
+        return vsprintf(self::get($code), $args);
+    }
+
+    /**
+     * A version of {@link vsprintf()} That translates the string format.
+     *
+     * @param string $code The format translation code.
+     * @param array $args The arguments to pass to {@link sprintf()}.
+     * @return string The translated string.
+     */
+    public static function getVsprintf($code, array $args, $default = null): string
+    {
+        return vsprintf(self::get($code, $default), $args);
     }
 
     public static function load($path, $underlay = false)
@@ -50,7 +75,7 @@ class Translate {
         $translations = $cache->get('translations');
 
         if (!$translations) {
-            $locales_path = $path."/$locale/*.".self::$defaultExtension;
+            $locales_path = $path . "/$locale/*." . self::$defaultExtension;
 
             $files = glob($locales_path);
             foreach ($files as $file) {

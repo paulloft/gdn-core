@@ -521,4 +521,21 @@ class Response implements JsonSerializable {
     {
         return $this->data;
     }
+
+    /**
+     * Redirect
+     * @param $url
+     */
+    public function redirect($url)
+    {
+        $request = Request::current();
+        $host = Request::current()->getHost();
+        $scheme = $request->getScheme();
+
+        $url = Helpers\Validate::url($url) ? $url : $scheme . '://' . $host . $url;
+
+        header("Location: $url");
+
+        exit;
+    }
 }

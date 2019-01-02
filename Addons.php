@@ -299,7 +299,7 @@ class Addons
         $addonKey = strtolower(basename($dir));
 
         // Scan the addon if it is enabled.
-        if ($enabled === null || in_arrayf($addonKey, $enabled)) {
+        if ($enabled === null || in_array($addonKey, $enabled, true)) {
             list($addonKey, $addon) = static::scanAddon($dir);
         } else {
             $addon = null;

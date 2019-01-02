@@ -255,4 +255,31 @@ class Text {
         return strcasecmp(substr($haystack, -strlen($needle)), $needle) === 0;
     }
 
+    /**
+     * Force a string to look like an ip address (v4).
+     *
+     * @param string $ip The ip string to look at.
+     * @return string|null The ipv4 address or null if {@link $ip} is empty.
+     */
+    public static function ipv4($ip):string
+    {
+        if (!$ip) {
+            return null;
+        }
+
+        if (strpos($ip, ',') !== false) {
+            $ip = substr($ip, 0, strpos($ip, ','));
+        }
+
+        // Make sure we have a valid ip.
+        if (preg_match('`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})`', $ip, $m)) {
+            $ip = $m[1];
+        } elseif ($ip === '::1') {
+            $ip = '127.0.0.1';
+        } else {
+            $ip = '0.0.0.0'; // unknown ip
+        }
+        return $ip;
+    }
+
 }

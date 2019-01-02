@@ -1,6 +1,8 @@
 <?php
 namespace Garden;
 use Garden\Exception;
+use Garden\Helpers\Files;
+use Garden\Helpers\Text;
 use Garden\Traits\Instance;
 
 class Controller {
@@ -120,7 +122,7 @@ class Controller {
             throw new Exception\NotFound('Page', 'View template "'.$view.'" not found in '.$viewPath);
         }
 
-        if (str_ends($realPath, '.'.$this->_viewExt)) {
+        if (Text::strEnds($realPath, '.'.$this->_viewExt)) {
             try {
                 $smarty = $this->smarty();
                 $smarty->setTemplateDir(PATH_ROOT.'/'.$this->_templateBaseDir);
@@ -130,7 +132,7 @@ class Controller {
                 throw new Exception\Error($e);
             }
         } else {
-            $view = \getInclude($realPath, $this->_data);
+            $view = Files::getInclude($realPath, $this->_data);
         }
 
         return $view;
@@ -165,7 +167,7 @@ class Controller {
         $addonFolder = $addonName ? $this->_addonFolder.'/'.$addonName : $this->controllerInfo('folder');
         $controllerName = $controllerName ?: $this->controllerInfo('controller');
 
-        if (str_ends($controllerName, 'controller')) {
+        if (Text::strEnds($controllerName, 'controller')) {
             $controllerName = substr($controllerName, 0, -10);
         }
 

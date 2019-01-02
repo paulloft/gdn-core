@@ -7,6 +7,7 @@
 
 namespace Garden\Exception;
 
+use Garden\Helpers\Text;
 use Garden\Response;
 
 /**
@@ -43,7 +44,7 @@ class Client extends \Exception implements \JsonSerializable {
         $result = [];
         foreach ($this->context as $key => $value) {
             if (stripos($key, 'http_') === 0) {
-                $key = Response::normalizeHeader(ltrim_substr($key, 'http_'));
+                $key = Response::normalizeHeader(Text::ltrimSubstr($key, 'http_'));
                 $result[$key] = $value;
             }
         }

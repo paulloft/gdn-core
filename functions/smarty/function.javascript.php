@@ -13,7 +13,7 @@ function smarty_function_javascript($Params, &$Smarty)
     $i = 0;
     foreach ($js as $id => $src) {
         $i++;
-        $static = str_begins('static_', $id) ? ' data-static="true"' : '';
+        $static = \Garden\Helpers\Text::strBegins('static_', $id) ? ' data-static="true"' : '';
         $html .= '<script src="' . $src . '" type="text/javascript" id="' . $id . '"' . $static . '></script>' . ($i == $c ? null : "\n    ");
     }
 

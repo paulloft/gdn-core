@@ -1,6 +1,9 @@
 <?php
 namespace Garden;
 
+use Garden\Helpers\Date;
+use Garden\Helpers\Text;
+
 /**
  * @author PaulLoft <info@paulloft.ru>
  * @copyright 2016 Paulloft
@@ -57,7 +60,7 @@ class Session
         $this->model->insert([
             'sessionID' => $sessionID,
             'userID' => $userID,
-            'expire' => date_sql(time() + ($remember ? $lifetime : (60*60*8))),
+            'expire' => Date::sql(time() + ($remember ? $lifetime : (60*60*8))),
             'lastActivity' => DB::expr('now()'),
             'userAgent' => Gdn::request()->getEnvKey('HTTP_USER_AGENT'),
             'ip' => Gdn::request()->getIP()
@@ -144,7 +147,7 @@ class Session
 
         // If the domain being set is completely incompatible with the current domain then make the domain work.
         $host = Gdn::request()->getHost();
-        if (!str_ends($host, trim($domain, '.'))) {
+        if (!Text::strEnds($host, trim($domain, '.'))) {
             $domain = '';
         }
 

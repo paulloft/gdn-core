@@ -3,6 +3,7 @@ namespace Garden\Db\Structure;
 
 use \Garden\Exception;
 use \Garden\Db\Database;
+use Garden\Helpers\Text;
 
 /**
  * MySQL structure driver
@@ -160,7 +161,7 @@ class MySQL extends \Garden\Db\Structure
                 // Check to drop a fulltext index if we don't support it.
                 if (!$this->supportsFulltext()) {
                     foreach ($indexesDb as $indexName => $indexSql) {
-                        if (str_begins($indexSql, 'fulltext')) {
+                        if (Text::strBegins($indexSql, 'fulltext')) {
                             //Drop index query
                             if (!$this->query("$alterSqlPrefix drop index $indexName;\n")) {
                                 throw new Exception\Custom(t('Failed to drop the index `%1$s` on table `%2$s`.'), array($indexName, $this->_table));

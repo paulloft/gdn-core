@@ -18,11 +18,11 @@ class Date {
         if ($date === null) {
             $date = time();
         } elseif (is_string($date)) {
-            $date = (string)strtotime($date);
+            $date = (int)strtotime($date);
         }
 
         if ($modifier) {
-            $date = (string)strtotime($modifier, $date);
+            $date = (int)strtotime($modifier, $date);
         }
 
         return date('Y-m-d H:i:s', $date);
@@ -34,7 +34,7 @@ class Date {
      * @param string $modifier
      * @return string
      */
-    public static function convert($date, $format = 'indatetime', $modifier = null)
+    public static function convert($date, $format = 'indatetime', $modifier = null): string
     {
         if (empty($date)) {
             return false;
@@ -43,11 +43,11 @@ class Date {
         $month = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
 
         if (is_string($date)) {
-            $date = strtotime($date);
+            $date = (int)strtotime($date);
         }
 
         if ($modifier) {
-            $date = strtotime($modifier, $date);
+            $date = (int)strtotime($modifier, $date);
         }
 
         switch ($format) {
@@ -103,7 +103,7 @@ class Date {
      * or `0` if the two dates are equal.
      * @category Date/Time Functions
      */
-    public static function compare($date1, $date2 = false)
+    public static function compare($date1, $date2 = false): int
     {
         if (!$date2) {
             $date2 = time();
@@ -112,6 +112,7 @@ class Date {
         if (is_string($date1)) {
             $date1 = strtotime($date1);
         }
+
         if (is_string($date2)) {
             $date2 = strtotime($date2);
         }
@@ -119,23 +120,34 @@ class Date {
         if ($date1 > $date2) {
             return 1;
         }
-        if ($date1 == $date2) {
-            return 0;
-        }
+
         if ($date1 < $date2) {
             return -1;
         }
+
+        return 0; // $date1 === $date2
     }
 
-    public static function get_ages($birthday, $label = true)
+    /**
+     * Retruns full years after birthday
+     * @param $birthday
+     * @param bool $label
+     * @return string
+     * @throws \Exception
+     */
+    public static function getAges($birthday): string
     {
-        $now = new \DateTime('now');
+        $now = new \DateTime();
         $age = $now->diff(new \DateTime($birthday));
-        $ages = $age->format('%y');
 
-        return $label ? $ages . ' ' . format_declension($ages, ['лет', 'год', 'года']) : $ages;
+        return $age->format('%y');
     }
 
+    /**
+     * Returns how much time has passed
+     * @param $date
+     * @return string
+     */
     public static function passed($date)
     {
         if (is_string($date)) {
@@ -154,41 +166,24 @@ class Date {
             case ($diff < 3600):
                 $tm = ceil($diff / 60);
                 $forms = ['минут', 'минута', 'минуты'];
-                return $tm . ' ' . format_declension($tm, $forms) . ' назад';
+                return $tm . ' ' . Text::declension($tm, $forms) . ' назад';
                 break;
 
             case ($diff < 86400):
                 $tm = ceil($diff / 3600);
                 $forms = ['часов', 'час', 'часа'];
-                return $tm . ' ' . format_declension($tm, $forms) . ' назад';
+                return $tm . ' ' . Text::declension($tm, $forms) . ' назад';
                 break;
 
             case ($diff < 604800):
                 $tm = round($diff / 86400);
                 $forms = ['дней', 'день', 'дня'];
-                return $tm . ' ' . format_declension($tm, $forms) . ' назад';
+                return $tm . ' ' . Text::declension($tm, $forms) . ' назад';
                 break;
 
             default:
-                return date_convert($date);
+                return self::convert($date);
                 break;
         }
-    }
-
-    /**
-     * Вычислить разницу между двумя датами
-     * @param string $start
-     * @param string $end
-     * @param string $differenceFormat Формат даты, возвращаемый функцией
-     * @return string
-     */
-    public static function difference($start, $end, $differenceFormat = '%a'): string
-    {
-        $datetime1 = date_create($start);
-        $datetime2 = date_create($end);
-
-        $interval = date_diff($datetime1, $datetime2);
-
-        return $interval->format($differenceFormat);
     }
 }

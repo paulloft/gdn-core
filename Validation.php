@@ -2,8 +2,10 @@
 
 namespace Garden;
 
-class Validation
-{
+use Garden\Helpers\Text;
+use Garden\Helpers\Validate;
+
+class Validation {
     /**
      * @var Model
      */
@@ -33,7 +35,7 @@ class Validation
      * Return validation errors in an array
      * @return array
      */
-    public function errors()
+    public function errors(): array
     {
         return $this->errors;
     }
@@ -42,7 +44,7 @@ class Validation
      * set data from validation
      * @param array $data
      */
-    public function setData($data)
+    public function setData(array $data)
     {
         $this->data = $data;
     }
@@ -99,7 +101,7 @@ class Validation
      * @param string $message
      * @return $this
      */
-    public function rule($field, $rule, $params = null, $message = false)
+    public function rule($field, $rule, $params = null, $message = false): self
     {
         $this->rule[$field][] = [
             'type' => $rule,
@@ -115,7 +117,7 @@ class Validation
      * @param array $data
      * @return bool
      */
-    public function validate($data = false)
+    public function validate($data = false): bool
     {
         if (!$this->validated) {
             if ($data) {
@@ -142,11 +144,14 @@ class Validation
      * @param $value
      * @return bool
      */
-    protected function isEmpty($value)
+    protected function isEmpty($value): bool
     {
         return $value === null || $value === '' || $value === false;
     }
 
+    /**
+     * Checked Databese table structure
+     */
     protected function checkStructure()
     {
         $structure = $this->getStructure();
@@ -168,7 +173,7 @@ class Validation
             if (!empty($length)) {
                 $len = mb_strlen($value);
                 if ($len > $length) {
-                    $this->errors[$field][] = t_sprintf('validate_max_length', $length);
+                    $this->errors[$field][] = Translate::getSprintf('validate_max_length', $length);
                     continue;
                 }
             }
@@ -218,17 +223,20 @@ class Validation
         }
     }
 
+    /**
+     * Check rules
+     */
     protected function checkRules()
     {
         if (empty($this->rule)) {
-            return true;
+            return;
         }
 
         foreach ($this->rule as $field => $rules) {
             foreach ((array)$rules as $opt) {
-                $type    = val('type', $opt);
+                $type = val('type', $opt);
                 $message = val('message', $opt);
-                $params  = val('params', $opt);
+                $params = val('params', $opt);
 
                 $value = val($field, $this->data);
                 $value = \is_array($value) ? array_map('trim', $value) : trim($value);
@@ -238,17 +246,17 @@ class Validation
                     $type = $type[1];
                 } elseif ($type instanceof \Closure) {
                     $ruleFunc = $type;
-                }else {
-                    $ruleFunc = 'validate_' . $type;
+                } else {
+                    $ruleFunc = [Validate::class, $type];
                 }
 
-                if ($type == 'unique') {
+                if ($type === 'unique') {
                     $params = [':id', $field, $this->model];
                 }
 
                 $params = $this->replaceParams($params, $this->data);
 
-                if (($type == 'required' || $type === 'not_empty' || !$this->isEmpty($value)) && !$ruleFunc($value, $params)) {
+                if (($type === 'required' || $type === 'not_empty' || !$this->isEmpty($value)) && !$ruleFunc($value, $params)) {
                     if (\is_array($message)) {
                         $field = val(0, $message);
                         $message = val(1, $message);
@@ -262,6 +270,11 @@ class Validation
         }
     }
 
+    /**
+     * @param $params
+     * @param $data
+     * @return mixed
+     */
     protected function replaceParams($params, $data)
     {
         if (!$params) {
@@ -275,8 +288,8 @@ class Validation
             return $params;
         }
 
-        if (str_begins($params, ':')) {
-            $key = ltrim_substr($params, ':');
+        if (Text::strBegins($params, ':')) {
+            $key = Text::ltrimSubstr($params, ':');
             return val($key, $data);
         }
 

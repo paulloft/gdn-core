@@ -29,28 +29,13 @@ class Config {
     /**
      * Get a setting from the config.
      *
-     * @param string $group Name of configuration group
      * @param string $key The config key.
      * @param mixed $default The default value if the config file doesn't exist.
      * @return mixed The value at {@link $key} or {@link $default} if the key isn't found.
      */
-    public static function get(string $group, string $key = null, $default = null)
+    public static function get(string $key, $default = null)
     {
-        if (array_key_exists($group, self::$data)) {
-            $data = self::$data[$group];
-        } else {
-            return $default;
-        }
-
-        if ($key === null) {
-            return $data;
-        }
-
-        if (array_key_exists($key, $data)) {
-            return $data[$key];
-        }
-
-        return $default;
+        return Arr::path($key, self::$data, $default);
     }
 
     /**

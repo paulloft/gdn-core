@@ -211,9 +211,8 @@ class Arr {
      *
      * @category Array Functions
      */
-    public static function translate($array, array $mappings): array
+    public static function translate(array $array, array $mappings): array
     {
-        $array = (array)$array;
         $result = [];
         foreach ($mappings as $index => $value) {
             if (is_numeric($index)) {
@@ -239,7 +238,7 @@ class Arr {
      * @category Array Functions
      * @category String Functions
      */
-    public static function implodeAssoc($elemglue, $keyglue, array $pieces): array
+    public static function implodeAssoc($elemglue, $keyglue, array $pieces): string
     {
         $result = '';
 
@@ -295,13 +294,13 @@ class Arr {
     }
 
     /**
-     * Safely get a value out of an array.
-     * @param $array
+     * Safely get a value out of an array
      * @param $key
-     * @param bool $dafult
-     * @return mixed
+     * @param array $array
+     * @param null $default
+     * @return mixed|null
      */
-    public static function get($array, $key, $default = null)
+    public static function get($key, array $array, $default = null)
     {
         return $array[$key] ?? $default;
     }

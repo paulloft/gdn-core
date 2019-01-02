@@ -43,6 +43,16 @@ class Validate {
     }
 
     /**
+     * is local url
+     * @param $value
+     * @return bool
+     */
+    public static function localUrl($value): bool
+    {
+        return !preg_match('#^(http|\/\/)#', $value);
+    }
+
+    /**
      * is mac
      * @param $value
      * @return bool

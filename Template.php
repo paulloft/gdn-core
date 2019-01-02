@@ -1,6 +1,8 @@
 <?php
 namespace Garden;
 
+use Garden\Helpers\Validate;
+
 class Template extends Controller {
 
     // template file
@@ -163,7 +165,7 @@ class Template extends Controller {
     protected function getResourcePath($resource, $src, $addon = null)
     {
         $addon = $addon ?? strtolower($this->getAddonName());
-        $local = is_local_url($src);
+        $local = Validate::localUrl($src);
         $version = (strpos($src, '?') === false ? '?' : '&') . 'v=' . $this->getCacheVersion();
         if ($local && $addon && file_exists(GDN_ADDONS . '/' . ucfirst($addon) . '/Assets/' . $resource . '/' . $src)) {
             return "/assets/$addon/$resource/$src$version";

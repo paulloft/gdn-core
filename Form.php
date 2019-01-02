@@ -2,6 +2,8 @@
 namespace Garden;
 
 use Garden\Helpers\Arr;
+use Garden\Helpers\Date;
+use Garden\Helpers\Text;
 
 class Form
 {
@@ -146,7 +148,7 @@ class Form
             return (bool)Request::current()->getQuery('form-submitted', 0);
         }
 
-        return Gdn::request()->getMethod() == $method;
+        return Gdn::request()->getMethod() === $method;
     }
 
     /**
@@ -309,9 +311,9 @@ class Form
                     $result = $this->model->save($post, $id);
                 } catch (\Exception $e) {
                     if (c('main.debug', true)) {
-                        $this->addError(t_sprintf('form_save_error_debug', $e->getMessage()));
+                        $this->addError(Translate::getSprintf('form_save_error_debug', $e->getMessage()));
                     } else {
-                        $this->addError(t('form_save_error'));
+                        $this->addError(Translate::get('form_save_error'));
                     }
 
                     $result = false;
@@ -443,9 +445,9 @@ class Form
         $attributes['name'] = $name;
         $attributes['type'] = $type;
 
-        if ($type == 'radio' || $type == 'checkbox') {
+        if ($type === 'radio' || $type === 'checkbox') {
             $value = $this->getValue($correctName);
-            $checked = \is_array($value) ? in_arrayf($inputValue, $value) : (string)$inputValue == (string)$value;
+            $checked = \is_array($value) ? in_array($inputValue, $value) : (string)$inputValue == (string)$value;
             if ($inputValue !== false && $checked) {
                 Arr::touch('checked', $attributes, 'checked');
             }
@@ -542,9 +544,9 @@ class Form
             $optionValue = $keyName && $keyValue ? val($keyValue, $option) : $key;
             $optionName = $keyName && $keyValue ? val($keyName, $option) : $option;
 
-            $selected = \is_array($fieldValue) ? in_arrayf($optionValue, $fieldValue) : (string)$optionValue == (string)$fieldValue;
+            $selected = \is_array($fieldValue) ? in_array($optionValue, $fieldValue) : (string)$optionValue === (string)$fieldValue;
 
-            $html .= '<option value="' . $optionValue . '"' . ($selected ? ' selected' : '') . '>' . $optionName . '</option>';
+            $html .= '<option value="' . $optionValue . '" ' . ($selected ? 'selected' : '') . '>' . $optionName . '</option>';
         }
 
         $html .= '</select>';
@@ -573,7 +575,7 @@ class Form
 
     protected function _value($name, $value = false)
     {
-        return format_form($value === false ? $this->getValue($name) : $value);
+        return Text::safe($value === false ? $this->getValue($name) : $value);
     }
 
     /**
@@ -605,12 +607,12 @@ class Form
                 if ($value && $options = val($field, $structure)) {
                     switch ($options->dataType) {
                         case 'time':
-                            $post[$field] = date_convert($value, 'time');
+                            $post[$field] = Date::convert($value, 'time');
                             break;
                         case 'date':
                         case 'datetime':
                         case 'timestamp':
-                            $post[$field] = date_convert($value, 'sql');
+                            $post[$field] = Date::convert($value, 'sql');
                             break;
                     }
                 } else {
@@ -634,7 +636,7 @@ class Form
         $secureFileds = $protected ? $this->getSecureFields() : [];
 
         foreach ($formData as $name => $value) {
-            if ($protected && !in_arrayf($name, $secureFileds)) {
+            if ($protected && !in_array($name, $secureFileds)) {
                 unset($formData[$name]);
                 continue;
             }
