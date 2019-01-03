@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden\Db\Driver;
 
 use \Garden\Exception;
@@ -11,40 +12,40 @@ abstract class SQL extends Database {
     {
         static $types = array
         (
-            'blob'                      => array('type' => 'string', 'binary' => TRUE, 'maxLength' => '65535'),
-            'bool'                      => array('type' => 'bool'),
-            'bigint unsigned'           => array('type' => 'int', 'min' => '0', 'max' => '18446744073709551615'),
-            'datetime'                  => array('type' => 'string'),
-            'decimal unsigned'          => array('type' => 'float', 'exact' => TRUE, 'min' => '0'),
-            'double'                    => array('type' => 'float'),
+            'blob' => array('type' => 'string', 'binary' => true, 'maxLength' => '65535'),
+            'bool' => array('type' => 'bool'),
+            'bigint unsigned' => array('type' => 'int', 'min' => '0', 'max' => '18446744073709551615'),
+            'datetime' => array('type' => 'string'),
+            'decimal unsigned' => array('type' => 'float', 'exact' => true, 'min' => '0'),
+            'double' => array('type' => 'float'),
             'double precision unsigned' => array('type' => 'float', 'min' => '0'),
-            'double unsigned'           => array('type' => 'float', 'min' => '0'),
-            'enum'                      => array('type' => 'string'),
-            'fixed'                     => array('type' => 'float', 'exact' => TRUE),
-            'fixed unsigned'            => array('type' => 'float', 'exact' => TRUE, 'min' => '0'),
-            'float unsigned'            => array('type' => 'float', 'min' => '0'),
-            'geometry'                  => array('type' => 'string', 'binary' => TRUE),
-            'int unsigned'              => array('type' => 'int', 'min' => '0', 'max' => '4294967295'),
-            'integer unsigned'          => array('type' => 'int', 'min' => '0', 'max' => '4294967295'),
-            'longblob'                  => array('type' => 'string', 'binary' => TRUE, 'maxLength' => '4294967295'),
-            'longtext'                  => array('type' => 'string', 'maxLength' => '4294967295'),
-            'mediumblob'                => array('type' => 'string', 'binary' => TRUE, 'maxLength' => '16777215'),
-            'mediumint'                 => array('type' => 'int', 'min' => '-8388608', 'max' => '8388607'),
-            'mediumint unsigned'        => array('type' => 'int', 'min' => '0', 'max' => '16777215'),
-            'mediumtext'                => array('type' => 'string', 'maxLength' => '16777215'),
-            'national varchar'          => array('type' => 'string'),
-            'numeric unsigned'          => array('type' => 'float', 'exact' => TRUE, 'min' => '0'),
-            'nvarchar'                  => array('type' => 'string'),
-            'point'                     => array('type' => 'string', 'binary' => TRUE),
-            'real unsigned'             => array('type' => 'float', 'min' => '0'),
-            'set'                       => array('type' => 'string'),
-            'smallint unsigned'         => array('type' => 'int', 'min' => '0', 'max' => '65535'),
-            'text'                      => array('type' => 'string', 'maxLength' => '65535'),
-            'tinyblob'                  => array('type' => 'string', 'binary' => TRUE, 'maxLength' => '255'),
-            'tinyint'                   => array('type' => 'int', 'min' => '-128', 'max' => '127'),
-            'tinyint unsigned'          => array('type' => 'int', 'min' => '0', 'max' => '255'),
-            'tinytext'                  => array('type' => 'string', 'maxLength' => '255'),
-            'year'                      => array('type' => 'string'),
+            'double unsigned' => array('type' => 'float', 'min' => '0'),
+            'enum' => array('type' => 'string'),
+            'fixed' => array('type' => 'float', 'exact' => true),
+            'fixed unsigned' => array('type' => 'float', 'exact' => true, 'min' => '0'),
+            'float unsigned' => array('type' => 'float', 'min' => '0'),
+            'geometry' => array('type' => 'string', 'binary' => true),
+            'int unsigned' => array('type' => 'int', 'min' => '0', 'max' => '4294967295'),
+            'integer unsigned' => array('type' => 'int', 'min' => '0', 'max' => '4294967295'),
+            'longblob' => array('type' => 'string', 'binary' => true, 'maxLength' => '4294967295'),
+            'longtext' => array('type' => 'string', 'maxLength' => '4294967295'),
+            'mediumblob' => array('type' => 'string', 'binary' => true, 'maxLength' => '16777215'),
+            'mediumint' => array('type' => 'int', 'min' => '-8388608', 'max' => '8388607'),
+            'mediumint unsigned' => array('type' => 'int', 'min' => '0', 'max' => '16777215'),
+            'mediumtext' => array('type' => 'string', 'maxLength' => '16777215'),
+            'national varchar' => array('type' => 'string'),
+            'numeric unsigned' => array('type' => 'float', 'exact' => true, 'min' => '0'),
+            'nvarchar' => array('type' => 'string'),
+            'point' => array('type' => 'string', 'binary' => true),
+            'real unsigned' => array('type' => 'float', 'min' => '0'),
+            'set' => array('type' => 'string'),
+            'smallint unsigned' => array('type' => 'int', 'min' => '0', 'max' => '65535'),
+            'text' => array('type' => 'string', 'maxLength' => '65535'),
+            'tinyblob' => array('type' => 'string', 'binary' => true, 'maxLength' => '255'),
+            'tinyint' => array('type' => 'int', 'min' => '-128', 'max' => '127'),
+            'tinyint unsigned' => array('type' => 'int', 'min' => '0', 'max' => '255'),
+            'tinytext' => array('type' => 'string', 'maxLength' => '255'),
+            'year' => array('type' => 'string'),
         );
 
         $type = str_replace(' zerofill', '', $type);
@@ -55,17 +56,17 @@ abstract class SQL extends Database {
         return parent::datatype($type);
     }
 
-    public function list_tables($like = NULL)
+    public function list_tables($like = null)
     {
         if (is_string($like)) {
             // Search for table names
-            $result = $this->query(Database::SELECT, 'SHOW TABLES LIKE ' . $this->quote($like), FALSE);
+            $result = $this->query(Database::SELECT, 'SHOW TABLES LIKE ' . $this->quote($like));
         } else {
             // Find all table names
-            $result = $this->query(Database::SELECT, 'SHOW TABLES', FALSE);
+            $result = $this->query(Database::SELECT, 'SHOW TABLES');
         }
 
-        $tables = array();
+        $tables = [];
         foreach ($result as $row) {
             $tables[] = reset($row);
         }
@@ -73,21 +74,21 @@ abstract class SQL extends Database {
         return $tables;
     }
 
-    public function list_columns($table, $like = NULL, $add_prefix = TRUE)
+    public function list_columns($table, $like = null, $add_prefix = true)
     {
         // Quote the table name
-        $table = ($add_prefix === TRUE) ? $this->quote_table($table) : $table;
+        $table = ($add_prefix === true) ? $this->quote_table($table) : $table;
 
         if (is_string($like)) {
             // Search for column names
-            $result = $this->query(Database::SELECT, 'SHOW FULL COLUMNS FROM ' . $table . ' LIKE ' . $this->quote($like), FALSE);
+            $result = $this->query(Database::SELECT, 'SHOW FULL COLUMNS FROM ' . $table . ' LIKE ' . $this->quote($like));
         } else {
             // Find all column names
-            $result = $this->query(Database::SELECT, 'SHOW FULL COLUMNS FROM ' . $table, FALSE);
+            $result = $this->query(Database::SELECT, 'SHOW FULL COLUMNS FROM ' . $table);
         }
 
         $count = 0;
-        $columns = array();
+        $columns = [];
         foreach ($result as $row) {
             list($type, $length) = $this->_parse_type($row['Type']);
 
@@ -96,7 +97,7 @@ abstract class SQL extends Database {
             $column->name = $row['Field'];
             $column->default = $row['Default'];
             $column->dataType = $type;
-            $column->allowNull = ($row['Null'] == 'YES');
+            $column->allownull = ($row['null'] === 'YES');
             $column->position = ++$count;
             $column->length = $length;
 
@@ -121,6 +122,7 @@ abstract class SQL extends Database {
                         case 'char':
                         case 'varchar':
                             $column->maxLength = $length;
+                            break;
                         case 'text':
                         case 'tinytext':
                         case 'mediumtext':
@@ -138,7 +140,7 @@ abstract class SQL extends Database {
 
             // MySQL attributes
             // ToDo Обрабатывать не только auto_increment, а ещё 'ON UPDATE CURRENT_TIMESTAMP', ''
-            $column->autoIncrement = strpos($row['Extra'], 'auto_increment') !== FALSE;
+            $column->autoIncrement = strpos($row['Extra'], 'auto_increment') !== false;
             $column->key = $row['Key'];
             $column->privileges = $row['Privileges'];
 

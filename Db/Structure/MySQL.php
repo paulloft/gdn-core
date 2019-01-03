@@ -1,8 +1,11 @@
 <?php
+
 namespace Garden\Db\Structure;
 
+use Garden\Config;
 use \Garden\Exception;
 use \Garden\Db\Database;
+use Garden\Helpers\Arr;
 use Garden\Helpers\Text;
 
 /**
@@ -17,13 +20,46 @@ use Garden\Helpers\Text;
  * @package Garden
  * @since 2.0
  */
-class MySQL extends \Garden\Db\Structure
-{
+class MySQL extends \Garden\Db\Structure {
+    public static $allowedTypes = [
+        'tinyint',
+        'smallint',
+        'mediumint',
+        'int',
+        'bigint',
+        'char',
+        'varchar',
+        'varbinary',
+        'date',
+        'datetime',
+        'mediumtext',
+        'longtext',
+        'text',
+        'decimal',
+        'numeric',
+        'float',
+        'double',
+        'enum',
+        'timestamp',
+        'tinyblob',
+        'blob',
+        'mediumblob',
+        'longblob',
+        'json'
+    ];
+
+    public static $columnTypes = [
+        'index' => 'index',
+        'key' => 'key',
+        'unique' => 'unique index',
+        'fulltext' => 'fulltext index',
+        'primary' => 'primary key'
+    ];
 
     public function dropTable()
     {
         if ($this->tableExists()) {
-            return $this->query('drop table `' . $this->_prefix . $this->_table . '`');
+            return $this->query('DROP TABLE `' . $this->_prefix . $this->_table . '`');
         }
 
         return false;
@@ -31,8 +67,8 @@ class MySQL extends \Garden\Db\Structure
 
     public function dropColumn($name)
     {
-        if (!$this->query('alter table `' . $this->_prefix . $this->_table . '` drop column `' . $name . '`')) {
-            throw new Exception\Custom(t('Failed to remove the `%1$s` column from the `%2$s` table.'), array($name, $this->_prefix . $this->_table));
+        if (!$this->query('ALTER TABLE `' . $this->_prefix . $this->_table . '` DROP COLUMN `' . $name . '`')) {
+            throw new Exception\Database("Failed to remove the `$name` column from the `{$this->_prefix}{$this->_table}` table");
         }
 
         return true;
@@ -40,23 +76,23 @@ class MySQL extends \Garden\Db\Structure
 
     public function renameColumn($oldname, $newname, $tablename = '')
     {
-        if ($tablename != '') {
+        if ($tablename !== '') {
             $this->_table = $tablename;
         }
 
         // Get the schema for this table
         $schema = $this->getColumns($this->_table);
-        $oldColumn = val($oldname, $schema);
-        $newColumn = val($newname, $schema);
+        $oldColumn = Arr::get($oldname, $schema);
+        $newColumn = Arr::get($newname, $schema);
 
         // Make sure that one column, or the other exists
         if (!$oldColumn && !$newColumn) {
-            throw new Exception\Custom(t('The `%1$s` column does not exist.'), $oldname);
+            throw new Exception\Database("The `$oldname` column does not exist");
         }
 
         // Make sure the new column name isn't already taken
         if ($oldColumn && $newColumn) {
-            throw new Exception\Custom(t('You cannot rename the `%1$s` column to `%2$s` because that column already exists.'), array($oldname, $newname));
+            throw new Exception\Database("You cannot rename the `$oldname` column to `$newname` because that column already exists");
         }
 
         // Rename the column
@@ -65,8 +101,8 @@ class MySQL extends \Garden\Db\Structure
         unset($this->_existingColumns[$oldname]);
         $this->_existingColumns[$newname] = $oldColumn;
 
-        if (!$this->query('alter table `' . $this->_table . '` change column `' . $oldname . '` ' . $this->defineColumn($newColumn))) {
-            throw new Exception\Custom(t('Failed to rename table `%1$s` to `%2$s`.'), array($oldname, $newname));
+        if (!$this->query("ALTER TABLE `{$this->_table}` CHANGE COLUMN `$oldname` " . $this->defineColumn($newColumn))) {
+            throw new Exception\Database("Failed to rename table `$oldname` to `$newname`");
         }
 
         return true;
@@ -74,8 +110,8 @@ class MySQL extends \Garden\Db\Structure
 
     public function renameTable($oldname, $newname)
     {
-        if (!$this->query('rename table `' . $this->_prefix . $oldname . '` to `' . $this->_prefix . $newname . '`')) {
-            throw new Exception\Custom(t('Failed to rename table `%1$s` to `%2$s`.'), array($oldname, $newname));
+        if (!$this->query("RENAME TABLE `{$this->_prefix}{$oldname}` TO `{$this->_prefix}{$newname}`")) {
+            throw new Exception\Database("Failed to rename table `$oldname` to `$newname`");
         }
 
         return true;
@@ -83,15 +119,15 @@ class MySQL extends \Garden\Db\Structure
 
     public function view($name, $sql)
     {
-        $this->query('create or replace view ' . $this->_prefix . $name . " as \n" . $sql);
+        $this->query("create or replace view {$this->_prefix}{$name} as \n{$sql}");
     }
 
     public function engine($engine, $checkAvailability = true)
     {
         $engine = strtolower($engine);
 
-        if ($checkAvailability) {
-            if (!$this->hasEngine($engine)) return $this;
+        if ($checkAvailability && !$this->hasEngine($engine)) {
+            return $this;
         }
 
         $this->_engine = $engine;
@@ -104,8 +140,8 @@ class MySQL extends \Garden\Db\Structure
         static $viableEngines = null;
 
         if ($viableEngines === null) {
-            $list = $this->_query("SHOW ENGINES;");
-            $viableEngines = array();
+            $list = $this->_query('SHOW ENGINES;');
+            $viableEngines = [];
             while ($storage = $list->get('Engine')) {
                 $name = strtolower($storage);
                 $viableEngines[$name] = true;
@@ -119,7 +155,7 @@ class MySQL extends \Garden\Db\Structure
     /**
      * Modifies $this->table() with the columns specified with $this->column().
      *
-     * @throws Exception\Custom
+     * @throws Exception\Database
      * @param boolean $explicit If true, this method will remove any columns from the table that were not
      * defined with $this->column().
      * @return boolean
@@ -127,10 +163,10 @@ class MySQL extends \Garden\Db\Structure
     protected function modify($explicit = false)
     {
         $px = $this->_prefix;
-        $addSql = array(); // statements executed at the end
+        $addSql = []; // statements executed at the end
 
         $existingColumns = $this->existingColumns();
-        $alterSql = array();
+        $alterSql = [];
 
         // 1. Remove any unnecessary columns if this is an explicit modification
         if ($explicit) {
@@ -139,15 +175,15 @@ class MySQL extends \Garden\Db\Structure
             // table that are NOT in $this->_columns.
             $removeColumns = array_diff(array_keys($existingColumns), array_keys($this->_columns));
             foreach ($removeColumns as $column) {
-                $alterSql[] = "drop column `$column`";
+                $alterSql[] = "DROP COLUMN `$column`";
             }
         }
 
         // Prepare the alter query
-        $alterSqlPrefix = 'alter table `' . $this->_prefix . $this->_table . "`\n";
+        $alterSqlPrefix = "ALTER TABLE `{$this->_prefix}{$this->_table}`\n";
 
         // 2. Alter the table storage engine.
-        $forceEngine = c('database.forceStorageEngine', false);
+        $forceEngine = Config::get('database.forceStorageEngine', false);
         if ($forceEngine && !$this->_engine) {
             $this->_engine = $forceEngine;
         }
@@ -155,24 +191,21 @@ class MySQL extends \Garden\Db\Structure
         $indexesDb = $this->indexSqlDb();
 
         if ($this->_engine) {
-            $currentEngine = $this->_query("show table status where name = '" . $this->_prefix . $this->_table . "'")->get('Engine');
+            $currentEngine = $this->_query("SHOW TABLE status WHERE name = '{$this->_prefix}{$this->_table}'")->get('Engine');
 
             if (strcasecmp($currentEngine, $this->_engine)) {
                 // Check to drop a fulltext index if we don't support it.
                 if (!$this->supportsFulltext()) {
                     foreach ($indexesDb as $indexName => $indexSql) {
-                        if (Text::strBegins($indexSql, 'fulltext')) {
-                            //Drop index query
-                            if (!$this->query("$alterSqlPrefix drop index $indexName;\n")) {
-                                throw new Exception\Custom(t('Failed to drop the index `%1$s` on table `%2$s`.'), array($indexName, $this->_table));
-                            }
+                        if (Text::strBegins($indexSql, 'fulltext') && !$this->query("$alterSqlPrefix drop index $indexName;\n")) {
+                            throw new Exception\Database("Failed to drop the index `$indexName` on table `{$this->_table}`");
                         }
                     }
                 }
 
                 // Engine query
                 if (!$this->query($alterSqlPrefix . ' engine = ' . $this->_engine)) {
-                    throw new Exception\Custom(t('Failed to alter the storage engine of table `%1$s` to `%2$s`.'), array($this->_prefix . $this->_table, $this->_engine));
+                    throw new Exception\Database("Failed to alter the storage engine of table `{$this->_prefix}{$this->_table}` to `{$this->_engine}`");
                 }
             }
         }
@@ -187,11 +220,11 @@ class MySQL extends \Garden\Db\Structure
             if (!isset($existingColumns[$columnName])) {
 
                 // This column name is not in the existing column collection, so add the column
-                $addColumnSql = 'add ' . $this->defineColumn(val($columnName, $this->_columns));
+                $addColumnSql = 'add ' . $this->defineColumn(Arr::get($columnName, $this->_columns));
                 if ($prevColumnName !== false) {
                     $addColumnSql .= " after `$prevColumnName`";
                 } else {
-                    $addColumnSql .= " first";
+                    $addColumnSql .= ' first';
                 }
 
                 $alterSql[] = $addColumnSql;
@@ -203,12 +236,12 @@ class MySQL extends \Garden\Db\Structure
                 $columnDef = $this->defineColumn($column);
                 $comment = "/* Existing: $existingColumnDef, New: $columnDef */\n";
 
-                if ($existingColumnDef != $columnDef) {
+                if ($existingColumnDef !== $columnDef) {
                     // The existing & new column types do not match, so modify the column.
-                    $alterSql[] = $comment . 'change `' . $columnName . '` ' . $this->defineColumn(val($columnName, $this->_columns));
+                    $alterSql[] = $comment . 'change `' . $columnName . '` ' . $this->defineColumn(Arr::get($columnName, $this->_columns));
                     // Check for a modification from an enum to an int.
-                    if (strcasecmp($existingColumn->type, 'enum') == 0 && in_array(strtolower($column->type), $this->types('int'))) {
-                        $sql = "update `$px{$this->_table}` set `$columnName` = case `$columnName`";
+                    if (strcasecmp($existingColumn->type, 'enum') === 0 && in_array(strtolower($column->type), $this->types('int'))) {
+                        $sql = "UPDATE `$px{$this->_table}` SET `$columnName` = case `$columnName`";
                         foreach ($existingColumn->enum as $index => $newValue) {
                             $oldValue = $index + 1;
 
@@ -221,7 +254,7 @@ class MySQL extends \Garden\Db\Structure
                             $sql .= " when $oldValue then $newValue";
                         }
                         $sql .= " else `$columnName` end";
-                        $description = "Update {$this->_table}.$columnName enum values to {$column->type}";
+                        $description = "update {$this->_table}.$columnName enum values to {$column->type}";
                         $addSql[$description] = $sql;
 
                     }
@@ -230,22 +263,20 @@ class MySQL extends \Garden\Db\Structure
             $prevColumnName = $columnName;
         }
 
-        if (count($alterSql) > 0) {
-            if (!$this->query($alterSqlPrefix . implode(",\n", $alterSql))) {
-                throw new Exception\Custom(t('Failed to alter the `%s` table.'), $this->_prefix . $this->_table);
-            }
+        if (count($alterSql) > 0 && !$this->query($alterSqlPrefix . implode(",\n", $alterSql))) {
+            throw new Exception\Database("Failed to alter the `{$this->_prefix}{$this->_table}` table");
         }
 
         // 4. Update indexes.
-        $indexSql = array();
+        $indexSql = [];
         // Go through the indexes to add or modify.
         foreach ($indexes as $name => $sql) {
             if (isset($indexesDb[$name])) {
-                if ($indexes[$name] != $indexesDb[$name]) {
-                    if ($name == 'PRIMARY') {
-                        $indexSql[$name][] = $alterSqlPrefix . "drop primary key;\n";
+                if ($indexes[$name] !== $indexesDb[$name]) {
+                    if ($name === 'PRIMARY') {
+                        $indexSql[$name][] = $alterSqlPrefix . "DROP primary key;\n";
                     } else {
-                        $indexSql[$name][] = $alterSqlPrefix . 'drop index ' . $name . ";\n";
+                        $indexSql[$name][] = $alterSqlPrefix . "DROP index {$name};\n";
                     }
                     $indexSql[$name][] = $alterSqlPrefix . "add $sql;\n";
                 }
@@ -257,10 +288,10 @@ class MySQL extends \Garden\Db\Structure
         // Go through the indexes to drop.
         if ($explicit) {
             foreach ($indexesDb as $name => $sql) {
-                if ($name == 'PRIMARY') {
-                    $indexSql[$name][] = $alterSqlPrefix . "drop primary key;\n";
+                if ($name === 'PRIMARY') {
+                    $indexSql[$name][] = $alterSqlPrefix . "DROP primary key;\n";
                 } else {
-                    $indexSql[$name][] = $alterSqlPrefix . 'drop index ' . $name . ";\n";
+                    $indexSql[$name][] = $alterSqlPrefix . "DROP index {$name};\n";
                 }
             }
         }
@@ -269,7 +300,7 @@ class MySQL extends \Garden\Db\Structure
         foreach ($indexSql as $name => $sqls) {
             foreach ($sqls as $sql) {
                 if (!$this->query($sql)) {
-                    throw new Exception\Custom(t('Error.ModifyIndex', 'Failed to add or modify the `%1$s` index in the `%2$s` table.'), array($name, $this->_table));
+                    throw new Exception\Database("Failed to add or modify the `$name` index in the `{$this->_table}` table");
                 }
             }
         }
@@ -277,7 +308,7 @@ class MySQL extends \Garden\Db\Structure
         // Run any additional Sql.
         foreach ($addSql as $description => $sql) {
             if (!$this->query($sql)) {
-                throw new Exception\Custom("Error modifying table: {$description}.");
+                throw new Exception\Database("Error modifying table: $description");
             }
         }
 
@@ -290,23 +321,24 @@ class MySQL extends \Garden\Db\Structure
      */
     protected function create()
     {
-        $primaryKey = array();
-        $uniqueKey = array();
-        $fullTextKey = array();
+        $primaryKey = [];
+        $uniqueKey = [];
+        $fullTextKey = [];
         $allowFullText = true;
-        $indexes = array();
+        $indexes = [];
         $keys = '';
         $sql = '';
 
-        $forceEngine = c('database.forceStorageEngine');
+        $forceEngine = Config::get('database.forceStorageEngine');
         if ($forceEngine && !$this->_engine) {
             $this->_engine = $forceEngine;
             $allowFullText = $this->supportsFulltext();
         }
 
         foreach ($this->_columns as $columnName => $column) {
-            if ($sql != '')
+            if ($sql !== '') {
                 $sql .= ',';
+            }
 
             $sql .= "\n" . $this->defineColumn($column, true);
 
@@ -315,17 +347,17 @@ class MySQL extends \Garden\Db\Structure
             foreach ($columnKeyTypes as $columnKeyType) {
                 $keyTypeParts = explode('.', $columnKeyType, 2);
                 $columnKeyType = $keyTypeParts[0];
-                $indexGroup = val(1, $keyTypeParts, '');
+                $indexGroup = Arr::get(1, $keyTypeParts, '');
 
-                if ($columnKeyType == 'primary' && !$column->autoIncrement) {
+                if ($columnKeyType === 'primary' && !$column->autoIncrement) {
                     $primaryKey[] = $columnName;
-                } elseif ($columnKeyType == 'key') {
+                } elseif ($columnKeyType === 'key') {
                     $indexes['FK'][$indexGroup][] = $columnName;
-                } elseif ($columnKeyType == 'index') {
+                } elseif ($columnKeyType === 'index') {
                     $indexes['IX'][$indexGroup][] = $columnName;
-                } elseif ($columnKeyType == 'unique') {
+                } elseif ($columnKeyType === 'unique') {
                     $uniqueKey[] = $columnName;
-                } elseif ($columnKeyType == 'fulltext' && $allowFullText) {
+                } elseif ($columnKeyType === 'fulltext' && $allowFullText) {
                     $fullTextKey[] = $columnName;
                 }
             }
@@ -344,7 +376,7 @@ class MySQL extends \Garden\Db\Structure
         }
         // Build the rest of the keys.
         foreach ($indexes as $indexType => $indexGroups) {
-            $createString = val($indexType, array('FK' => 'key', 'IX' => 'index'));
+            $createString = Arr::get($indexType, ['FK' => 'key', 'IX' => 'index']);
             foreach ($indexGroups as $indexGroup => $columnNames) {
                 if (!$indexGroup) {
                     foreach ($columnNames as $columnName) {
@@ -356,7 +388,7 @@ class MySQL extends \Garden\Db\Structure
             }
         }
 
-        $sql = 'create table `' . $this->_prefix . $this->_table . '` (' . $sql . $keys . "\n)";
+        $sql = 'CREATE TABLE `' . $this->_prefix . $this->_table . '` (' . $sql . $keys . "\n)";
 
         // Check to see if there are any fulltext columns, otherwise use innodb.
         if (!$this->_engine) {
@@ -369,21 +401,24 @@ class MySQL extends \Garden\Db\Structure
                     break;
                 }
             }
-            if ($hasFulltext)
+            if ($hasFulltext) {
                 $this->_engine = 'myisam';
-            else
-                $this->_engine = c('database.storageEngine', 'innodb');
+            } else {
+                $this->_engine = Config::get('database.storageEngine', 'innodb');
+            }
 
             if (!$this->hasEngine($this->_engine)) {
                 $this->_engine = 'myisam';
             }
         }
 
-        if ($this->_engine)
+        if ($this->_engine) {
             $sql .= ' engine=' . $this->_engine;
+        }
 
-        if ($this->_encoding !== false && $this->_encoding != '')
+        if ($this->_encoding !== false && $this->_encoding !== '') {
             $sql .= ' default character set ' . $this->_encoding;
+        }
 
         // if (array_key_exists('Collate', $this->database->extendedProperties)) {
         //     $sql .= ' collate ' . $this->database->extendedProperties['Collate'];
@@ -404,9 +439,8 @@ class MySQL extends \Garden\Db\Structure
 
     protected function indexSql($columns, $keyType = false)
     {
-        $result = array();
-        $prefixes = array('key' => 'FK_', 'index' => 'IX_', 'unique' => 'UX_', 'fulltext' => 'TX_');
-        $indexes = array();
+        $result = $indexes = [];
+        $prefixes = ['key' => 'FK_', 'index' => 'IX_', 'unique' => 'UX_', 'fulltext' => 'TX_'];
 
         // Gather the names of the columns.
         foreach ($columns as $columnName => $column) {
@@ -415,17 +449,20 @@ class MySQL extends \Garden\Db\Structure
             foreach ($columnKeyTypes as $columnKeyType) {
                 $parts = explode('.', $columnKeyType, 2);
                 $columnKeyType = $parts[0];
-                $indexGroup = val(1, $parts, '');
+                $indexGroup = Arr::get(1, $parts, '');
 
-                if (!$columnKeyType || ($keyType && $keyType != $columnKeyType))
+                if (!$columnKeyType || ($keyType && $keyType !== $columnKeyType)) {
                     continue;
+                }
 
                 // Don't add a fulltext if we don't support.
-                if ($columnKeyType == 'fulltext' && !$this->supportsFulltext())
+                if ($columnKeyType === 'fulltext' && !$this->supportsFulltext()) {
                     continue;
+                }
 
-                if ($columnKeyType == 'primary' && $column->autoIncrement)
+                if ($columnKeyType === 'primary' && $column->autoIncrement) {
                     continue;
+                }
 
                 $indexes[$columnKeyType][$indexGroup][] = $columnName;
             }
@@ -433,13 +470,13 @@ class MySQL extends \Garden\Db\Structure
 
         // Make the multi-column keys into sql statements.
         foreach ($indexes as $columnKeyType => $indexGroups) {
-            $createType = val($columnKeyType, array('index' => 'index', 'key' => 'key', 'unique' => 'unique index', 'fulltext' => 'fulltext index', 'primary' => 'primary key'));
+            $createType = Arr::get($columnKeyType, self::$columnTypes);
 
-            if ($columnKeyType == 'primary') {
+            if ($columnKeyType === 'primary') {
                 $result['PRIMARY'] = 'primary key (`' . implode('`, `', $indexGroups['']) . '`)';
             } else {
                 foreach ($indexGroups as $indexGroup => $columnNames) {
-                    $multi = (strlen($indexGroup) > 0 || in_array($columnKeyType, array('unique', 'fulltext')));
+                    $multi = ($indexGroup !== '' || in_array($columnKeyType, ['unique', 'fulltext']));
 
                     if ($multi) {
                         $indexName = "{$prefixes[$columnKeyType]}{$this->_table}" . ($indexGroup ? '_' . $indexGroup : '');
@@ -462,9 +499,9 @@ class MySQL extends \Garden\Db\Structure
     protected function indexSqlDb()
     {
         // We don't want this to be captured so send it directly.
-        $data = $this->_query('show indexes from ' . $this->_prefix . $this->_table);
+        $data = $this->_query('SHOW indexes FROM ' . $this->_prefix . $this->_table);
 
-        $result = array();
+        $result = [];
         foreach ($data as $row) {
             if (isset($result[$row->Key_name])) {
                 $result[$row->Key_name] .= ', `' . $row->Column_name . '`';
@@ -487,21 +524,25 @@ class MySQL extends \Garden\Db\Structure
                         break;
                     default:
                         // Try and guess the index type.
-                        if (strcasecmp($row->Index_type, 'fulltext') == 0)
+                        if (strcasecmp($row->Index_type, 'fulltext') === 0) {
                             $type = 'fulltext index ' . $row->Key_name;
-                        elseif ($row->Non_unique)
+                        } elseif ($row->Non_unique) {
                             $type = 'index ' . $row->Key_name;
-                        else
+                        } else {
                             $type = 'unique index ' . $row->Key_name;
+                        }
 
                         break;
                 }
-                $column = val($row->Column_name, $this->_columns);
+                $column = Arr::get($row->Column_name, $this->_columns);
 
-                if (!$column) continue;
-
-                if ($type == 'primary key' && $column->autoIncrement)
+                if (!$column) {
                     continue;
+                }
+
+                if ($type === 'primary key' && $column->autoIncrement) {
+                    continue;
+                }
 
                 $result[$row->Key_name] = $type . ' (`' . $row->Column_name . '`';
             }
@@ -517,16 +558,15 @@ class MySQL extends \Garden\Db\Structure
 
     protected function defineColumn($column, $create = false)
     {
-        $allowedTypes = array('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'char', 'varchar', 'varbinary', 'date', 'datetime', 'mediumtext', 'longtext', 'text', 'decimal', 'numeric', 'float', 'double', 'enum', 'timestamp', 'tinyblob', 'blob', 'mediumblob', 'longblob', 'json');
-        if (!is_array($column->type) && !in_array($column->type, $allowedTypes)){
-            throw new Exception\Custom(t('The specified data type (%1$s) is not accepted for the MySQL database.'), $column->type);
+        if (!is_array($column->type) && !in_array($column->type, self::$allowedTypes)) {
+            throw new Exception\Database("The specified data type ({$column->type}) is not accepted for the MySQL database");
         }
 
-        $return = '`' . $column->name . '` ' . $column->type;
+        $return = "`{$column->name}` {$column->type}";
 
         $lengthTypes = $this->types('length');
-        if ($column->length != '' && in_array(strtolower($column->type), $lengthTypes)) {
-            if ($column->precision != '') {
+        if ($column->length !== '' && in_array(strtolower($column->type), $lengthTypes)) {
+            if ($column->precision !== '') {
                 $return .= '(' . $column->length . ', ' . $column->precision . ')';
             } else {
                 $return .= '(' . $column->length . ')';
@@ -563,16 +603,20 @@ class MySQL extends \Garden\Db\Structure
     {
         if (is_numeric($value)) {
             return $value;
-        } elseif (is_bool($value)) {
-            return $value ? '1' : '0';
-        } elseif ($value instanceof Database\Expression) {
-            return $value->compile();
-        } else {
-            return "'" . str_replace("'", "''", $value) . "'";
         }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        if ($value instanceof Database\Expression) {
+            return $value->compile();
+        }
+
+        return "'" . str_replace("'", "''", $value) . "'";
     }
 
-    protected function supportsFulltext()
+    protected function supportsFulltext(): bool
     {
         return strcasecmp($this->_engine, 'myisam') === 0;
     }

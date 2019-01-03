@@ -1,6 +1,10 @@
-<?php 
+<?php
+
 namespace Garden\Db\Database\Query\Builder;
+
 use Garden\Db\Database;
+use \Garden\Exception;
+
 /**
  * Database query builder for JOIN statements. See [Query Builder](/database/query/builder) for usage and examples.
  *
@@ -19,46 +23,46 @@ class Join extends Database\Query\Builder {
     protected $_table;
 
     // ON ...
-    protected $_on = array();
+    protected $_on = [];
 
     // USING ...
-    protected $_using = array();
+    protected $_using = [];
 
     /**
      * Creates a new JOIN statement for a table. Optionally, the type of JOIN
      * can be specified as the second parameter.
      *
-     * @param   mixed   $table  column name or array($column, $alias) or object
-     * @param   string  $alias  table alias
-     * @param   string  $type   type of JOIN: INNER, RIGHT, LEFT, etc
+     * @param   mixed $table column name or array($column, $alias) or object
+     * @param   string $alias table alias
+     * @param   string $type type of JOIN: INNER, RIGHT, LEFT, etc
      * @return  void
      */
-    public function __construct($table, $alias = NULL, $type = NULL)
+    public function __construct($table, $alias = null, $type = null)
     {
         // Set the table to JOIN on
-        $this->_table = $alias ? array($table, $alias) : $table;
+        $this->_table = $alias ? [$table, $alias] : $table;
 
-        if ($type !== NULL) {
+        if ($type !== null) {
             // Set the JOIN type
-            $this->_type = (string) $type;
+            $this->_type = (string)$type;
         }
     }
 
     /**
      * Adds a new condition for joining.
      *
-     * @param   mixed   $c1  column name or array($column, $alias) or object
-     * @param   string  $op  logic operator
-     * @param   mixed   $c2  column name or array($column, $alias) or object
+     * @param   mixed $c1 column name or array($column, $alias) or object
+     * @param   string $op logic operator
+     * @param   mixed $c2 column name or array($column, $alias) or object
      * @return  $this
      */
     public function on($c1, $op, $c2)
     {
-        if ( ! empty($this->_using)) {
-            throw new \Exception('JOIN ... ON ... cannot be combined with JOIN ... USING ...');
+        if (!empty($this->_using)) {
+            throw new Exception\Database('JOIN ... ON ... cannot be combined with JOIN ... USING ...');
         }
 
-        $this->_on[] = array($c1, $op, $c2);
+        $this->_on[] = [$c1, $op, $c2];
 
         return $this;
     }
@@ -66,16 +70,14 @@ class Join extends Database\Query\Builder {
     /**
      * Adds a new condition for joining.
      *
-     * @param   string  $columns  column name
+     * @param   string $columns column name
      * @return  $this
      */
-    public function using($columns)
+    public function using(...$columns)
     {
-        if ( ! empty($this->_on)) {
-            throw new \Exception('JOIN ... ON ... cannot be combined with JOIN ... USING ...');
+        if (!empty($this->_on)) {
+            throw new Exception\Database('JOIN ... ON ... cannot be combined with JOIN ... USING ...');
         }
-
-        $columns = func_get_args();
 
         $this->_using = array_merge($this->_using, $columns);
 
@@ -85,45 +87,42 @@ class Join extends Database\Query\Builder {
     /**
      * Compile the SQL partial for a JOIN statement and return it.
      *
-     * @param   mixed  $db  Database instance or name of instance
+     * @param   mixed $db Database instance or name of instance
      * @return  string
      */
-    public function compile($db = NULL)
+    public function compile($db = null)
     {
-        if ( ! is_object($db)) {
+        if (!is_object($db)) {
             // Get the database instance
             $db = Database::instance($db);
         }
 
         if ($this->_type) {
-            $sql = strtoupper($this->_type).' JOIN';
+            $sql = strtoupper($this->_type) . ' JOIN';
         } else {
             $sql = 'JOIN';
         }
 
         // Quote the table name that is being joined
-        $sql .= ' '.$db->quote_table($this->_table);
+        $sql .= ' ' . $db->quote_table($this->_table);
 
-        if ( ! empty($this->_using)) {
+        if (!empty($this->_using)) {
             // Quote and concat the columns
-            $sql .= ' USING ('.implode(', ', array_map(array($db, 'quote_column'), $this->_using)).')';
+            $sql .= ' USING (' . implode(', ', array_map([$db, 'quote_column'], $this->_using)) . ')';
         } else {
-            $conditions = array();
-            foreach ($this->_on as $condition) {
-                // Split the condition
-                list($c1, $op, $c2) = $condition;
-
+            $conditions = [];
+            foreach ($this->_on as list($c1, $op, $c2)) {
                 if ($op) {
                     // Make the operator uppercase and spaced
-                    $op = ' '.strtoupper($op);
+                    $op = ' ' . strtoupper($op);
                 }
 
                 // Quote each of the columns used for the condition
-                $conditions[] = $db->quote_column($c1).$op.' '.$db->quote_column($c2);
+                $conditions[] = $db->quote_column($c1) . $op . ' ' . $db->quote_column($c2);
             }
 
             // Concat the conditions "... AND ..."
-            $sql .= ' ON ('.implode(' AND ', $conditions).')';
+            $sql .= ' ON (' . implode(' AND ', $conditions) . ')';
         }
 
         return $sql;
@@ -132,9 +131,9 @@ class Join extends Database\Query\Builder {
     public function reset()
     {
         $this->_type =
-        $this->_table = NULL;
+        $this->_table = null;
 
-        $this->_on = array();
+        $this->_on = [];
     }
 
 }

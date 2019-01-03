@@ -53,8 +53,8 @@ class Session
      */
     public function create($userID, $remember = false)
     {
-        $salt = c('main.hashsalt');
-        $lifetime = c('session.lifetime');
+        $salt = Config::get('main.hashsalt');
+        $lifetime = Config::get('session.lifetime');
         $sessionID = md5($salt.$userID.session_id().time());
         $expireDate = Date::create()
             ->addSeconds($remember ? $lifetime : 60*60*8)
@@ -143,9 +143,9 @@ class Session
      */
     public function setCookie($name, $value, $lifetime)
     {
-        $name   = c('session.cookie.prefix').$name;
-        $path   = c('session.cookie.path');
-        $domain = c('session.cookie.domain');
+        $name   = Config::get('session.cookie.prefix').$name;
+        $path   = Config::get('session.cookie.path');
+        $domain = Config::get('session.cookie.domain');
 
 
         // If the domain being set is completely incompatible with the current domain then make the domain work.
@@ -173,7 +173,7 @@ class Session
      */
     public function getCookie($name, $default = false, $usePrefix = true)
     {
-        $name = $usePrefix ? c('session.cookie.prefix').$name : $name;
+        $name = $usePrefix ? Config::get('session.cookie.prefix').$name : $name;
         return val($name, $_COOKIE, $default);
     }
 

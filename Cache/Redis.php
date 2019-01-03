@@ -1,6 +1,7 @@
 <?php
 namespace Garden\Cache;
 
+use Garden\Config;
 use \Garden\Exception;
 
 class Redis extends \Garden\Cache
@@ -42,7 +43,7 @@ class Redis extends \Garden\Cache
 
         $this->cache = val('connection', $config, null);
 
-        $this->salt = c('main.hashsalt', 'gdn');
+        $this->salt = Config::get('main.hashsalt', 'gdn');
         $this->dirty = \Garden\Gdn::dirtyCache();
 
         $this->_igbinary = \function_exists('igbinary_serialize');

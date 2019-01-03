@@ -193,7 +193,8 @@ class Application {
             $response = Response::create($ex);
             ob_start();
             $handled = Event::fire('exception', $ex);
-            $response->setBody(ob_get_clean());
+            ob_get_clean();
+            $response->setBody($handled);
 
             if (!$handled) {
                 throw $ex;

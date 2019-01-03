@@ -148,7 +148,7 @@ class Addons
     {
         // Load the addons from the config if they aren't passed in.
         if (!\is_array($enabledAddons)) {
-            $enabledAddons = Config::get('addons', null, []);
+            $enabledAddons = Config::get('addons', []);
         }
 
         // Reformat the enabled array into the form: array('addon_key' => 'addon_key')
@@ -462,7 +462,7 @@ class Addons
 
         // load translations
         if (!$cache->get('translations')) {
-            $locale = c('main.locale', 'en_US');
+            $locale = Config::get('main.locale', 'en_US');
             $localePath = val('dir', $addon);
             Translate::load("$localePath/Locales/$locale." . Translate::$defaultExtension);
         }

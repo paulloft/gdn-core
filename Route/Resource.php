@@ -110,13 +110,13 @@ class Resource extends \Garden\Route {
     public function dispatch(Request $request): Response
     {
         $controller = new $this->controller();
-        $actionArgs = $this->getActionArguments($controller, $request);
-
         $request->setEnv('ACTION', $this->action);
         $request->setEnv('CONTROLLER', $this->controller);
 
-        $response = new \Garden\Response;
-        \Garden\Response::current($response);
+        $response = new Response();
+        Response::current($response);
+
+        $actionArgs = $this->getActionArguments($controller, $request, $response);
 
         ob_start();
 
@@ -203,7 +203,7 @@ class Resource extends \Garden\Route {
      * @throws Exception\InvalidArgument
      * @throws \ReflectionException
      */
-    protected function getActionArguments($controller, Request $request): array
+    protected function getActionArguments($controller, Request $request, Response $response): array
     {
         $actionArgs = $this->arguments;
 
@@ -218,7 +218,7 @@ class Resource extends \Garden\Route {
 
             if ($this->isMapped($paramName)) {
                 // The parameter is mapped to a specific request item.
-                array_splice($actionArgs, $i, 0, [$this->mappedData($paramName, $request)]);
+                array_splice($actionArgs, $i, 0, [$this->mappedData($paramName, $request, $response)]);
             } elseif (!isset($actionArgs[$paramName])) {
                 if ($param->isDefaultValueAvailable()) {
                     $actionArgs[$paramName] = $param->getDefaultValue();

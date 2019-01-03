@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden\Db\Driver\MySQLi;
 /**
  * MySQLi database result.   See [Results](/database/results) for usage and examples.
@@ -11,11 +12,11 @@ namespace Garden\Db\Driver\MySQLi;
  */
 class Result extends \Garden\Db\Database\Result {
 
-    protected $_internal_row = 0;
+    protected $internalRow = 0;
 
-    public function __construct($result, $sql, $as_object = FALSE, array $params = NULL)
+    public function __construct($result, $sql, $asObject = false, array $params = null)
     {
-        parent::__construct($result, $sql, $as_object, $params);
+        parent::__construct($result, $sql, $asObject, $params);
 
         // Find the number of rows in the result
         $this->_total_rows = $result->num_rows;
@@ -30,33 +31,36 @@ class Result extends \Garden\Db\Database\Result {
 
     public function seek($offset)
     {
-        if ($this->offsetExists($offset) AND $this->_result->data_seek($offset)) {
+        if ($this->offsetExists($offset) && $this->_result->data_seek($offset)) {
             // Set the current row to the offset
-            $this->_current_row = $this->_internal_row = $offset;
+            $this->_current_row = $this->internalRow = $offset;
 
-            return TRUE;
-        } else {
-            return FALSE;
+            return true;
         }
+
+        return FALSE;
     }
 
     public function current()
     {
-        if ($this->_current_row !== $this->_internal_row AND !$this->seek($this->_current_row)) return NULL;
+        if ($this->_current_row !== $this->internalRow && !$this->seek($this->_current_row)) {
+            return null;
+        }
 
         // Increment internal row for optimization assuming rows are fetched in order
-        $this->_internal_row++;
+        $this->internalRow++;
 
-        if ($this->_as_object === TRUE) {
+        if ($this->_as_object === true) {
             // Return an stdClass
             return $this->_result->fetch_object();
-        } elseif (is_string($this->_as_object)) {
+        }
+
+        if (is_string($this->_as_object)) {
             // Return an object of given class name
             return $this->_result->fetch_object($this->_as_object, (array)$this->_object_params);
-        } else {
-            // Return an array of the row
-            return $this->_result->fetch_assoc();
         }
+        // Return an array of the row
+        return $this->_result->fetch_assoc();
     }
 
-} // End Database_MySQLi_Result_Select
+}

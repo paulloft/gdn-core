@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden\Db\Driver;
 
 use \Garden\Exception;
@@ -18,6 +19,11 @@ class PDO extends SQL {
     // PDO uses no quoting for identifiers
     protected $_identifier = '';
 
+    /**
+     * @var \PDO
+     */
+    protected $_connection;
+
     public function __construct($name, array $config)
     {
         parent::__construct($name, $config);
@@ -28,19 +34,22 @@ class PDO extends SQL {
         }
     }
 
+
     public function connect()
     {
-        if ($this->_connection) return;
+        if ($this->_connection) {
+            return;
+        }
 
         // Extract the connection parameters, adding required variabels
-        $host = val('host', $this->_config, 'localhost');
-        $type = val('type', $this->_config, 'mysql');
-        $dsn = val('dsn', $this->_config);
-        $database = val('database', $this->_config);
-        $username = val('username', $this->_config, NULL);
-        $password = val('password', $this->_config, NULL);
-        $persistent = val('persistent', $this->_config);
-        $options = val('options', $this->_config, []);
+        $host = $this->_config['host'] ?? 'localhost';
+        $type = $this->_config['type'] ?? 'mysql';
+        $dsn = $this->_config['dsn'] ?? null;
+        $database = $this->_config['database'] ?? null;
+        $username = $this->_config['username'] ?? null;
+        $password = $this->_config['password'] ?? null;
+        $persistent = $this->_config['persistent'] ?? null;
+        $options = $this->_config['options'] ?? [];
 
         if (!$dsn) {
             $dsn = "$type:host=$host;dbname=$database";
@@ -51,14 +60,14 @@ class PDO extends SQL {
 
         if (!empty($persistent)) {
             // Make the connection persistent
-            $options[\PDO::ATTR_PERSISTENT] = TRUE;
+            $options[\PDO::ATTR_PERSISTENT] = true;
         }
 
         try {
             // Create a new PDO connection
             $this->_connection = new \PDO($dsn, $username, $password, $options);
         } catch (\PDOException $e) {
-            throw new \Exception($e->getMessage(), $e->getCode());
+            throw new Exception\Database($e->getMessage(), $e->getCode());
         }
 
         if (!empty($this->_config['charset'])) {
@@ -111,7 +120,7 @@ class PDO extends SQL {
     public function disconnect()
     {
         // Destroy the PDO object
-        $this->_connection = NULL;
+        $this->_connection = null;
 
         return parent::disconnect();
     }
@@ -128,13 +137,12 @@ class PDO extends SQL {
     /**
      * @param int $type
      * @param string $sql
-     * @param bool $as_object
-     * @param array|NULL $params
+     * @param bool $asObject
+     * @param array|null $params
      * @return array|Database\Result\Cached|object
-     * @throws Exception\Error
-     * @throws \Exception
+     * @throws Exception\Database
      */
-    public function query($type, $sql, $as_object = FALSE, array $params = NULL)
+    public function query($type, $sql, $asObject = false, array $params = null)
     {
         // Make sure the database is connected
         $this->_connection or $this->connect();
@@ -143,7 +151,7 @@ class PDO extends SQL {
             $result = $this->_connection->query($sql);
         } catch (\Exception $e) {
             // Convert the exception in a database exception
-            throw new Exception\Error("{$e->getMessage()} \n[$sql ]");
+            throw new Exception\Database("{$e->getMessage()} \n[$sql ]");
         }
 
         // Set the last query
@@ -151,10 +159,10 @@ class PDO extends SQL {
 
         if ($type === Database::SELECT) {
             // Convert the result into an array, as PDOStatement::rowCount is not reliable
-            if ($as_object === FALSE) {
+            if ($asObject === false) {
                 $result->setFetchMode(\PDO::FETCH_ASSOC);
-            } elseif (is_string($as_object)) {
-                $result->setFetchMode(\PDO::FETCH_CLASS, $as_object, $params);
+            } elseif (is_string($asObject)) {
+                $result->setFetchMode(\PDO::FETCH_CLASS, $asObject, $params);
             } else {
                 $result->setFetchMode(\PDO::FETCH_CLASS, 'stdClass');
             }
@@ -162,17 +170,22 @@ class PDO extends SQL {
             $result = $result->fetchAll();
 
             // Return an iterator of results
-            return new Database\Result\Cached($result, $sql, $as_object, $params);
-        } elseif ($type === Database::INSERT) {
-            // Return a list of insert id and rows created
-            return array($this->_connection->lastInsertId(), $result->rowCount(),);
-        } else {
-            // Return the number of rows affected
-            return $result->rowCount();
+            return new Database\Result\Cached($result, $sql, $asObject);
         }
+
+        if ($type === Database::INSERT) {
+            // Return a list of insert id and rows created
+            return [
+                $this->_connection->lastInsertId(),
+                $result->rowCount()
+            ];
+        }
+
+        // Return the number of rows affected
+        return $result->rowCount();
     }
 
-    public function begin($mode = NULL)
+    public function begin($mode = null)
     {
         // Make sure the database is connected
         $this->_connection or $this->connect();

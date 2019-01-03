@@ -21,10 +21,10 @@ class ErrorHandler {
 
     private static function kuria()
     {
-        $handler = new \Kuria\Error\ErrorHandler(c('main.debug', true));
+        $handler = new \Kuria\Error\ErrorHandler(Config::get('main.debug', true));
         $handler->register();
 
-        if (c('main.logs', true)) {
+        if (Config::get('main.logs', true)) {
             $handler->on('fatal', function ($exception) {
                 /**
                  * @var \Exception $exception

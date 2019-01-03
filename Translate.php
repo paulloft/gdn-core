@@ -71,7 +71,7 @@ class Translate {
     public static function autoload($path = GDN_LOCALE)
     {
         $cache = Cache::instance('system');
-        $locale = c('main.locale', 'en_US');
+        $locale = Config::get('main.locale', 'en_US');
         $translations = $cache->get('translations');
 
         if (!$translations) {

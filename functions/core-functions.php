@@ -6,22 +6,6 @@
  */
 
 /**
- * An alias of {@link config()}.
- *
- * @param string $key The config key.
- * @param string $default The default value if the config setting isn't available.
- * @return mixed The config value.
- * @see \Garden\Config:get()
- */
-function c($key = false, $default = null)
-{
-    $data = Garden\Config::data();
-    return valr($key, $data, $default);
-}
-
-
-
-/**
  * Translate a string.
  *
  * @param string $code The translation code.

@@ -165,10 +165,6 @@ class Response implements JsonSerializable {
             return $result;
         }
 
-        if ($result instanceof Exception\Response) {
-            return $result->getResponse();
-        }
-
         $response = new self();
 
         if ($result instanceof Exception\Client) {

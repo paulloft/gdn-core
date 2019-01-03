@@ -1,6 +1,10 @@
-<?php 
+<?php
+
 namespace Garden\Db;
+
 use \Garden\Exception;
+use Garden\Helpers\Arr;
+
 /**
  * Database connection wrapper/helper.
  *
@@ -21,10 +25,10 @@ use \Garden\Exception;
 abstract class Database {
 
     // Query types
-    const SELECT =  1;
-    const INSERT =  2;
-    const UPDATE =  3;
-    const DELETE =  4;
+    const SELECT = 1;
+    const INSERT = 2;
+    const UPDATE = 3;
+    const DELETE = 4;
 
     /**
      * @var  string  default instance name
@@ -47,32 +51,32 @@ abstract class Database {
      *     // Create a custom configured instance
      *     $db = Database::instance('custom', $config);
      *
-     * @param   string   $name    instance name
-     * @param   array    $config  configuration parameters
+     * @param   string $name instance name
+     * @param   array $config configuration parameters
      * @throws Exception\Error
      * @return  self
      */
-    public static function instance($name = NULL, array $config = NULL) 
+    public static function instance($name = null, array $config = null)
     {
-        if ($name === NULL) {
+        if ($name === null) {
             // Use the default instance name
             $name = self::$default;
         }
 
-        if ( !isset(self::$instances[$name])) {
-            if ($config === NULL) {
+        if (!isset(self::$instances[$name])) {
+            if ($config === null) {
                 // Load the configuration for this database
                 $config = \Garden\Config::get('database');
             }
 
-            $driver = val('driver', $config);
+            $driver = Arr::get('driver', $config);
 
             if (!$driver) {
                 throw new Exception\Error("Database driver not defined in $name configuration");
             }
 
             // Set the driver class name
-            $driver = 'Garden\Db\Driver\\'.ucfirst($driver);
+            $driver = 'Garden\Db\Driver\\' . ucfirst($driver);
 
             // Create the database connection instance
             $driver = new $driver($name, $config);
@@ -115,7 +119,7 @@ abstract class Database {
 
         // Store the config locally
         $this->_config = $config;
-        $this->_connection = val('connection', $config, null);
+        $this->_connection = Arr::get('connection', $config);
 
         if (empty($this->_config['tablePrefix'])) {
             $this->_config['tablePrefix'] = '';
@@ -156,7 +160,7 @@ abstract class Database {
      *
      *     $db->connect();
      *
-     * @throws  Database_Exception
+     * @throws  Exception\Database
      * @return  void
      */
     abstract public function connect();
@@ -173,7 +177,7 @@ abstract class Database {
     {
         unset(self::$instances[$this->_instance]);
 
-        return TRUE;
+        return true;
     }
 
     /**
@@ -181,8 +185,8 @@ abstract class Database {
      *
      *     $db->set_charset('utf8');
      *
-     * @throws  Database_Exception
-     * @param   string   $charset  character set name
+     * @throws  Exception\Database
+     * @param   string $charset character set name
      * @return  void
      */
     abstract public function set_charset($charset);
@@ -191,20 +195,20 @@ abstract class Database {
      * Perform an SQL query of the given type.
      *
      *     // Make a SELECT query and use objects for results
-     *     $db->query(Database::SELECT, 'SELECT * FROM groups', TRUE);
+     *     $db->query(Database::SELECT, 'SELECT * FROM groups', true);
      *
      *     // Make a SELECT query and use "Model_User" for the results
      *     $db->query(Database::SELECT, 'SELECT * FROM users LIMIT 1', 'Model_User');
      *
-     * @param   integer  $type       Database::SELECT, Database::INSERT, etc
-     * @param   string   $sql        SQL query
-     * @param   mixed    $as_object  result object class string, TRUE for stdClass, FALSE for assoc array
-     * @param   array    $params     object construct parameters for result class
+     * @param   integer $type Database::SELECT, Database::INSERT, etc
+     * @param   string $sql SQL query
+     * @param   mixed $asObject result object class string, true for stdClass, false for assoc array
+     * @param   array $params object construct parameters for result class
      * @return  object   Database_Result for SELECT queries
      * @return  array    list (insert id, row count) for INSERT queries
      * @return  integer  number of affected rows for all other queries
      */
-    abstract public function query($type, $sql, $as_object = FALSE, array $params = NULL);
+    abstract public function query($type, $sql, $asObject = false, array $params = null);
 
     /**
      * Start a SQL transaction
@@ -218,16 +222,16 @@ abstract class Database {
      *          // Insert successful commit the changes
      *          $db->commit();
      *     }
-     *     catch (Database_Exception $e)
+     *     catch (Exception\Database $e)
      *     {
      *          // Insert failed. Rolling back changes...
      *          $db->rollback();
      *      }
      *
-     * @param string $mode  transaction mode
+     * @param string $mode transaction mode
      * @return  boolean
      */
-    abstract public function begin($mode = NULL);
+    abstract public function begin($mode = null);
 
     /**
      * Commit the current transaction
@@ -255,15 +259,15 @@ abstract class Database {
      *     // Get the total number of records in the "users" table
      *     $count = $db->count_records('users');
      *
-     * @param   mixed    $table  table name string or array(query, alias)
+     * @param   mixed $table table name string or array(query, alias)
      * @return  integer
      */
-    public function count_records($table)
+    public function countRecords($table)
     {
         // Quote the table name
         $table = $this->quote_table($table);
 
-        return $this->query(self::SELECT, 'SELECT COUNT(*) AS total_row_count FROM '.$table)
+        return $this->query(self::SELECT, "SELECT COUNT(*) AS total_row_count FROM $table")
             ->get('total_row_count');
     }
 
@@ -272,69 +276,65 @@ abstract class Database {
      *
      *     $db->datatype('char');
      *
-     * @param   string  $type  SQL data type
+     * @param   string $type SQL data type
      * @return  array
      */
     public function datatype($type)
     {
-        static $types = array
-        (
+        static $types = [
             // SQL-92
-            'bit'                           => array('type' => 'string', 'exact' => TRUE),
-            'bit varying'                   => array('type' => 'string'),
-            'char'                          => array('type' => 'string', 'exact' => TRUE),
-            'char varying'                  => array('type' => 'string'),
-            'character'                     => array('type' => 'string', 'exact' => TRUE),
-            'character varying'             => array('type' => 'string'),
-            'date'                          => array('type' => 'string'),
-            'dec'                           => array('type' => 'float', 'exact' => TRUE),
-            'decimal'                       => array('type' => 'float', 'exact' => TRUE),
-            'double precision'              => array('type' => 'float'),
-            'float'                         => array('type' => 'float'),
-            'int'                           => array('type' => 'int', 'min' => '-2147483648', 'max' => '2147483647'),
-            'integer'                       => array('type' => 'int', 'min' => '-2147483648', 'max' => '2147483647'),
-            'interval'                      => array('type' => 'string'),
-            'national char'                 => array('type' => 'string', 'exact' => TRUE),
-            'national char varying'         => array('type' => 'string'),
-            'national character'            => array('type' => 'string', 'exact' => TRUE),
-            'national character varying'    => array('type' => 'string'),
-            'nchar'                         => array('type' => 'string', 'exact' => TRUE),
-            'nchar varying'                 => array('type' => 'string'),
-            'numeric'                       => array('type' => 'float', 'exact' => TRUE),
-            'real'                          => array('type' => 'float'),
-            'smallint'                      => array('type' => 'int', 'min' => '-32768', 'max' => '32767'),
-            'time'                          => array('type' => 'string'),
-            'time with time zone'           => array('type' => 'string'),
-            'timestamp'                     => array('type' => 'string'),
-            'timestamp with time zone'      => array('type' => 'string'),
-            'varchar'                       => array('type' => 'string'),
+            'bit' => array('type' => 'string', 'exact' => true),
+            'bit varying' => array('type' => 'string'),
+            'char' => array('type' => 'string', 'exact' => true),
+            'char varying' => array('type' => 'string'),
+            'character' => array('type' => 'string', 'exact' => true),
+            'character varying' => array('type' => 'string'),
+            'date' => array('type' => 'string'),
+            'dec' => array('type' => 'float', 'exact' => true),
+            'decimal' => array('type' => 'float', 'exact' => true),
+            'double precision' => array('type' => 'float'),
+            'float' => array('type' => 'float'),
+            'int' => array('type' => 'int', 'min' => '-2147483648', 'max' => '2147483647'),
+            'integer' => array('type' => 'int', 'min' => '-2147483648', 'max' => '2147483647'),
+            'interval' => array('type' => 'string'),
+            'national char' => array('type' => 'string', 'exact' => true),
+            'national char varying' => array('type' => 'string'),
+            'national character' => array('type' => 'string', 'exact' => true),
+            'national character varying' => array('type' => 'string'),
+            'nchar' => array('type' => 'string', 'exact' => true),
+            'nchar varying' => array('type' => 'string'),
+            'numeric' => array('type' => 'float', 'exact' => true),
+            'real' => array('type' => 'float'),
+            'smallint' => array('type' => 'int', 'min' => '-32768', 'max' => '32767'),
+            'time' => array('type' => 'string'),
+            'time with time zone' => array('type' => 'string'),
+            'timestamp' => array('type' => 'string'),
+            'timestamp with time zone' => array('type' => 'string'),
+            'varchar' => array('type' => 'string'),
 
             // SQL:1999
-            'binary large object'               => array('type' => 'string', 'binary' => TRUE),
-            'blob'                              => array('type' => 'string', 'binary' => TRUE),
-            'boolean'                           => array('type' => 'bool'),
-            'char large object'                 => array('type' => 'string'),
-            'character large object'            => array('type' => 'string'),
-            'clob'                              => array('type' => 'string'),
-            'national character large object'   => array('type' => 'string'),
-            'nchar large object'                => array('type' => 'string'),
-            'nclob'                             => array('type' => 'string'),
-            'time without time zone'            => array('type' => 'string'),
-            'timestamp without time zone'       => array('type' => 'string'),
+            'binary large object' => array('type' => 'string', 'binary' => true),
+            'blob' => array('type' => 'string', 'binary' => true),
+            'boolean' => array('type' => 'bool'),
+            'char large object' => array('type' => 'string'),
+            'character large object' => array('type' => 'string'),
+            'clob' => array('type' => 'string'),
+            'national character large object' => array('type' => 'string'),
+            'nchar large object' => array('type' => 'string'),
+            'nclob' => array('type' => 'string'),
+            'time without time zone' => array('type' => 'string'),
+            'timestamp without time zone' => array('type' => 'string'),
 
             // SQL:2003
-            'bigint'    => array('type' => 'int', 'min' => '-9223372036854775808', 'max' => '9223372036854775807'),
+            'bigint' => array('type' => 'int', 'min' => '-9223372036854775808', 'max' => '9223372036854775807'),
 
             // SQL:2008
-            'binary'            => array('type' => 'string', 'binary' => TRUE, 'exact' => TRUE),
-            'binary varying'    => array('type' => 'string', 'binary' => TRUE),
-            'varbinary'         => array('type' => 'string', 'binary' => TRUE),
-        );
+            'binary' => array('type' => 'string', 'binary' => true, 'exact' => true),
+            'binary varying' => array('type' => 'string', 'binary' => true),
+            'varbinary' => array('type' => 'string', 'binary' => true),
+        ];
 
-        if (isset($types[$type]))
-            return $types[$type];
-
-        return array();
+        return $types[$type] ?? [];
     }
 
     /**
@@ -347,10 +347,10 @@ abstract class Database {
      *     // Get all user-related tables
      *     $tables = $db->list_tables('user%');
      *
-     * @param   string   $like  table to search for
+     * @param   string $like table to search for
      * @return  array
      */
-    abstract public function list_tables($like = NULL);
+    abstract public function list_tables($like = null);
 
     /**
      * Lists all of the columns in a table. Optionally, a LIKE string can be
@@ -363,14 +363,14 @@ abstract class Database {
      *     $columns = $db->list_columns('users', '%name%');
      *
      *     // Get the columns from a table that doesn't use the table prefix
-     *     $columns = $db->list_columns('users', NULL, FALSE);
+     *     $columns = $db->list_columns('users', null, false);
      *
-     * @param   string  $table       table to get columns from
-     * @param   string  $like        column to search for
-     * @param   boolean $add_prefix  whether to add the table prefix automatically or not
+     * @param   string $table table to get columns from
+     * @param   string $like column to search for
+     * @param   boolean $add_prefix whether to add the table prefix automatically or not
      * @return  array
      */
-    abstract public function list_columns($table, $like = NULL, $add_prefix = TRUE);
+    abstract public function list_columns($table, $like = null, $add_prefix = true);
 
     /**
      * Extracts the text between parentheses, if any.
@@ -378,14 +378,14 @@ abstract class Database {
      *     // Returns: array('CHAR', '6')
      *     list($type, $length) = $db->_parse_type('CHAR(6)');
      *
-     * @param   string  $type
+     * @param   string $type
      * @return  array   list containing the type and length, if any
      */
     protected function _parse_type($type)
     {
-        if (($open = strpos($type, '(')) === FALSE) {
+        if (($open = strpos($type, '(')) === false) {
             // No length specified
-            return array($type, NULL);
+            return array($type, null);
         }
 
         // Closing parenthesis
@@ -395,7 +395,7 @@ abstract class Database {
         $length = substr($type, $open + 1, $close - 1 - $open);
 
         // Type without the length
-        $type = substr($type, 0, $open).substr($type, $close + 1);
+        $type = substr($type, 0, $open) . substr($type, $close + 1);
 
         return array($type, $length);
     }
@@ -420,7 +420,7 @@ abstract class Database {
     /**
      * Quote a value for an SQL query.
      *
-     *     $db->quote(NULL);   // 'NULL'
+     *     $db->quote(null);   // 'null'
      *     $db->quote(10);     // 10
      *     $db->quote('fred'); // 'fred'
      *
@@ -429,34 +429,47 @@ abstract class Database {
      * [Database_Query] objects will be compiled and converted to a sub-query.
      * All other objects will be converted using the `__toString` method.
      *
-     * @param   mixed   $value  any value to quote
+     * @param   mixed $value any value to quote
      * @return  string
      * @uses    Database::escape
      */
     public function quote($value)
     {
-        if ($value === NULL) {
-            return 'NULL';
-        } elseif ($value === TRUE) {
+        if ($value === null) {
+            return 'null';
+        }
+
+        if ($value === true) {
             return "'1'";
-        } elseif ($value === FALSE) {
+        }
+
+        if ($value === false) {
             return "'0'";
-        } elseif (is_object($value)) {
+        }
+
+        if (is_object($value)) {
             if ($value instanceof Database\Query) {
                 // Create a sub-query
-                return '('.$value->compile($this).')';
-            } elseif ($value instanceof Database\Expression) {
+                return '(' . $value->compile($this) . ')';
+            }
+
+            if ($value instanceof Database\Expression) {
                 // Compile the expression
                 return $value->compile($this);
-            } else {
-                // Convert the object to a string
-                return $this->quote( (string) $value);
             }
-        } elseif (is_array($value)) {
-            return '('.implode(', ', array_map(array($this, __FUNCTION__), $value)).')';
-        } elseif (is_int($value)) {
-            return (int) $value;
-        } elseif (is_float($value)) {
+            // Convert the object to a string
+            return $this->quote((string)$value);
+        }
+
+        if (is_array($value)) {
+            return '(' . implode(', ', array_map([$this, __FUNCTION__], $value)) . ')';
+        }
+
+        if (is_int($value)) {
+            return (int)$value;
+        }
+
+        if (is_float($value)) {
             // Convert to non-locale aware float to prevent possible commas
             return sprintf('%F', $value);
         }
@@ -478,7 +491,7 @@ abstract class Database {
      * [Database_Query] objects will be compiled and converted to a sub-query.
      * All other objects will be converted using the `__toString` method.
      *
-     * @param   mixed   $column  column name or array(column, alias)
+     * @param   mixed $column column name or array(column, alias)
      * @return  string
      * @uses    Database::quote_identifier
      * @uses    Database::tablePrefix
@@ -486,7 +499,7 @@ abstract class Database {
     public function quote_column($column)
     {
         // Identifiers are escaped by repeating them
-        $escaped_identifier = $this->_identifier.$this->_identifier;
+        $escaped_identifier = $this->_identifier . $this->_identifier;
 
         if (is_array($column)) {
             list($column, $alias) = $column;
@@ -495,27 +508,21 @@ abstract class Database {
 
         if ($column instanceof Database\Query) {
             // Create a sub-query
-            $column = '('.$column->compile($this).')';
+            $column = '(' . $column->compile($this) . ')';
         } elseif ($column instanceof Database\Expression) {
             // Compile the expression
             $column = $column->compile($this);
         } else {
             // Convert to a string
-            $column = (string) $column;
-
-            // $apos = stripos($column, ' AS ');
-            // if ($apos !== FALSE) {
-            //     $alias = trim(substr($column, ($apos+4)));
-            //     $column = trim(substr($column, 0, $apos));
-            //     $alias = str_replace($this->_identifier, $escaped_identifier, $alias);
-            // }
+            $column = (string)$column;
 
             $column = str_replace($this->_identifier, $escaped_identifier, $column);
 
             if ($column === '*') {
                 return $column;
             }
-            elseif (strpos($column, '.') !== FALSE) {
+
+            if (strpos($column, '.') !== false) {
                 $parts = explode('.', $column);
 
                 if ($prefix = $this->tablePrefix()) {
@@ -523,24 +530,24 @@ abstract class Database {
                     $offset = count($parts) - 2;
 
                     // Add the table prefix to the table name
-                    $parts[$offset] = $prefix.$parts[$offset];
+                    $parts[$offset] = $prefix . $parts[$offset];
                 }
 
                 foreach ($parts as & $part) {
                     if ($part !== '*') {
                         // Quote each of the parts
-                        $part = $this->_identifier.$part.$this->_identifier;
+                        $part = $this->_identifier . $part . $this->_identifier;
                     }
                 }
 
                 $column = implode('.', $parts);
             } else {
-                $column = $this->_identifier.$column.$this->_identifier;
+                $column = $this->_identifier . $column . $this->_identifier;
             }
         }
 
         if (isset($alias)) {
-            $column .= ' AS '.$this->_identifier.$alias.$this->_identifier;
+            $column .= ' AS ' . $this->_identifier . $alias . $this->_identifier;
         }
 
         return $column;
@@ -556,7 +563,7 @@ abstract class Database {
      * [Database_Query] objects will be compiled and converted to a sub-query.
      * All other objects will be converted using the `__toString` method.
      *
-     * @param   mixed   $table  table name or array(table, alias)
+     * @param   mixed $table table name or array(table, alias)
      * @return  string
      * @uses    Database::quote_identifier
      * @uses    Database::tablePrefix
@@ -564,7 +571,7 @@ abstract class Database {
     public function quote_table($table)
     {
         // Identifiers are escaped by repeating them
-        $escaped_identifier = $this->_identifier.$this->_identifier;
+        $escaped_identifier = $this->_identifier . $this->_identifier;
 
         if (is_array($table)) {
             list($table, $alias) = $table;
@@ -573,24 +580,17 @@ abstract class Database {
 
         if ($table instanceof Database\Query) {
             // Create a sub-query
-            $table = '('.$table->compile($this).')';
+            $table = '(' . $table->compile($this) . ')';
         } elseif ($table instanceof Database\Expression) {
             // Compile the expression
             $table = $table->compile($this);
-        } else  {
+        } else {
             // Convert to a string
-            $table = (string) $table;
-
-            // $apos = stripos($table, ' as ');
-            // if ($apos !== FALSE) {
-            //     $alias = substr($table, ($apos+4));
-            //     $table = substr($table, 0, $apos);
-            //     $alias = str_replace($this->_identifier, $escaped_identifier, $alias);
-            // }
+            $table = (string)$table;
 
             $table = str_replace($this->_identifier, $escaped_identifier, $table);
 
-            if (strpos($table, '.') !== FALSE) {
+            if (strpos($table, '.') !== false) {
                 $parts = explode('.', $table);
 
                 if ($prefix = $this->tablePrefix()) {
@@ -598,24 +598,24 @@ abstract class Database {
                     $offset = count($parts) - 1;
 
                     // Add the table prefix to the table name
-                    $parts[$offset] = $prefix.$parts[$offset];
+                    $parts[$offset] = $prefix . $parts[$offset];
                 }
 
                 foreach ($parts as & $part) {
                     // Quote each of the parts
-                    $part = $this->_identifier.$part.$this->_identifier;
+                    $part = $this->_identifier . $part . $this->_identifier;
                 }
 
                 $table = implode('.', $parts);
             } else {
                 // Add the table prefix
-                $table = $this->_identifier.$this->tablePrefix().$table.$this->_identifier;
+                $table = $this->_identifier . $this->tablePrefix() . $table . $this->_identifier;
             }
         }
 
         if (isset($alias)) {
             // Attach table prefix to alias
-            $table .= ' AS '.$this->_identifier.$this->tablePrefix().$alias.$this->_identifier;
+            $table .= ' AS ' . $this->_identifier . $this->tablePrefix() . $alias . $this->_identifier;
         }
 
         return $table;
@@ -629,13 +629,13 @@ abstract class Database {
      * [Database_Query] objects will be compiled and converted to a sub-query.
      * All other objects will be converted using the `__toString` method.
      *
-     * @param   mixed   $value  any identifier
+     * @param   mixed $value any identifier
      * @return  string
      */
     public function quote_identifier($value)
     {
         // Identifiers are escaped by repeating them
-        $escaped_identifier = $this->_identifier.$this->_identifier;
+        $escaped_identifier = $this->_identifier . $this->_identifier;
 
         if (is_array($value)) {
             list($value, $alias) = $value;
@@ -644,32 +644,32 @@ abstract class Database {
 
         if ($value instanceof Database\Query) {
             // Create a sub-query
-            $value = '('.$value->compile($this).')';
+            $value = '(' . $value->compile($this) . ')';
         } elseif ($value instanceof Database\Expression) {
             // Compile the expression
             $value = $value->compile($this);
-        }  else  {
+        } else {
             // Convert to a string
-            $value = (string) $value;
+            $value = (string)$value;
 
             $value = str_replace($this->_identifier, $escaped_identifier, $value);
 
-            if (strpos($value, '.') !== FALSE) {
+            if (strpos($value, '.') !== false) {
                 $parts = explode('.', $value);
 
-                foreach ($parts as & $part) {
+                foreach ($parts as &$part) {
                     // Quote each of the parts
-                    $part = $this->_identifier.$part.$this->_identifier;
+                    $part = $this->_identifier . $part . $this->_identifier;
                 }
 
                 $value = implode('.', $parts);
-            } else  {
-                $value = $this->_identifier.$value.$this->_identifier;
+            } else {
+                $value = $this->_identifier . $value . $this->_identifier;
             }
         }
 
         if (isset($alias)) {
-            $value .= ' AS '.$this->_identifier.$alias.$this->_identifier;
+            $value .= ' AS ' . $this->_identifier . $alias . $this->_identifier;
         }
 
         return $value;
@@ -681,9 +681,9 @@ abstract class Database {
      *
      *     $value = $db->escape('any string');
      *
-     * @param   string   $value  value to quote
+     * @param   string $value value to quote
      * @return  string
      */
     abstract public function escape($value);
 
-} // End Database_Connection
+}

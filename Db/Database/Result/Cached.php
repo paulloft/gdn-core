@@ -12,9 +12,9 @@ use Garden\Db\Database;
  */
 class Cached extends Database\Result {
 
-    public function __construct(array $result, $sql, $as_object = NULL)
+    public function __construct(array $result, $sql, $asObject = null)
     {
-        parent::__construct($result, $sql, $as_object);
+        parent::__construct($result, $sql, $asObject);
 
         // Find the number of rows in the result
         $this->_total_rows = count($result);
@@ -35,16 +35,16 @@ class Cached extends Database\Result {
         if ($this->offsetExists($offset)) {
             $this->_current_row = $offset;
 
-            return TRUE;
-        } else {
-            return FALSE;
-        }
+            return true;
+        } 
+        
+        return false;
     }
 
     public function current()
     {
         // Return an array of the row
-        return $this->valid() ? $this->_result[$this->_current_row] : NULL;
+        return $this->valid() ? $this->_result[$this->_current_row] : null;
     }
 
 }

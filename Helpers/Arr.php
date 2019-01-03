@@ -234,11 +234,11 @@ class Arr {
      * @param array $keys
      * @return array
      */
-    public static function mapRecursive(callable $callbacks, array $array, $keys = null): array
+    public static function map(callable $callbacks, array $array, $keys = null): array
     {
         foreach ($array as $key => $val) {
             if (is_array($val)) {
-                $array[$key] = self::mapRecursive($callbacks, $array[$key]);
+                $array[$key] = self::map($callbacks, $array[$key]);
             } elseif (!is_array($keys) || \in_array($key, $keys)) {
                 if (is_array($callbacks)) {
                     foreach ($callbacks as $cb) {

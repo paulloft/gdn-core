@@ -11,16 +11,17 @@ class Smarty extends \Smarty {
     {
         parent::__construct();
 
-        $config = c('smarty');
+        $config = Config::get('smarty');
         $this->caching = val('caching', $config);
         $this
-            ->setCompileDir( val('compile_dir', $config, GDN_CACHE.'/smarty/') )
-            ->setCacheDir( val('cache_dir', $config, GDN_CACHE.'/smarty/') )
-            ->setPluginsDir( val('plugins_dir', $config) );
+            ->setCompileDir(val('compile_dir', $config, GDN_CACHE . '/smarty/'))
+            ->setCacheDir(val('cache_dir', $config, GDN_CACHE . '/smarty/'))
+            ->setPluginsDir(val('plugins_dir', $config));
 
         $this->registerClass('Date', Date::class);
         $this->registerClass('Text', Text::class);
         $this->registerPlugin('modifier', 'translate', [Translate::class, 'get']);
+        $this->registerPlugin('modifier', 'config', [Config::class, 'get']);
 
         if (Cache::$clear) {
             $this->clearAllCache();

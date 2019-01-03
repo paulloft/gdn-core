@@ -1,9 +1,11 @@
 <?php
+
 namespace Garden\Db;
 
 use \Garden\Exception;
 use \Garden\Db\Database;
 use \Garden\Gdn;
+use Garden\Helpers\Arr;
 
 /**
  * Database Structure tools
@@ -23,7 +25,7 @@ abstract class Structure {
 
     public $addonEnabled = true;
 
-    protected $_sql = array();
+    protected $_sql = [];
     protected $_prefix = '';
     protected $_encoding;
     protected $_columns;
@@ -32,26 +34,26 @@ abstract class Structure {
     protected $_tableExists;
     protected $_engine;
 
-    public static $instances = array();
+    public static $instances = [];
 
     /**
      * @param null $name
      * @return $this
      */
-    public static function instance($name = null)
+    public static function instance($name = null): self
     {
         if ($name === null) {
             // Use the default Database instance name
             $name = Database::$default;
         }
 
-        if (!isset(Structure::$instances[$name])) {
+        if (!isset(self::$instances[$name])) {
             $database = Gdn::database($name);
 
-            Structure::$instances[$name] = new Structure\MySQL($database);
+            self::$instances[$name] = new Structure\MySQL($database);
         }
 
-        return Structure::$instances[$name];
+        return self::$instances[$name];
     }
 
     /**
@@ -62,7 +64,7 @@ abstract class Structure {
      */
     public function __construct($database = null)
     {
-        $this->database = $database === null ? Gdn::database() : $database;
+        $this->database = $database ?? Gdn::database();
         $this->prefix($this->database->tablePrefix());
         $this->reset();
     }
@@ -81,7 +83,7 @@ abstract class Structure {
         }
 
         $this->_table = $name;
-        if ($encoding == '') {
+        if ($encoding === '') {
             $encoding = $this->database->encoding();
         }
 
@@ -99,7 +101,7 @@ abstract class Structure {
     public function primary($name, $type = 'int(10)')
     {
         $column = $this->createColumn($name, $type, false, null, 'primary');
-        $dataType = val('type', $this->dataType($column));
+        $dataType = Arr::get('type', $this->dataType($column));
 
         if ($dataType === 'int') {
             $column->autoIncrement = true;
@@ -116,7 +118,7 @@ abstract class Structure {
      * @param mixed $type The data type of the column to be created. Types with a length speecifty the length in barackets.
      * * If an array of values is provided, the type will be set as "enum" and the array will be assigned as the column's Enum property.
      * * If an array of two values is specified then a "set" or "enum" can be specified (ex. array('set', array('short', 'tall', 'fat', 'skinny')))
-     * @param boolean $nullDefault Whether or not nulls are allowed, if not a default can be specified.
+     * @param mixed $nullDefault Whether or not nulls are allowed, if not a default can be specified.
      * * true: Nulls are allowed.
      * * false: Nulls are not allowed.
      * * Any other value: Nulls are not allowed, and the specified value will be used as the default.
@@ -133,8 +135,8 @@ abstract class Structure {
             $null = false;
             $default = null;
         } elseif (is_array($nullDefault)) {
-            $null = val('null', $nullDefault);
-            $default = val('default', $nullDefault, null);
+            $null = Arr::get('null', $nullDefault);
+            $default = Arr::get('default', $nullDefault);
         } else {
             $null = false;
             $default = $nullDefault;
@@ -142,11 +144,11 @@ abstract class Structure {
 
         // Check the key type for validity. A column can be in many keys by specifying an array as key type.
         $keyTypes = (array)$keyType;
-        $keyTypes1 = array();
+        $keyTypes1 = [];
         foreach ($keyTypes as $keyType1) {
             $parts = explode('.', $keyType1, 2);
 
-            if (in_array($parts[0], array('primary', 'key', 'index', 'unique', 'fulltext', false))) {
+            if (in_array($parts[0], ['primary', 'key', 'index', 'unique', 'fulltext', false])) {
                 $keyTypes1[] = $keyType1;
             }
         }
@@ -167,7 +169,6 @@ abstract class Structure {
      * Creates the table and columns specified with $this->table() and
      * $this->column(). If no table or columns have been specified, this method
      * will throw a fatal error.
-
      * @param bool $explicit If TRUE, and the table specified with $this->table() already exists, this
      * method will remove any columns from the table that were not defined with
      * $this->column().
@@ -187,11 +188,11 @@ abstract class Structure {
 
         try {
             // Make sure that table and columns have been defined
-            if ($this->_table == '') {
+            if ($this->_table === '') {
                 throw new Exception\Error('You must specify a table before calling DatabaseStructure::Set()');
             }
 
-            if (count($this->_columns) == 0) {
+            if (count($this->_columns) === 0) {
                 throw new Exception\Error('You must provide at least one column before calling DatabaseStructure::Set()');
             }
 
@@ -206,10 +207,10 @@ abstract class Structure {
 
                 // If the table already exists, go into modify mode.
                 return $this->modify($explicit);
-            } else {
-                // If it doesn't already exist, go into create mode.
-                return $this->create();
             }
+
+            // If it doesn't already exist, go into create mode.
+            return $this->create();
         } catch (Exception\Error $ex) {
             $this->reset();
             throw $ex;
@@ -226,9 +227,9 @@ abstract class Structure {
         if ($this->capture) {
             $this->_sql[] = $sql;
             return true;
-        } else {
-            return $this->database->query($type, $sql);
         }
+
+        return $this->database->query($type, $sql);
     }
 
     /**
@@ -239,7 +240,9 @@ abstract class Structure {
      */
     public function prefix($prefix = '')
     {
-        if ($prefix != '') $this->_prefix = $prefix;
+        if ($prefix !== '') {
+            $this->_prefix = $prefix;
+        }
 
         return $this->_prefix;
     }
@@ -254,13 +257,13 @@ abstract class Structure {
                 $tablename = $this->tableName();
             }
 
-            if (strlen($tablename) > 0) {
+            if ($tablename !== '') {
                 $tables = $this->database->list_tables($this->_prefix . $tablename);
                 $result = count($tables) > 0;
             } else {
                 $result = false;
             }
-            if ($tablename == $this->tableName()) {
+            if ($tablename === $this->tableName()) {
                 $this->_tableExists = $result;
             }
             return $result;
@@ -288,7 +291,9 @@ abstract class Structure {
         $result = isset($columns[$columnName]);
         if (!$result) {
             foreach ($columns as $colName => $def) {
-                if (strcasecmp($columnName, $colName) == 0) return true;
+                if (strcasecmp($columnName, $colName) === 0) {
+                    return true;
+                }
             }
             return false;
         }
@@ -304,7 +309,7 @@ abstract class Structure {
             if ($this->tableExists()) {
                 $this->_existingColumns = $this->getColumns($this->_table);
             } else {
-                $this->_existingColumns = array();
+                $this->_existingColumns = [];
             }
         }
         return $this->_existingColumns;
@@ -316,15 +321,19 @@ abstract class Structure {
      */
     public function columns($name = '')
     {
-        if (strlen($name) > 0) {
+        if ($name !== '') {
             if (isset($this->_columns[$name])) {
                 return $this->_columns[$name];
-            } else {
-                foreach ($this->_columns as $colname => $def) {
-                    if (strcasecmp($name, $colname) == 0) return $def;
-                }
-                return null;
             }
+
+            foreach ($this->_columns as $colname => $def) {
+                if (strcasecmp($name, $colname) === 0) {
+                    return $def;
+                }
+            }
+
+            return null;
+
         }
         return $this->_columns;
     }
@@ -353,13 +362,15 @@ abstract class Structure {
      */
     public function columnType($column)
     {
-        if (is_string($column)) $column = $this->_columns[$column];
+        if (is_string($column)) {
+            $column = $this->_columns[$column];
+        }
 
-        $type = val('type', $column);
-        $length = val('length', $column);
-        $precision = val('precision', $column);
+        $type = Arr::get('type', $column);
+        $length = Arr::get('length', $column);
+        $precision = Arr::get('precision', $column);
 
-        if (in_array(strtolower($type), array('tinyint', 'smallint', 'mediumint', 'int', 'float', 'double'))) {
+        if (in_array(strtolower($type), ['tinyint', 'smallint', 'mediumint', 'int', 'float', 'double'])) {
             $length = null;
         }
 
@@ -367,8 +378,8 @@ abstract class Structure {
             $result = "$type($length, $precision)";
         } elseif ($type && $length) {
             $result = "$type($length)";
-        } elseif (strtolower($type) == 'enum') {
-            $result = val('enum', $column, array());
+        } elseif (strtolower($type) === 'enum') {
+            $result = Arr::get('enum', $column, []);
         } elseif ($type) {
             $result = $type;
         } else {
@@ -393,13 +404,13 @@ abstract class Structure {
      */
     public function types($class = 'all')
     {
-        $date = array('datetime', 'date');
-        $decimal = array('decimal', 'numeric');
-        $float = array('float', 'double');
-        $int = array('int', 'tinyint', 'smallint', 'mediumint', 'bigint');
-        $string = array('varchar', 'char', 'mediumtext', 'text');
-        $length = array('varbinary');
-        $other = array('enum', 'tinyblob', 'blob', 'mediumblob', 'longblob');
+        $date = ['datetime', 'date'];
+        $decimal = ['decimal', 'numeric'];
+        $float = ['float', 'double'];
+        $int = ['int', 'tinyint', 'smallint', 'mediumint', 'bigint'];
+        $string = ['varchar', 'char', 'mediumtext', 'text'];
+        $length = ['varbinary'];
+        $other = ['enum', 'tinyblob', 'blob', 'mediumblob', 'longblob'];
 
         switch (strtolower($class)) {
             case 'date':
@@ -423,7 +434,7 @@ abstract class Structure {
                 return $decimal;
 
             default:
-                return array();
+                return [];
         }
     }
 
@@ -442,7 +453,7 @@ abstract class Structure {
     public function reset()
     {
         $this->_encoding = '';
-        $this->_columns = array();
+        $this->_columns = [];
         $this->_existingColumns = null;
         $this->_tableExists = null;
         $this->_table = '';
@@ -466,8 +477,8 @@ abstract class Structure {
 
         // Check for a length in the type.
         if (is_string($type) && preg_match('/(\w+)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/', $type, $matches)) {
-            $type = $matches[1];
-            $length = $matches[2];
+            list(, $type, $length) = $matches;
+
             if (count($matches) >= 4) {
                 $precision = $matches[3];
             }
@@ -487,7 +498,7 @@ abstract class Structure {
 
         // Handle enums and sets as types.
         if (is_array($type)) {
-            if (count($type) === 2 && is_array(val(1, $type))) {
+            if (count($type) === 2 && is_array(Arr::get(1, $type))) {
                 // The type is specified as the first element in the array.
                 $column->type = $type[0];
                 $column->enum = $type[1];
@@ -527,7 +538,7 @@ abstract class Structure {
     {
         $columns = $this->database->list_columns($table);
 
-        $result = array();
+        $result = [];
         foreach ($columns as $name => $column) {
             $unsigned = is_string($column->type) && stripos($column->type, 'u') === 0;
 
@@ -536,7 +547,7 @@ abstract class Structure {
             $obj->type = $column->dataType;
             $obj->length = $column->length;
             $obj->precision = '';
-            $obj->enum = val('options', $column);
+            $obj->enum = Arr::get('options', $column);
             $obj->allowNull = $column->allowNull;
             $obj->default = $column->default;
             $obj->keyType = $this->getKeyType($column->key);

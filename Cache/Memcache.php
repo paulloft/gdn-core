@@ -1,6 +1,7 @@
 <?php
 namespace Garden\Cache;
 
+use Garden\Config;
 use \Garden\Exception;
 
 /**
@@ -37,7 +38,7 @@ class Memcache extends \Garden\Cache {
         $this->prefix = val('keyPrefix', $config, $this->prefix);
         $this->cache = val('connection', $config, null);
 
-        $this->salt = c('main.hashsalt', 'gdn');
+        $this->salt = Config::get('main.hashsalt', 'gdn');
 
         $this->dirty = \Garden\Gdn::dirtyCache();
 

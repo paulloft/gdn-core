@@ -58,9 +58,9 @@ class Config {
         }
 
         if ($underlay) {
-            $data = array_replace($loaded, self::$data[$group]);
+            $data = array_replace_recursive($loaded, self::$data[$group]);
         } else {
-            $data = array_replace(self::$data[$group], $loaded);
+            $data = array_replace_recursive(self::$data[$group], $loaded);
         }
 
         self::$data[$group] = $data;
@@ -84,7 +84,7 @@ class Config {
             $config = $data;
         } else {
             $config = Arr::load($path);
-            $config = array_replace($config, $data);
+            $config = array_replace_recursive($config, $data);
         }
 
         // Remove null config values.

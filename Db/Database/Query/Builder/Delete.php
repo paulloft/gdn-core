@@ -1,6 +1,9 @@
-<?php 
+<?php
+
 namespace Garden\Db\Database\Query\Builder;
+
 use Garden\Db\Database;
+
 /**
  * Database query builder for DELETE statements. See [Query Builder](/database/query/builder) for usage and examples.
  *
@@ -18,10 +21,10 @@ class Delete extends Where {
     /**
      * Set the table for a delete.
      *
-     * @param   mixed  $table  table name or array($table, $alias) or object
+     * @param   mixed $table table name or array($table, $alias) or object
      * @return  void
      */
-    public function __construct($table = NULL)
+    public function __construct($table = null)
     {
         if ($table) {
             // Set the inital table name
@@ -35,7 +38,7 @@ class Delete extends Where {
     /**
      * Sets the table to delete from.
      *
-     * @param   mixed  $table  table name or array($table, $alias) or object
+     * @param   mixed $table table name or array($table, $alias) or object
      * @return  $this
      */
     public function table($table)
@@ -48,32 +51,32 @@ class Delete extends Where {
     /**
      * Compile the SQL query and return it.
      *
-     * @param   mixed  $db  Database instance or name of instance
+     * @param   mixed $db Database instance or name of instance
      * @return  string
      */
-    public function compile($db = NULL)
+    public function compile($db = null)
     {
-        if ( ! is_object($db)) {
+        if (!is_object($db)) {
             // Get the database instance
             $db = Database::instance($db);
         }
 
         // Start a deletion query
-        $query = 'DELETE FROM '.$db->quote_table($this->_table);
+        $query = 'DELETE FROM ' . $db->quote_table($this->_table);
 
-        if ( ! empty($this->_where)) {
+        if (!empty($this->_where)) {
             // Add deletion conditions
-            $query .= ' WHERE '.$this->_compile_conditions($db, $this->_where);
+            $query .= ' WHERE ' . $this->_compile_conditions($db, $this->_where);
         }
 
-        if ( ! empty($this->_order_by)) {
+        if (!empty($this->_order_by)) {
             // Add sorting
-            $query .= ' '.$this->_compile_order_by($db, $this->_order_by);
+            $query .= ' ' . $this->_compile_order_by($db, $this->_order_by);
         }
 
-        if ($this->_limit !== NULL) {
+        if ($this->_limit !== null) {
             // Add limiting
-            $query .= ' LIMIT '.$this->_limit;
+            $query .= ' LIMIT ' . $this->_limit;
         }
 
         $this->_sql = $query;
@@ -83,12 +86,12 @@ class Delete extends Where {
 
     public function reset()
     {
-        $this->_table = NULL;
-        $this->_where = array();
+        $this->_table = null;
+        $this->_where = [];
 
-        $this->_parameters = array();
+        $this->_parameters = [];
 
-        $this->_sql = NULL;
+        $this->_sql = null;
 
         return $this;
     }

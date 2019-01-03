@@ -1,6 +1,9 @@
-<?php 
+<?php
+
 namespace Garden\Db\Database\Query;
+
 use Garden\Db\Database;
+
 /**
  * Database query builder. See [Query Builder](/database/query/builder) for usage and examples.
  *
@@ -15,13 +18,13 @@ abstract class Builder extends Database\Query {
     /**
      * Compiles an array of JOIN statements into an SQL partial.
      *
-     * @param   object  $db     Database instance
-     * @param   array   $joins  join statements
+     * @param   object $db Database instance
+     * @param   array $joins join statements
      * @return  string
      */
     protected function _compile_join(Database $db, array $joins)
     {
-        $statements = array();
+        $statements = [];
 
         foreach ($joins as $join) {
             // Compile each of the join statements
@@ -35,42 +38,42 @@ abstract class Builder extends Database\Query {
      * Compiles an array of conditions into an SQL partial. Used for WHERE
      * and HAVING.
      *
-     * @param   object  $db          Database instance
-     * @param   array   $conditions  condition statements
+     * @param   object $db Database instance
+     * @param   array $conditions condition statements
      * @return  string
      */
     protected function _compile_conditions(Database $db, array $conditions)
     {
-        $last_condition = NULL;
+        $last_condition = null;
 
         $sql = '';
         foreach ($conditions as $group) {
             // Process groups of conditions
             foreach ($group as $logic => $condition) {
                 if ($condition === '(') {
-                    if ( ! empty($sql) AND $last_condition !== '(') {
+                    if (!empty($sql) && $last_condition !== '(') {
                         // Include logic operator
-                        $sql .= ' '.$logic.' ';
+                        $sql .= ' ' . $logic . ' ';
                     }
 
                     $sql .= '(';
                 } elseif ($condition === ')') {
                     $sql .= ')';
                 } else {
-                    if ( ! empty($sql) AND $last_condition !== '(') {
+                    if (!empty($sql) && $last_condition !== '(') {
                         // Add the logic operator
-                        $sql .= ' '.$logic.' ';
+                        $sql .= ' ' . $logic . ' ';
                     }
 
                     // Split the condition
                     list($column, $op, $value) = $condition;
 
-                    if ($value === NULL) {
+                    if ($value === null) {
                         if ($op === '=') {
-                            // Convert "val = NULL" to "val IS NULL"
+                            // Convert "val = null" to "val IS null"
                             $op = 'IS';
-                        } elseif ($op === '!=' OR $op === '<>') {
-                            // Convert "val != NULL" to "valu IS NOT NULL"
+                        } elseif ($op === '!=' || $op === '<>') {
+                            // Convert "val != null" to "valu IS NOT null"
                             $op = 'IS NOT';
                         }
                     }
@@ -78,30 +81,30 @@ abstract class Builder extends Database\Query {
                     // Database operators are always uppercase
                     $op = strtoupper($op);
 
-                    if ($op === 'BETWEEN' AND is_array($value)) {
+                    if ($op === 'BETWEEN' && is_array($value)) {
                         // BETWEEN always has exactly two arguments
                         list($min, $max) = $value;
 
-                        if ((is_string($min) AND array_key_exists($min, $this->_parameters)) === FALSE) {
+                        if ((is_string($min) && array_key_exists($min, $this->_parameters)) === false) {
                             // Quote the value, it is not a parameter
                             $min = $db->quote($min);
                         }
 
-                        if ((is_string($max) AND array_key_exists($max, $this->_parameters)) === FALSE) {
+                        if ((is_string($max) && array_key_exists($max, $this->_parameters)) === false) {
                             // Quote the value, it is not a parameter
                             $max = $db->quote($max);
                         }
 
                         // Quote the min and max value
-                        $value = $min.' AND '.$max;
-                    } elseif ((is_string($value) AND array_key_exists($value, $this->_parameters)) === FALSE) {
+                        $value = $min . ' AND ' . $max;
+                    } elseif ((is_string($value) && array_key_exists($value, $this->_parameters)) === false) {
                         // Quote the value, it is not a parameter
                         $value = $db->quote($value);
                     }
 
                     if ($column) {
                         if (is_array($column)) {
-                            if ($op == 'BETWEEN DATE') {
+                            if ($op === 'BETWEEN DATE') {
                                 $op = 'BETWEEN';
                                 $values = [];
                                 foreach ($column as $col) {
@@ -120,7 +123,7 @@ abstract class Builder extends Database\Query {
                     }
 
                     // Append the statement to the query
-                    $sql .= trim($column.' '.$op.' '.$value);
+                    $sql .= trim($column . ' ' . $op . ' ' . $value);
                 }
 
                 $last_condition = $condition;
@@ -133,26 +136,23 @@ abstract class Builder extends Database\Query {
     /**
      * Compiles an array of set values into an SQL partial. Used for UPDATE.
      *
-     * @param   object  $db      Database instance
-     * @param   array   $values  updated values
+     * @param   object $db Database instance
+     * @param   array $values updated values
      * @return  string
      */
     protected function _compile_set(Database $db, array $values)
     {
-        $set = array();
-        foreach ($values as $group) {
-            // Split the set
-            list ($column, $value) = $group;
-
+        $set = [];
+        foreach ($values as list ($column, $value)) {
             // Quote the column name
             $column = $db->quote_column($column);
 
-            if ((is_string($value) AND array_key_exists($value, $this->_parameters)) === FALSE) {
+            if ((is_string($value) && array_key_exists($value, $this->_parameters)) === false) {
                 // Quote the value, it is not a parameter
                 $value = $db->quote($value);
             }
 
-            $set[$column] = $column.' = '.$value;
+            $set[$column] = $column . ' = ' . $value;
         }
 
         return implode(', ', $set);
@@ -161,13 +161,13 @@ abstract class Builder extends Database\Query {
     /**
      * Compiles an array of GROUP BY columns into an SQL partial.
      *
-     * @param   object  $db       Database instance
-     * @param   array   $columns
+     * @param   object $db Database instance
+     * @param   array $columns
      * @return  string
      */
     protected function _compile_group_by(Database $db, array $columns)
     {
-        $group = array();
+        $group = [];
 
         foreach ($columns as $column) {
             if (is_array($column)) {
@@ -181,22 +181,20 @@ abstract class Builder extends Database\Query {
             $group[] = $column;
         }
 
-        return 'GROUP BY '.implode(', ', $group);
+        return 'GROUP BY ' . implode(', ', $group);
     }
 
     /**
      * Compiles an array of ORDER BY statements into an SQL partial.
      *
-     * @param   object  $db       Database instance
-     * @param   array   $columns  sorting columns
+     * @param   object $db Database instance
+     * @param   array $columns sorting columns
      * @return  string
      */
     protected function _compile_order_by(Database $db, array $columns)
     {
-        $sort = array();
-        foreach ($columns as $group) {
-            list ($column, $direction) = $group;
-
+        $sort = [];
+        foreach ($columns as list ($column, $direction)) {
             if (is_array($column)) {
                 // Use the column alias
                 $column = $db->quote_identifier(end($column));
@@ -207,13 +205,13 @@ abstract class Builder extends Database\Query {
 
             if ($direction) {
                 // Make the direction uppercase
-                $direction = ' '.strtoupper($direction);
+                $direction = ' ' . strtoupper($direction);
             }
 
-            $sort[] = $column.$direction;
+            $sort[] = $column . $direction;
         }
 
-        return 'ORDER BY '.implode(', ', $sort);
+        return 'ORDER BY ' . implode(', ', $sort);
     }
 
     /**

@@ -1,6 +1,9 @@
-<?php 
+<?php
+
 namespace Garden\Db\Database;
+
 use Garden\Db\Database;
+
 /**
  * Database result wrapper.  See [Results](/database/results) for usage and examples.
  *
@@ -19,7 +22,7 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
     protected $_result;
 
     // Total number of rows and current row
-    protected $_total_rows  = 0;
+    protected $_total_rows = 0;
     protected $_current_row = 0;
 
     // Return rows as an object or associative array
@@ -31,13 +34,13 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
     /**
      * Sets the total number of rows and stores the result locally.
      *
-     * @param   mixed   $result     query result
-     * @param   string  $sql        SQL query
-     * @param   mixed   $as_object
-     * @param   array   $params
+     * @param   mixed $result query result
+     * @param   string $sql SQL query
+     * @param   mixed $asObject
+     * @param   array $params
      * @return  void
      */
-    public function __construct($result, $sql, $as_object = FALSE, array $params = NULL)
+    public function __construct($result, $sql, $asObject = false, array $params = null)
     {
         // Store the result locally
         $this->_result = $result;
@@ -45,13 +48,13 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
         // Store the SQL locally
         $this->_query = $sql;
 
-        if (is_object($as_object)) {
+        if (is_object($asObject)) {
             // Get the object class name
-            $as_object = get_class($as_object);
+            $asObject = get_class($asObject);
         }
 
         // Results as objects or associative arrays
-        $this->_as_object = $as_object;
+        $this->_as_object = $asObject;
 
         if ($params) {
             // Object constructor params
@@ -91,21 +94,21 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      *     // Associative array of rows, "id" => "name"
      *     $rows = $result->as_array('id', 'name');
      *
-     * @param   string  $key    column for associative keys
-     * @param   string  $value  column for values
+     * @param   string $key column for associative keys
+     * @param   string $value column for values
      * @return  array
      */
-    public function as_array($key = NULL, $value = NULL)
+    public function as_array($key = null, $value = null)
     {
-        $results = array();
+        $results = [];
 
-        if ($key === NULL AND $value === NULL) {
+        if ($key === null && $value === null) {
             // Indexed rows
 
             foreach ($this as $row) {
                 $results[] = $row;
             }
-        } elseif ($key === NULL) {
+        } elseif ($key === null) {
             // Indexed columns
 
             if ($this->_as_object) {
@@ -117,7 +120,7 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
                     $results[] = $row[$value];
                 }
             }
-        } elseif ($value === NULL) {
+        } elseif ($value === null) {
             // Associative rows
 
             if ($this->_as_object) {
@@ -129,17 +132,13 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
                     $results[$row[$key]] = $row;
                 }
             }
+        } elseif ($this->_as_object) {
+            foreach ($this as $row) {
+                $results[$row->$key] = $row->$value;
+            }
         } else {
-            // Associative columns
-
-            if ($this->_as_object) {
-                foreach ($this as $row) {
-                    $results[$row->$key] = $row->$value;
-                }
-            } else {
-                foreach ($this as $row) {
-                    $results[$row[$key]] = $row[$value];
-                }
+            foreach ($this as $row) {
+                $results[$row[$key]] = $row[$value];
             }
         }
 
@@ -154,20 +153,20 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      *     // Get the "id" value
      *     $id = $result->get('id');
      *
-     * @param   string  $name     column to get
-     * @param   mixed   $default  default value if the column does not exist
+     * @param   string $name column to get
+     * @param   mixed $default default value if the column does not exist
      * @return  mixed
      */
-    public function get($name, $default = NULL)
+    public function get($name, $default = null)
     {
         $row = $this->current();
 
         if ($this->_as_object) {
-            if (isset($row->$name))
+            if (isset($row->$name)) {
                 return $row->$name;
-        } else {
-            if (isset($row[$name]))
-                return $row[$name];
+            }
+        } elseif (isset($row[$name])) {
+            return $row[$name];
         }
 
         return $default;
@@ -193,7 +192,7 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      *         // Row 10 exists
      *     }
      *
-     * @param   int     $offset
+     * @param   int $offset
      * @return  boolean
      */
     public function offsetExists($offset)
@@ -206,13 +205,14 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      *
      *     $row = $result[10];
      *
-     * @param   int     $offset
+     * @param   int $offset
      * @return  mixed
      */
     public function offsetGet($offset)
     {
-        if ( ! $this->seek($offset))
-            return NULL;
+        if (!$this->seek($offset)) {
+            return null;
+        }
 
         return $this->current();
     }
@@ -222,8 +222,8 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      *
      * [!!] You cannot modify a database result.
      *
-     * @param   int     $offset
-     * @param   mixed   $value
+     * @param   int $offset
+     * @param   mixed $value
      * @return  void
      * @throws  \Exception
      */
@@ -237,7 +237,7 @@ abstract class Result implements \Countable, \Iterator, \SeekableIterator, \Arra
      *
      * [!!] You cannot modify a database result.
      *
-     * @param   int     $offset
+     * @param   int $offset
      * @return  void
      * @throws  \Exception
      */

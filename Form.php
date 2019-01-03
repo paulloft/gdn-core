@@ -1,12 +1,12 @@
 <?php
+
 namespace Garden;
 
 use Garden\Helpers\Arr;
 use Garden\Helpers\Date;
 use Garden\Helpers\Text;
 
-class Form
-{
+class Form {
     /**
      * @var string form method
      */
@@ -310,7 +310,7 @@ class Form
                 try {
                     $result = $this->model->save($post, $id);
                 } catch (\Exception $e) {
-                    if (c('main.debug', true)) {
+                    if (Config::get('main.debug', true)) {
                         $this->addError(Translate::getSprintf('form_save_error_debug', $e->getMessage()));
                     } else {
                         $this->addError(Translate::get('form_save_error'));
@@ -334,7 +334,7 @@ class Form
     public function generateSecureKey($data)
     {
         $keys = array_keys($data);
-        $key = md5(implode(';', $keys).c('main.hashsalt'));
+        $key = md5(implode(';', $keys) . Config::get('main.hashsalt'));
 
         Gdn::cache()->set("form_$key", $keys, self::KEY_LIFE_TIME);
 

@@ -1,6 +1,9 @@
-<?php 
+<?php
+
 namespace Garden\Db\Database;
+
 use Garden\Db\Database;
+
 /**
  * Database expressions can be used to add unescaped SQL fragments to a
  * [Database_Query_Builder] object.
@@ -11,7 +14,7 @@ use Garden\Db\Database;
  *     $query = DB::select(array(DB::expr('CONCAT(first_name, last_name)'), 'full_name')));
  *
  * More examples are available on the [Query Builder](database/query/builder#database-expressions) page
- * 
+ *
  * @package    Kohana/Database
  * @category   Base
  * @author     Kohana Team
@@ -31,11 +34,11 @@ class Expression {
      *
      *     $expression = new Database_Expression('COUNT(users.id)');
      *
-     * @param   string  $value      raw SQL expression string
-     * @param   array   $parameters unquoted parameter values
+     * @param   string $value raw SQL expression string
+     * @param   array $parameters unquoted parameter values
      * @return  void
      */
-    public function __construct($value, array $parameters = array())
+    public function __construct($value, array $parameters = [])
     {
         // Set the expression string
         $this->_value = $value;
@@ -45,8 +48,8 @@ class Expression {
     /**
      * Bind a variable to a parameter.
      *
-     * @param   string  $param  parameter key to replace
-     * @param   mixed   $var    variable to use
+     * @param   string $param parameter key to replace
+     * @param   mixed $var variable to use
      * @return  $this
      */
     public function bind($param, & $var)
@@ -59,8 +62,8 @@ class Expression {
     /**
      * Set the value of a parameter.
      *
-     * @param   string  $param  parameter key to replace
-     * @param   mixed   $value  value to use
+     * @param   string $param parameter key to replace
+     * @param   mixed $value value to use
      * @return  $this
      */
     public function param($param, $value)
@@ -73,7 +76,7 @@ class Expression {
     /**
      * Add multiple parameter values.
      *
-     * @param   array   $params list of parameter values
+     * @param   array $params list of parameter values
      * @return  $this
      */
     public function parameters(array $params)
@@ -92,7 +95,7 @@ class Expression {
      */
     public function value()
     {
-        return (string) $this->_value;
+        return (string)$this->_value;
     }
 
     /**
@@ -115,18 +118,18 @@ class Expression {
      * @param   mixed    Database instance or name of instance
      * @return  string
      */
-    public function compile($db = NULL)
+    public function compile($db = null)
     {
-        if ( ! is_object($db)) {
+        if (!is_object($db)) {
             // Get the database instance
             $db = Database::instance($db);
         }
 
         $value = $this->value();
 
-        if ( ! empty($this->_parameters)) {
+        if (!empty($this->_parameters)) {
             // Quote all of the parameter values
-            $params = array_map(array($db, 'quote'), $this->_parameters);
+            $params = array_map([$db, 'quote'], $this->_parameters);
 
             // Replace the values in the expression
             $value = strtr($value, $params);

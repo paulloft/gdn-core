@@ -26,7 +26,7 @@ class Tasks
 
     public function __construct()
     {
-        $config = c('tasks');
+        $config = Config::get('tasks');
 
         ini_set('memory_limit', val('memorylimit', $config, '256M'));
         set_time_limit(val('timelimit', $config, 15 * 60));

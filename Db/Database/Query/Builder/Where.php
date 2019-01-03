@@ -1,6 +1,9 @@
-<?php 
+<?php
+
 namespace Garden\Db\Database\Query\Builder;
+
 use Garden\Db\Database;
+
 /**
  * Database query builder for WHERE statements. See [Query Builder](/database/query/builder) for usage and examples.
  *
@@ -13,20 +16,20 @@ use Garden\Db\Database;
 abstract class Where extends Database\Query\Builder {
 
     // WHERE ...
-    protected $_where = array();
+    protected $_where = [];
 
     // ORDER BY ...
-    protected $_order_by = array();
+    protected $_order_by = [];
 
     // LIMIT ...
-    protected $_limit = NULL;
+    protected $_limit;
 
     /**
      * Alias of and_where()
      *
-     * @param   mixed   $column  column name or array($column, $alias) or object
-     * @param   string  $op      logic operator
-     * @param   mixed   $value   column value
+     * @param   mixed $column column name or array($column, $alias) or object
+     * @param   string $op logic operator
+     * @param   mixed $value column value
      * @return  $this
      */
     public function where($column, $op, $value)
@@ -37,14 +40,14 @@ abstract class Where extends Database\Query\Builder {
     /**
      * Creates a new "AND WHERE" condition for the query.
      *
-     * @param   mixed   $column  column name or array($column, $alias) or object
-     * @param   string  $op      logic operator
-     * @param   mixed   $value   column value
+     * @param   mixed $column column name or array($column, $alias) or object
+     * @param   string $op logic operator
+     * @param   mixed $value column value
      * @return  $this
      */
     public function and_where($column, $op, $value)
     {
-        $this->_where[] = array('AND' => array($column, $op, $value));
+        $this->_where[] = ['AND' => [$column, $op, $value]];
 
         return $this;
     }
@@ -52,14 +55,14 @@ abstract class Where extends Database\Query\Builder {
     /**
      * Creates a new "OR WHERE" condition for the query.
      *
-     * @param   mixed   $column  column name or array($column, $alias) or object
-     * @param   string  $op      logic operator
-     * @param   mixed   $value   column value
+     * @param   mixed $column column name or array($column, $alias) or object
+     * @param   string $op logic operator
+     * @param   mixed $value column value
      * @return  $this
      */
     public function or_where($column, $op, $value)
     {
-        $this->_where[] = array('OR' => array($column, $op, $value));
+        $this->_where[] =['OR' => [$column, $op, $value]];
 
         return $this;
     }
@@ -81,7 +84,7 @@ abstract class Where extends Database\Query\Builder {
      */
     public function and_where_open()
     {
-        $this->_where[] = array('AND' => '(');
+        $this->_where[] = ['AND' => '('];
 
         return $this;
     }
@@ -93,7 +96,7 @@ abstract class Where extends Database\Query\Builder {
      */
     public function or_where_open()
     {
-        $this->_where[] = array('OR' => '(');
+        $this->_where[] = ['OR' => '('];
 
         return $this;
     }
@@ -118,7 +121,7 @@ abstract class Where extends Database\Query\Builder {
     {
         $group = end($this->_where);
 
-        if ($group AND reset($group) === '(') {
+        if ($group && reset($group) === '(') {
             array_pop($this->_where);
 
             return $this;
@@ -134,7 +137,7 @@ abstract class Where extends Database\Query\Builder {
      */
     public function and_where_close()
     {
-        $this->_where[] = array('AND' => ')');
+        $this->_where[] = ['AND' => ')'];
 
         return $this;
     }
@@ -146,7 +149,7 @@ abstract class Where extends Database\Query\Builder {
      */
     public function or_where_close()
     {
-        $this->_where[] = array('OR' => ')');
+        $this->_where[] = ['OR' => ')'];
 
         return $this;
     }
@@ -154,13 +157,13 @@ abstract class Where extends Database\Query\Builder {
     /**
      * Applies sorting with "ORDER BY ..."
      *
-     * @param   mixed   $column     column name or array($column, $alias) or object
-     * @param   string  $direction  direction of sorting
+     * @param   mixed $column column name or array($column, $alias) or object
+     * @param   string $direction direction of sorting
      * @return  $this
      */
-    public function order_by($column, $direction = NULL)
+    public function order_by($column, $direction = null)
     {
-        $this->_order_by[] = array($column, $direction);
+        $this->_order_by[] = [$column, $direction];
 
         return $this;
     }
@@ -168,12 +171,12 @@ abstract class Where extends Database\Query\Builder {
     /**
      * Return up to "LIMIT ..." results
      *
-     * @param   integer  $number  maximum results to return or NULL to reset
+     * @param   integer $number maximum results to return or null to reset
      * @return  $this
      */
     public function limit($number)
     {
-        $this->_limit = ($number === NULL) ? NULL : (int) $number;
+        $this->_limit = ($number === null) ? null : (int)$number;
 
         return $this;
     }
@@ -197,7 +200,7 @@ abstract class Where extends Database\Query\Builder {
      */
     public function and_between_date($columns, $date)
     {
-        $this->_where[] = array('AND' => array($columns, 'BETWEEN DATE', $date));
+        $this->_where[] = ['AND' => [$columns, 'BETWEEN DATE', $date]];
 
         return $this;
     }
@@ -210,7 +213,7 @@ abstract class Where extends Database\Query\Builder {
      */
     public function or_between_date($columns, $date)
     {
-        $this->_where[] = array('OR' => array($columns, 'BETWEEN DATE', $date));
+        $this->_where[] = ['OR' => [$columns, 'BETWEEN DATE', $date]];
 
         return $this;
     }

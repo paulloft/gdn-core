@@ -1,7 +1,10 @@
-<?php 
+<?php
+
 namespace Garden\Db\Database;
+
 use Garden\Db\Database;
 use Garden\Gdn;
+
 /**
  * Database query wrapper.  See [Parameterized Statements](database/query/parameterized) for usage and examples.
  *
@@ -17,7 +20,7 @@ class Query {
     protected $_type;
 
     // Execute the query during a cache hit
-    protected $_force_execute = FALSE;
+    protected $_force_execute = false;
 
     // Cache lifetime
     protected $_lifetime;
@@ -26,19 +29,19 @@ class Query {
     protected $_sql;
 
     // Quoted query parameters
-    protected $_parameters = array();
+    protected $_parameters = [];
 
     // Return results as associative arrays or objects
-    protected $_as_object = FALSE;
+    protected $_as_object = false;
 
     // Parameters for __construct when using object results
-    protected $_object_params = array();
+    protected $_object_params = [];
 
     /**
      * Creates a new SQL query of the specified type.
      *
-     * @param   integer  $type  query type: Database::SELECT, Database::INSERT, etc
-     * @param   string   $sql   query string
+     * @param   integer $type query type: Database::SELECT, Database::INSERT, etc
+     * @param   string $sql query string
      * @return  void
      */
     public function __construct($type, $sql)
@@ -58,7 +61,7 @@ class Query {
             // Return the SQL string
             return $this->compile(Database::instance());
         } catch (\Exception $e) {
-            return (string)\Exception::text($e);
+            return $e->getMessage();
         }
     }
 
@@ -75,14 +78,14 @@ class Query {
     /**
      * Enables the query to be cached for a specified amount of time.
      *
-     * @param   integer  $lifetime  number of seconds to cache, 0 deletes it from the cache
-     * @param   boolean  $force whether or not to execute the query during a cache hit
+     * @param   integer $lifetime number of seconds to cache, 0 deletes it from the cache
+     * @param   boolean $force whether or not to execute the query during a cache hit
      * @return  $this
      * @uses    Cache::$cache_life
      */
-    public function cached($lifetime = NULL, $force = FALSE)
+    public function cached($lifetime = null, $force = false)
     {
-        if ($lifetime === NULL) {
+        if ($lifetime === null) {
             // Use the global setting
             $lifetime = \Garden\Cache::DEFAULT_LIFETIME;
         }
@@ -100,9 +103,9 @@ class Query {
      */
     public function as_assoc()
     {
-        $this->_as_object = FALSE;
+        $this->_as_object = false;
 
-        $this->_object_params = array();
+        $this->_object_params = [];
 
         return $this;
     }
@@ -110,11 +113,11 @@ class Query {
     /**
      * Returns results as objects
      *
-     * @param   string  $class  classname or TRUE for stdClass
-     * @param   array   $params
+     * @param   string $class classname or true for stdClass
+     * @param   array $params
      * @return  $this
      */
-    public function as_object($class = TRUE, array $params = NULL)
+    public function as_object($class = true, array $params = null)
     {
         $this->_as_object = $class;
 
@@ -129,8 +132,8 @@ class Query {
     /**
      * Set the value of a parameter in the query.
      *
-     * @param   string   $param  parameter key to replace
-     * @param   mixed    $value  value to use
+     * @param   string $param parameter key to replace
+     * @param   mixed $value value to use
      * @return  $this
      */
     public function param($param, $value)
@@ -144,8 +147,8 @@ class Query {
     /**
      * Bind a variable to a parameter in the query.
      *
-     * @param   string  $param  parameter key to replace
-     * @param   mixed   $var    variable to use
+     * @param   string $param parameter key to replace
+     * @param   mixed $var variable to use
      * @return  $this
      */
     public function bind($param, & $var)
@@ -159,7 +162,7 @@ class Query {
     /**
      * Add multiple parameters to the query.
      *
-     * @param   array  $params  list of parameters
+     * @param   array $params list of parameters
      * @return  $this
      */
     public function parameters(array $params)
@@ -174,12 +177,12 @@ class Query {
      * Compile the SQL query and return it. Replaces any parameters with their
      * given values.
      *
-     * @param   mixed  $db  Database instance or name of instance
+     * @param   mixed $db Database instance or name of instance
      * @return  string
      */
-    public function compile($db = NULL)
+    public function compile($db = null)
     {
-        if ( ! is_object($db)) {
+        if (!is_object($db)) {
             // Get the database instance
             $db = Database::instance($db);
         }
@@ -187,9 +190,9 @@ class Query {
         // Import the SQL locally
         $sql = $this->_sql;
 
-        if ( ! empty($this->_parameters)) {
+        if (!empty($this->_parameters)) {
             // Quote all of the values
-            $values = array_map(array($db, 'quote'), $this->_parameters);
+            $values = array_map([$db, 'quote'], $this->_parameters);
 
             // Replace the values in the SQL
             $sql = strtr($sql, $values);
@@ -201,37 +204,37 @@ class Query {
     /**
      * Execute the current query on the given database.
      *
-     * @param   mixed    $db  Database instance or name of instance
-     * @param   string   result object classname, TRUE for stdClass or FALSE for array
+     * @param   mixed $db Database instance or name of instance
+     * @param   string   result object classname, true for stdClass or false for array
      * @param   array    result object constructor arguments
      * @return  Database\Result   Database_Result for SELECT queries
      * @return  mixed    the insert id for INSERT queries
      * @return  integer  number of affected rows for all other queries
      */
-    public function execute($db = NULL, $as_object = NULL, $object_params = NULL)
+    public function execute($db = null, $as_object = null, $object_params = null)
     {
-        if ( ! is_object($db)) {
+        if (!is_object($db)) {
             // Get the database instance
             $db = Database::instance($db);
         }
 
-        if ($as_object === NULL) {
+        if ($as_object === null) {
             $as_object = $this->_as_object;
         }
 
-        if ($object_params === NULL) {
+        if ($object_params === null) {
             $object_params = $this->_object_params;
         }
 
         // Compile the SQL query
         $sql = $this->compile($db);
 
-        if ($this->_lifetime !== NULL AND $this->_type === Database::SELECT) {
+        if ($this->_lifetime !== null && $this->_type === Database::SELECT) {
             // Set the cache key based on the database instance name and SQL
-            $cache_key = 'Database::query("'.$db.'", "'.$sql.'")';
+            $cache_key = 'Database::query("' . $db . '", "' . $sql . '")';
 
             // Read the cache first to delete a possible hit with lifetime <= 0
-            if (($result = Gdn::cache()->get($cache_key)) !== NULL AND ! $this->_force_execute) {
+            if (($result = Gdn::cache()->get($cache_key)) !== null AND !$this->_force_execute) {
                 // Return a cached result
                 return new Database\Result\Cached($result, $sql, $as_object, $object_params);
             }
@@ -240,7 +243,7 @@ class Query {
         // Execute the query
         $result = $db->query($this->_type, $sql, $as_object, $object_params);
 
-        if (isset($cache_key) AND $this->_lifetime > 0) {
+        if (isset($cache_key) && $this->_lifetime > 0) {
             // Cache the result array
             Gdn::cache()->set($cache_key, $result->as_array(), $this->_lifetime);
         }

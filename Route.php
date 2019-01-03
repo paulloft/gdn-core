@@ -6,6 +6,8 @@ abstract class Route {
     const MAP_QUERY = 'query'; // map to the querystring.
     const MAP_INPUT = 'input'; // map to the input (post).
     const MAP_DATA = 'data';  // map to the querystring or input depending on the method.
+    const MAP_RESPONSE = 'response';
+    const MAP_REQUEST = 'request';
 
     /// Properties ///
 
@@ -40,9 +42,11 @@ abstract class Route {
      * @var array An array of global parameter mappings.
      */
     protected static $globalMappings = [
-        'data' => Route::MAP_DATA,
-        'query' => Route::MAP_QUERY,
-        'input' => Route::MAP_INPUT
+        'data' => self::MAP_DATA,
+        'query' => self::MAP_QUERY,
+        'input' => self::MAP_INPUT,
+        'request' => self::MAP_REQUEST,
+        'response' => self::MAP_RESPONSE,
     ];
 
     /**
@@ -234,7 +238,7 @@ abstract class Route {
      * @param Request $request The {@link Request} to get the data from.
      * @return array|null Returns the mapped data or null if there is no data.
      */
-    protected function mappedData($name, Request $request)
+    protected function mappedData($name, Request $request, Response $response)
     {
         $name = strtolower($name);
 
@@ -250,12 +254,23 @@ abstract class Route {
             case self::MAP_DATA:
                 $result = $request->getData();
                 break;
+
             case self::MAP_INPUT:
                 $result = $request->getInputData();
                 break;
+
             case self::MAP_QUERY:
                 $result = $request->getQuery();
                 break;
+
+            case self::MAP_REQUEST:
+                $result = $request;
+                break;
+
+            case self::MAP_RESPONSE;
+                $result = $response;
+                break;
+
             default:
                 return null;
         }

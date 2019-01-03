@@ -76,8 +76,8 @@ class Template extends Controller {
      */
     protected function getPageData()
     {
-        $sitename = c('main.sitename');
-        $separator = c('main.titleSeparator', '-');
+        $sitename = Config::get('main.sitename');
+        $separator = Config::get('main.titleSeparator', '-');
         $title = $this->data('title');
 
         return [
@@ -111,7 +111,7 @@ class Template extends Controller {
         $data['content'] = $view;
 
         $this->setData('gdn', $data);
-        $this->setData('sitename', c('main.sitename'));
+        $this->setData('sitename', Config::get('main.sitename'));
 
         return $this->fetchView($this->template, '/', $addonFolder?: $this->addon);
     }

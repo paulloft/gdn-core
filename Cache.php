@@ -21,13 +21,13 @@ abstract class Cache implements Interfaces\Cache {
         self::flush();
 
         if ($driver === null) {
-            $driver = c('cache.driver', 'dirty');
+            $driver = Config::get('cache.driver', 'dirty');
         }
 
         if (!isset(self::$instances[$driver])) {
             $driverClass = 'Garden\Cache\\' . ucfirst($driver);
 
-            $options = $options ?: c("cache.$driver", []);
+            $options = $options ?: Config::get("cache.$driver", []);
             self::$instances[$driver] = new $driverClass($options);
         }
 

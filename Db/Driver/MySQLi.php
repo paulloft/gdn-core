@@ -1,8 +1,10 @@
 <?php
+
 namespace Garden\Db\Driver;
 
 use \Garden\Exception;
 use \Garden\Db\Database;
+use Garden\Helpers\Arr;
 
 /**
  * MySQLi database connection.
@@ -16,7 +18,7 @@ use \Garden\Db\Database;
 class MySQLi extends SQL {
 
     // Database in use by each connection
-    protected static $_current_databases = array();
+    protected static $_current_databases = [];
 
     // Use SET NAMES to set the character set
     protected static $_set_names;
@@ -29,43 +31,44 @@ class MySQLi extends SQL {
 
     public function connect()
     {
-        if ($this->_connection)
+        if ($this->_connection) {
             return;
+        }
 
-        if (MySQLi::$_set_names === NULL) {
+        if (self::$_set_names === null) {
             // Determine if we can use mysqli_set_charset(), which is only
             // available on PHP 5.2.3+ when compiled against MySQL 5.0+
-            MySQLi::$_set_names = !function_exists('mysqli_set_charset');
+            self::$_set_names = !function_exists('mysqli_set_charset');
         }
 
         // Extract the connection parameters, adding required variabels
-        $hostname = val('host', $this->_config, 'localhost');
-        $database = val('database', $this->_config);
-        $username = val('username', $this->_config, NULL);
-        $password = val('password', $this->_config, NULL);
-        $socket = val('socket', $this->_config);
-        $port = val('port', $this->_config, 3306);
-        $ssl = val('ssl', $this->_config, NULL);
+        $hostname = $this->_config['host'] ?? 'localhost';
+        $database = $this->_config['database'] ?? null;
+        $username = $this->_config['username'] ?? null;
+        $password = $this->_config['password'] ?? null;
+        $socket = $this->_config['socket'] ?? null;
+        $port = $this->_config['port'] ?? 3306;
+        $ssl = $this->_config['ssl'] ?? null;
 
         try {
             if (is_array($ssl)) {
                 $this->_connection = mysqli_init();
                 $this->_connection->ssl_set(
-                    val('client_key_path', $ssl),
-                    val('client_cert_path', $ssl),
-                    val('ca_cert_path', $ssl),
-                    val('ca_dir_path', $ssl),
-                    val('cipher', $ssl)
+                    $ssl['client_key_path'] ?? null,
+                    $ssl['client_cert_path'] ?? null,
+                    $ssl['ca_cert_path'] ?? null,
+                    $ssl['ca_dir_path'] ?? null,
+                    $ssl['cipher'] ?? null
                 );
                 $this->_connection->real_connect($hostname, $username, $password, $database, $port, $socket, MYSQLI_CLIENT_SSL);
             } else {
-                $this->_connection = new mysqli($hostname, $username, $password, $database, $port, $socket);
+                $this->_connection = new \mysqli($hostname, $username, $password, $database, $port, $socket);
             }
         } catch (\Exception $e) {
             // No connection exists
-            $this->_connection = NULL;
+            $this->_connection = null;
 
-            throw new \Exception($e->getMessage(), $e->getCode());
+            throw new Exception\Database($e->getMessage(), $e->getCode());
         }
 
         // \xFF is a better delimiter, but the PHP driver uses underscore
@@ -78,7 +81,7 @@ class MySQLi extends SQL {
 
         if (!empty($this->_config['variables'])) {
             // Set session variables
-            $variables = array();
+            $variables = [];
 
             foreach ($this->_config['variables'] as $var => $val) {
                 $variables[] = 'SESSION ' . $var . ' = ' . $this->quote($val);
@@ -92,12 +95,13 @@ class MySQLi extends SQL {
     {
         try {
             // Database is assumed disconnected
-            $status = TRUE;
+            $status = true;
 
             if (is_resource($this->_connection)) {
-                if ($status = $this->_connection->close()) {
+                $status = $this->_connection->close();
+                if ($status) {
                     // Clear the connection
-                    $this->_connection = NULL;
+                    $this->_connection = null;
 
                     // Clear the instance
                     parent::disconnect();
@@ -114,14 +118,14 @@ class MySQLi extends SQL {
     /**
      * @param string $charset
      * @throws Exception\Error
-     * @throws \Exception
+     * @throws Exception\Database
      */
     public function set_charset($charset)
     {
         // Make sure the database is connected
         $this->_connection or $this->connect();
 
-        if (self::$_set_names === TRUE) {
+        if (self::$_set_names === true) {
             // PHP is compiled against MySQL 4.x
             $status = (bool)$this->_connection->query('SET NAMES ' . $this->quote($charset));
         } else {
@@ -129,19 +133,19 @@ class MySQLi extends SQL {
             $status = $this->_connection->set_charset($charset);
         }
 
-        if ($status === FALSE) {
+        if ($status === false) {
             throw new Exception\Error($this->_connection->error, $this->_connection->errno);
         }
     }
 
-    public function query($type, $sql, $as_object = FALSE, array $params = NULL)
+    public function query($type, $sql, $asObject = false, array $params = null)
     {
         // Make sure the database is connected
         $this->_connection or $this->connect();
 
         // Execute the query
-        if (($result = $this->_connection->query($sql)) === FALSE) {
-            throw new Exception\Error("{$this->_connection->error} [$sql]", $this->_connection->errno);
+        if (($result = $this->_connection->query($sql)) === false) {
+            throw new Exception\Database("{$this->_connection->error} [$sql]", $this->_connection->errno);
         }
 
         // Set the last query
@@ -149,15 +153,15 @@ class MySQLi extends SQL {
 
         if ($type === Database::SELECT) {
             // Return an iterator of results
-            return new MySQLi\Result($result, $sql, $as_object, $params);
+            return new MySQLi\Result($result, $sql, $asObject, $params);
         }
 
         if ($type === Database::INSERT) {
             // Return a list of insert id and rows created
-            return array(
+            return [
                 $this->_connection->insert_id,
                 $this->_connection->affected_rows,
-            );
+            ];
         }
 
         // Return the number of rows affected
@@ -172,13 +176,13 @@ class MySQLi extends SQL {
      * @param string $mode Isolation level
      * @return boolean
      */
-    public function begin($mode = NULL)
+    public function begin($mode = null)
     {
         // Make sure the database is connected
         $this->_connection or $this->connect();
 
-        if ($mode AND !$this->_connection->query("SET TRANSACTION ISOLATION LEVEL $mode")) {
-            throw new \Exception($this->_connection->error, $this->_connection->errno);
+        if ($mode && !$this->_connection->query("SET TRANSACTION ISOLATION LEVEL $mode")) {
+            throw new Exception\Database($this->_connection->error, $this->_connection->errno);
         }
 
         return (bool)$this->_connection->query('START TRANSACTION');
@@ -215,8 +219,8 @@ class MySQLi extends SQL {
         // Make sure the database is connected
         $this->_connection or $this->connect();
 
-        if (($value = $this->_connection->real_escape_string((string)$value)) === FALSE) {
-            throw new \Exception($this->_connection->error, $this->_connection->errno);
+        if (($value = $this->_connection->real_escape_string((string)$value)) === false) {
+            throw new Exception\Database($this->_connection->error, $this->_connection->errno);
         }
 
         // SQL standard is to use single-quotes for all values

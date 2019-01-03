@@ -1,21 +1,21 @@
 <?php
 
-function smarty_function_head($params, Smarty_Internal_Template $template) {
+function smarty_function_head($params, Smarty_Internal_Template $template)
+{
     $vars = $template->getTemplateVars('gdn');
     $title = $template->getTemplateVars('title');
-    $meta  = \Garden\Helpers\Arr::get('meta', $vars);
-    $sitename = c('main.sitename');
-    $separator = c('main.titleSeparator', '-');
-    
-    $html = "<title>".strip_tags($title.' '.$separator.' '.$sitename)."</title>\n    ";
+    $meta = \Garden\Helpers\Arr::get('meta', $vars);
+    $sitename = \Garden\Config::get('main.sitename');
+    $separator = \Garden\Config::get('main.titleSeparator', '-');
 
-    if(!empty($meta)){
-        $c = count($meta);
+    $html = '<title>' . strip_tags($title . ' ' . $separator . ' ' . $sitename) . "</title>\n    ";
+
+    if (!empty($meta)) {
+        $count = count($meta);
         $i = 0;
-        foreach ($meta as $name => $value) {
+        foreach ($meta as $name => list($content, $http_equiv)) {
             $i++;
-            list($content, $http_equiv) = $value;
-            $html .= '<meta '.($http_equiv ? 'http-equiv' : 'name').'="'.$name.'" content="'.$content.'" />'.($i == $c ? null : "\n    ");
+            $html .= '<meta ' . ($http_equiv ? 'http-equiv' : 'name') . '="' . $name . '" content="' . $content . '" />' . ($i === $count ? null : "\n    ");
         }
     }
 
