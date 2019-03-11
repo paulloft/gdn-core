@@ -10,8 +10,8 @@ use DateTimeZone;
 
 class Date extends \DateTime {
 
-    const FORMAT_SQL = 'd-m-Y H:i:s';
-    const FORMAT_SQL_DATE = '%D-%M-%Y';
+    const FORMAT_SQL = 'Y-m-d H:i:s';
+    const FORMAT_SQL_DATE = '%Y-%M-%D';
     const FORMAT_DATE = '%D.%M.%Y';
     const FORMAT_DATE_TIME = 'd.m.Y H:i';
     const FORMAT_DATE_TIME_SEC = 'd.m.Y H:i:s';
