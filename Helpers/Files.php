@@ -52,6 +52,6 @@ class Files {
             return $result;
         };
 
-        return $func($variables, $path);
+        return $func($path, $variables);
     }
 }

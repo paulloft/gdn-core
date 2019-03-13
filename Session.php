@@ -3,6 +3,7 @@ namespace Garden;
 
 use Garden\Helpers\Date;
 use Garden\Helpers\Text;
+use Garden\Db\DB;
 
 /**
  * @author PaulLoft <info@paulloft.ru>

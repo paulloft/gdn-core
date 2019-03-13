@@ -9,6 +9,7 @@ namespace Garden;
 
 use Garden\Exception;
 use Garden\Helpers\Arr;
+use Garden\Helpers\Files;
 
 /**
  * Contains functionality that allows addons to enhance or change an application's functionality.
@@ -470,7 +471,7 @@ class Addons
         // Run the class' bootstrap.
         $bootstrapPath = val(self::K_BOOTSTRAP, $addon);
         if ($bootstrapPath) {
-            include_once $bootstrapPath;
+            Files::getInclude($bootstrapPath);
         }
 
         return true;

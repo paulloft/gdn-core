@@ -258,7 +258,7 @@ abstract class Structure {
             }
 
             if ($tablename !== '') {
-                $tables = $this->database->list_tables($this->_prefix . $tablename);
+                $tables = $this->database->listTables($this->_prefix . $tablename);
                 $result = count($tables) > 0;
             } else {
                 $result = false;
@@ -536,7 +536,7 @@ abstract class Structure {
 
     protected function getColumns($table)
     {
-        $columns = $this->database->list_columns($table);
+        $columns = $this->database->listColumns($table);
 
         $result = [];
         foreach ($columns as $name => $column) {

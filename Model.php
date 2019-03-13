@@ -2,6 +2,7 @@
 namespace Garden;
 
 use Garden\Helpers\Date;
+use Garden\Db\DB;
 
 /**
  * Model base class
@@ -135,7 +136,7 @@ class Model {
      */
     public function getID($id)
     {
-        $query = DB::select_array($this->_select)
+        $query = DB::selectArray($this->_select)
             ->from($this->table)
             ->where($this->primaryKey, '=', $id)
             ->limit(1);
@@ -167,7 +168,7 @@ class Model {
      */
     public function getWhere(array $where = [], array $order = [], $limit = 0, $offset = 0)
     {
-        $this->_query = DB::select_array($this->_select)->from($this->table);
+        $this->_query = DB::selectArray($this->_select)->from($this->table);
 
         $this->_where($where);
 
@@ -575,7 +576,7 @@ class Model {
         $result = Gdn::cache()->get($cacheKey);
 
         if (!$result) {
-            $result = Gdn::database()->list_columns($this->table);
+            $result = Gdn::database()->listColumns($this->table);
             Gdn::cache()->set($cacheKey, $result);
         }
 
