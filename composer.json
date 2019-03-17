@@ -25,11 +25,11 @@
 		"php": ">=7.0",
 		"ext-json": "*",
 		"ext-mbstring": "*",
+		"ext-PDO": "*",
+		"ext-pdo_mysql": "*",
 		"ext-Reflection": "*",
-		"ext-fileinfo": "*",
 		"lib-pcre": "*",
-		"kuria/error": "^0.2.0",
-		"paulloft/gdn-db": "*",
+		"kuria/error": "^0.2.0"
 	},
 	"autoload": {
 		"psr-4": {
