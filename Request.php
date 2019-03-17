@@ -227,7 +227,7 @@ class Request implements JsonSerializable {
         $env['QUERY'] = $_GET;
 
         // SERVER_NAME.
-        $host = Arr::select(['HTTP_X_FORWARDED_HOST', 'HTTP_HOST', 'SERVER_NAME'], $_SERVER);
+        $host = Arr::select($_SERVER, ['HTTP_X_FORWARDED_HOST', 'HTTP_HOST', 'SERVER_NAME']);
         list($host) = explode(':', $host, 2);
         $env['SERVER_NAME'] = $host;
 
@@ -241,10 +241,10 @@ class Request implements JsonSerializable {
             $url_scheme = 'https';
         }
 
-        $url_scheme = Arr::select([
+        $url_scheme = Arr::select($_SERVER, [
             'HTTP_X_ORIGINALLY_FORWARDED_PROTO', // varnish modifies the scheme
             'HTTP_X_FORWARDED_PROTO' // load balancer-originated (and terminated) ssl
-        ], $_SERVER, $url_scheme);
+        ], $url_scheme);
         $env['URL_SCHEME'] = $url_scheme;
 
         // SERVER_PORT.
@@ -266,9 +266,7 @@ class Request implements JsonSerializable {
         // IP Address.
         // Load balancers set a different ip address.
         $ip = Arr::select(
-            ['HTTP_X_ORIGINALLY_FORWARDED_FOR', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'],
-            $_SERVER,
-            '127.0.0.1'
+            $_SERVER, ['HTTP_X_ORIGINALLY_FORWARDED_FOR', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'], '127.0.0.1'
         );
         $env['REMOTE_ADDR'] = Text::ipv4($ip);
         $env['COOKIE'] = $_COOKIE;
@@ -712,7 +710,7 @@ class Request implements JsonSerializable {
         $fullPath = '/' . ltrim($fullPath, '/');
 
         // Try stripping the root out of the path first.
-        $root = (string)$this->getRoot();
+        $root = $this->getRoot();
 
         if ($root &&
             strpos($fullPath, $root) === 0 &&

@@ -305,7 +305,7 @@ class Form {
             $post = $this->getFormValues();
 
             if ($this->model && $this->model instanceof Model) {
-                $id = Arr::extract($this->model->getPrimaryKey(), $post);
+                $id = Arr::extract($post, $this->model->getPrimaryKey());
                 $post = $this->fixPostData($post);
                 try {
                     $result = $this->model->save($post, $id);
@@ -391,8 +391,8 @@ class Form {
     {
         $return = '<form ';
         $currentPath = Gdn::request()->getPath();
-        Arr::touch('action', $attributes, $currentPath);
-        Arr::touch('method', $attributes, $this->method);
+        Arr::touch($attributes, 'action', $currentPath);
+        Arr::touch($attributes, 'method', $this->method);
         $this->method = val('method', $attributes);
 
         $return .= $this->attrToString($attributes);
@@ -436,7 +436,7 @@ class Form {
     public function input($name, $type = 'text', array $attributes = [])
     {
         if ($type !== 'radio' && $type !== 'checkbox' && $type !== 'hidden') {
-            Arr::touch('class', $attributes, $this->inputClass);
+            Arr::touch($attributes, 'class', $this->inputClass);
         }
 
         $inputValue = val('value', $attributes);
@@ -449,7 +449,7 @@ class Form {
             $value = $this->getValue($correctName);
             $checked = \is_array($value) ? in_array($inputValue, $value) : (string)$inputValue == (string)$value;
             if ($inputValue !== false && $checked) {
-                Arr::touch('checked', $attributes, 'checked');
+                Arr::touch($attributes, 'checked', 'checked');
             }
         } else {
             $attributes['value'] = $this->_value($correctName, $inputValue);
@@ -468,8 +468,8 @@ class Form {
      */
     public function textarea($name, array $attributes = [])
     {
-        Arr::touch('class', $attributes, $this->inputClass);
-        Arr::touch('rows', $attributes, '5');
+        Arr::touch($attributes, 'class', $this->inputClass);
+        Arr::touch($attributes, 'rows', '5');
 
         $attributes['name'] = $name;
         $value = val('value', $attributes);
@@ -493,8 +493,8 @@ class Form {
      */
     public function checkbox($name, array $attributes = [])
     {
-        Arr::touch('value', $attributes, 1);
-        $defaultValue = Arr::extract('defaultValue', $attributes, null);
+        Arr::touch($attributes, 'value', 1);
+        $defaultValue = Arr::extract($attributes, 'defaultValue', null);
 
         $html = '<input type="hidden" name="' . $name . '" value="' . $defaultValue . '" />';
         $html .= $this->input($name, 'checkbox', $attributes);
@@ -522,13 +522,13 @@ class Form {
      */
     public function select($name, array $options = [], array $attributes = [])
     {
-        Arr::touch('class', $attributes, $this->inputClass);
+        Arr::touch($attributes, 'class', $this->inputClass);
         $attributes['name'] = $name;
 
-        $defaultName = Arr::extract('default_name', $attributes);
-        $defaultValue = Arr::extract('default_value', $attributes);
-        $keyValue = Arr::extract('key_value', $attributes);
-        $keyName = Arr::extract('key_name', $attributes);
+        $defaultName = Arr::extract($attributes, 'default_name');
+        $defaultValue = Arr::extract($attributes, 'default_value');
+        $keyValue = Arr::extract($attributes, 'key_value');
+        $keyName = Arr::extract($attributes, 'key_name');
 
         $html = '<select ' . $this->attrToString($attributes) . '>';
 

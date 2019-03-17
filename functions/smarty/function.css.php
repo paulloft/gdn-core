@@ -2,7 +2,7 @@
 
 function smarty_function_css($Params, Smarty_Internal_Template $template)
 {
-    $css = \Garden\Helpers\Arr::get('css', $template->getTemplateVars('gdn'));
+    $css = \Garden\Helpers\Arr::get($template->getTemplateVars('gdn'), 'css');
 
     if(empty($css)) {
         return false;

@@ -4,7 +4,7 @@ function smarty_function_head($params, Smarty_Internal_Template $template)
 {
     $vars = $template->getTemplateVars('gdn');
     $title = $template->getTemplateVars('title');
-    $meta = \Garden\Helpers\Arr::get('meta', $vars);
+    $meta = \Garden\Helpers\Arr::get($vars, 'meta');
     $sitename = \Garden\Config::get('main.sitename');
     $separator = \Garden\Config::get('main.titleSeparator', '-');
 

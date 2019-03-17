@@ -2,7 +2,7 @@
 
 function smarty_function_javascript($Params, Smarty_Internal_Template $template)
 {
-    $js = \Garden\Helpers\Arr::get('js', $template->getTemplateVars('gdn'));
+    $js = \Garden\Helpers\Arr::get($template->getTemplateVars('gdn'), 'js');
 
     if (empty($js)) {
         return false;

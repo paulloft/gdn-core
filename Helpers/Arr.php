@@ -104,18 +104,13 @@ class Arr {
     /**
      * Save an array of data to a specified path.
      *
-     * @param array $data The data to save.
+     * @param array $array The data to save.
      * @param string $path The path to save to.
      * @param string $php_var The name of the php variable to load from if using the php file type.
      * @return bool Returns true if the save was successful or false otherwise.
-     * @throws \InvalidArgumentException Throws an exception when the file type isn't supported.
      */
-    public static function save($data, $path): bool
+    public static function save(array $array, $path): bool
     {
-        if (!is_array($data)) {
-            throw new \InvalidArgumentException('Config::saveArray(): Argument #1 is not an array.', 500);
-        }
-
         // Get the extension of the file, but allow for .ini.php, .json.php etc.
         $ext = strstr(basename($path), '.');
 
@@ -123,24 +118,24 @@ class Arr {
             case '.json':
             case '.json.php':
                 if (defined('JSON_PRETTY_PRINT')) {
-                    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                    $json = json_encode($array, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
                 } else {
-                    $json = json_encode($data);
+                    $json = json_encode($array);
                 }
                 $result = file_put_contents($path, $json, LOCK_EX);
                 break;
             case '.php':
-                $php = "<?php\nreturn " . self::export($data) . ';';
+                $php = "<?php\nreturn " . self::export($array) . ';';
                 $result = file_put_contents($path, $php, LOCK_EX);
                 break;
             case '.ser':
             case '.ser.php':
-                $ser = serialize($data);
+                $ser = serialize($array);
                 $result = file_put_contents($path, $ser, LOCK_EX);
                 break;
             case '.yml':
             case '.yml.php':
-                $yml = yaml_emit($data, YAML_UTF8_ENCODING, YAML_LN_BREAK);
+                $yml = yaml_emit($array, YAML_UTF8_ENCODING, YAML_LN_BREAK);
                 $result = file_put_contents($path, $yml, LOCK_EX);
                 break;
             default:
@@ -171,13 +166,13 @@ class Arr {
     /**
      * Select the first non-empty value from an array.
      *
-     * @param array $keys An array of keys to try.
      * @param array $array The array to select from.
+     * @param array $keys An array of keys to try.
      * @param mixed $default The default value if non of the keys exist.
      * @return mixed Returns the first non-empty value of {@link $default} if none are found.
      * @category Array Functions
      */
-    public static function select(array $keys, array $array, $default = null)
+    public static function select(array $array, array $keys, $default = null)
     {
         foreach ($keys as $key) {
             if (isset($array[$key]) && $array[$key]) {
@@ -190,12 +185,12 @@ class Arr {
     /**
      * Make sure that a key exists in an array.
      *
-     * @param string|int $key The array key to ensure.
      * @param array &$array The array to modify.
+     * @param string|int $key The array key to ensure.
      * @param mixed $default The default value to set if key does not exist.
      * @category Array Functions
      */
-    public static function touch($key, array &$array, $default)
+    public static function touch(array &$array, $key, $default)
     {
         if (!array_key_exists($key, $array)) {
             $array[$key] = $default;
@@ -260,7 +255,7 @@ class Arr {
      * @param mixed $default
      * @return mixed
      */
-    public static function extract($key, array &$array, $default = null)
+    public static function extract(array &$array, $key, $default = null)
     {
         $result = $array[$key] ?? $default;
         unset($array[$key]);
@@ -270,12 +265,12 @@ class Arr {
 
     /**
      * Safely get a value out of an array
-     * @param $key
      * @param array $array
+     * @param $key
      * @param null $default
      * @return mixed|null
      */
-    public static function get($key, array $array, $default = null)
+    public static function get(array $array, $key, $default = null)
     {
         return $array[$key] ?? $default;
     }
@@ -283,14 +278,14 @@ class Arr {
     /**
      * Return the value from an associative array.
      * This function differs from get() in that $key can be an array that will be used to walk a nested array.
-     * @param string $path The keys or property names of the value. This can be an array or dot-seperated string.
      * @param array $array The array or object to search.
+     * @param string $path The keys or property names of the value. This can be an array or dot-seperated string.
      * @param mixed $default The value to return if the key does not exist.
      * @param string $delimiter
      * @return mixed The value from the array.
      * @category Array Functions
      */
-    public static function path(string $path, array $array, $default = null, string $delimiter = '.')
+    public static function path(array $array, string $path, $default = null, string $delimiter = '.')
     {
         if (array_key_exists($path, $array)) {
             return $array[$path];

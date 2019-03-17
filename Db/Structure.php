@@ -2,10 +2,10 @@
 
 namespace Garden\Db;
 
-use \Garden\Exception;
-use \Garden\Db\Database;
-use \Garden\Gdn;
+use Garden\Exception;
+use Garden\Gdn;
 use Garden\Helpers\Arr;
+use Garden\Helpers\Object;
 
 /**
  * Database Structure tools
@@ -101,7 +101,7 @@ abstract class Structure {
     public function primary($name, $type = 'int(10)')
     {
         $column = $this->createColumn($name, $type, false, null, 'primary');
-        $dataType = Arr::get('type', $this->dataType($column));
+        $dataType = Arr::get($this->dataType($column), 'type');
 
         if ($dataType === 'int') {
             $column->autoIncrement = true;
@@ -135,8 +135,8 @@ abstract class Structure {
             $null = false;
             $default = null;
         } elseif (is_array($nullDefault)) {
-            $null = Arr::get('null', $nullDefault);
-            $default = Arr::get('default', $nullDefault);
+            $null = Arr::get($nullDefault, 'null');
+            $default = Arr::get($nullDefault, 'default');
         } else {
             $null = false;
             $default = $nullDefault;
@@ -366,9 +366,9 @@ abstract class Structure {
             $column = $this->_columns[$column];
         }
 
-        $type = Arr::get('type', $column);
-        $length = Arr::get('length', $column);
-        $precision = Arr::get('precision', $column);
+        $type = Arr::get($column, 'type');
+        $length = Arr::get($column, 'length');
+        $precision = Arr::get($column, 'precision');
 
         if (in_array(strtolower($type), ['tinyint', 'smallint', 'mediumint', 'int', 'float', 'double'])) {
             $length = null;
@@ -379,7 +379,7 @@ abstract class Structure {
         } elseif ($type && $length) {
             $result = "$type($length)";
         } elseif (strtolower($type) === 'enum') {
-            $result = Arr::get('enum', $column, []);
+            $result = Arr::get($column, 'enum', []);
         } elseif ($type) {
             $result = $type;
         } else {
@@ -498,7 +498,7 @@ abstract class Structure {
 
         // Handle enums and sets as types.
         if (is_array($type)) {
-            if (count($type) === 2 && is_array(Arr::get(1, $type))) {
+            if (count($type) === 2 && is_array(Arr::get($type, 1))) {
                 // The type is specified as the first element in the array.
                 $column->type = $type[0];
                 $column->enum = $type[1];
@@ -547,7 +547,7 @@ abstract class Structure {
             $obj->type = $column->dataType;
             $obj->length = $column->length;
             $obj->precision = '';
-            $obj->enum = Arr::get('options', $column);
+            $obj->enum = Object::val($column, 'options');
             $obj->allowNull = $column->allowNull;
             $obj->default = $column->default;
             $obj->keyType = $this->getKeyType($column->key);

@@ -9,7 +9,6 @@ namespace Garden;
 
 use Garden\Exception;
 use Garden\Helpers\Arr;
-use Garden\Helpers\Files;
 
 /**
  * Contains functionality that allows addons to enhance or change an application's functionality.
@@ -335,8 +334,8 @@ class Addons
             $info = [];
         }
 
-        Arr::touch('name', $info, $addon_key);
-        Arr::touch('version', $info, '0.0');
+        Arr::touch($info, 'name', $addon_key);
+        Arr::touch($info, 'version', '0.0');
 
         $bootstrap = self::checkFile($settings, self::K_BOOTSTRAP);
         $config = self::checkFile($settings, self::K_CONFIG);
@@ -471,7 +470,7 @@ class Addons
         // Run the class' bootstrap.
         $bootstrapPath = val(self::K_BOOTSTRAP, $addon);
         if ($bootstrapPath) {
-            Files::getInclude($bootstrapPath);
+            include_once $bootstrapPath;
         }
 
         return true;

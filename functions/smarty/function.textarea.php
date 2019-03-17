@@ -8,7 +8,7 @@ function smarty_function_textarea($params, Smarty_Internal_Template $template)
         return '<div class="alert alert-danger">' . \Garden\Translate::get('Form class not initialized') . '</div>';
     }
 
-    $name = \Garden\Helpers\Arr::extract('name', $params);
+    $name = \Garden\Helpers\Arr::extract($params, 'name');
 
     return $form->textarea($name, $params);
 }

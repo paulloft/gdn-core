@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden;
 
 use Garden\Helpers\Date;
@@ -6,7 +7,6 @@ use Garden\Db\DB;
 
 /**
  * Model base class
- *
  *
  * @author PaulLoft <info@paulloft.ru>
  * @copyright 2014 Paulloft
@@ -30,11 +30,11 @@ class Model {
     public $resultObject = false;
 
     /**
-     * @var Db\Database\Query\Builder\Select
+     * @var \Garden\Db\Database\Query\Builder\Select
      */
     protected $_query;
     protected $_select = ['*'];
-    protected $_allowedFields = [];
+    protected $_allowedFields;
 
     private $_insertFields = [];
     private $_updateFields = [];
@@ -46,10 +46,10 @@ class Model {
      */
     protected $_validation;
 
-    public $fieldDateInserted = 'dateInserted';
-    public $fieldDateUpdated  = 'dateUpdated';
-    public $fieldUserUpdated  = 'userUpdated';
-    public $fieldUserInserted = 'userInserted';
+    public $fieldCreatedDate = 'created_at';
+    public $fieldUpdatedDate = 'updated_at';
+    public $fieldCreatedUser = 'created_by';
+    public $fieldUpdatedUser = 'updated_by';
 
     public $DBinstance;
     public $triggers = true;
@@ -60,7 +60,8 @@ class Model {
      * Returns the application singleton or null if the singleton has not been created yet.
      * @return $this
      */
-    public static function instance($table = null, $primaryKey = null) {
+    public static function instance($table = null, $primaryKey = null)
+    {
         $class_name = get_called_class();
 
         $instance = $class_name === self::class && $table ? $table : $class_name;
@@ -86,9 +87,7 @@ class Model {
             $this->setPrimaryKey($primaryKey);
         }
 
-        if (Gdn::authLoaded()) {
-            $this->userID = val('id', Gdn::auth()->user);
-        }
+        $this->userID = Request::current()->getEnvKey('USER_ID');
 
         $this->setFields($this->allowedFields);
     }
@@ -150,7 +149,7 @@ class Model {
      * @param array $order Array('order' => 'direction')
      * @param int $limit
      * @param int $offset
-     * @return Db\Database\Result
+     * @return \Garden\Db\Database\Result
      */
     public function get(array $order = [], $limit = 0, $offset = 0)
     {
@@ -164,7 +163,7 @@ class Model {
      * @param array $order Array('order' => 'direction')
      * @param int $limit
      * @param int $offset
-     * @return Db\Database\Result
+     * @return \Garden\Db\Database\Result
      */
     public function getWhere(array $where = [], array $order = [], $limit = 0, $offset = 0)
     {
@@ -208,7 +207,7 @@ class Model {
      */
     public function setFields(array $fields)
     {
-        $this->_allowedFields[$this->table] = $fields;
+        $this->_allowedFields = $fields;
     }
 
     /**
@@ -218,7 +217,7 @@ class Model {
      */
     public function getAllowedFields()
     {
-        return val($this->table, $this->_allowedFields, []);
+        return $this->_allowedFields ?? $this->getTableFields();
     }
 
     /**
@@ -242,7 +241,7 @@ class Model {
             ->values($data)
             ->execute($this->DBinstance);
 
-        $id = val(0, $query);
+        list($id) = $query;
 
         if ($this->triggers) {
             Event::fire('gdn_model_insert', $this, $id, $data);
@@ -283,22 +282,22 @@ class Model {
      * Update record by filter
      *
      * @param array $where Array('field' => 'value')
-     * @param array $data POST data\
+     * @param array $fields POST data
      * @return int number of rows affected
      */
-    public function updateWhere(array $where, array $data)
+    public function updateWhere(array $fields, array $where)
     {
-        $data = $this->updateDefaultFields($data);
-        $data = $this->fixPostData($data);
+        $fields = $this->updateDefaultFields($fields);
+        $fields = $this->fixPostData($fields);
 
-        $this->_query = DB::update($this->table)->set($data);
+        $this->_query = DB::update($this->table)->set($fields);
 
         $this->_where($where);
 
         $rows = $this->_query->execute($this->DBinstance);
 
         if ($this->triggers) {
-            Event::fire('gdn_model_updateWhere', $this, $where, $data);
+            Event::fire('gdn_model_updateWhere', $this, $where, $fields);
         }
 
         return (int)$rows;
@@ -333,8 +332,8 @@ class Model {
      */
     public function fixPostData(array $post)
     {
-        $fields = $this->getAllowedFields() ?: $this->getTableFields();
-        $post = $this->checkArray($post, $fields);
+        $allowedFields = $this->getAllowedFields();
+        $post = array_intersect_key($post, array_flip($allowedFields));
         $post = $this->setNullValues($post);
 
         return $post;
@@ -352,11 +351,7 @@ class Model {
 
         if (!$result) {
             $structure = $this->getStructure();
-
-            $result = [];
-            foreach ($structure as $col) {
-                $result[] = val('name', $col);
-            }
+            $result = array_column($structure, 'name');
 
             Gdn::cache()->set($cacheKey, $result);
         }
@@ -416,7 +411,7 @@ class Model {
      * enqueues addition data
      * @param array $fields array fields
      */
-    public function insert_queue(array $fields = [])
+    public function queueInsert(array $fields = [])
     {
         $fields = $this->insertDefaultFields($fields);
         $fields = $this->fixPostData($fields);
@@ -430,7 +425,7 @@ class Model {
      * @param array $where
      * @param array $fields
      */
-    public function update_queue(array $where = [], array $fields)
+    public function queueUpdate(array $fields, array $where = [])
     {
         $fields = $this->updateDefaultFields($fields);
         $fields = $this->fixPostData($fields);
@@ -442,9 +437,8 @@ class Model {
     /**
      * enqueues insert or update data
      * @param array $fields
-     * @param array $where
      */
-    public function insupd_queue(array $fields)
+    public function queueInsertOrUpdate(array $fields)
     {
         $fields = $this->updateDefaultFields($fields);
         $fields = $this->fixPostData($fields);
@@ -457,7 +451,7 @@ class Model {
      * enqueues delete data
      * @param array $where
      */
-    public function delete_queue(array $where)
+    public function queueDelete(array $where)
     {
         if (!empty($where)) {
             $this->_deleteFields[] = $where;
@@ -469,16 +463,14 @@ class Model {
      *
      * @param string $table
      */
-    public function start_queue($table = false)
+    public function queueStart($table = null)
     {
         $sql = '';
-        $table = $table ?: $this->table;
+        $table = $table ?? $this->table;
 
         foreach ($this->_updateFields as $update) {
-            $fields = val('fields', $update);
-            $where = val('where', $update);
-            $this->_query = DB::update($table)->set($fields);
-            $this->_where($where);
+            $this->_query = DB::update($table)->set($update['fields']);
+            $this->_where($update['where']);
             $sql .= $this->_query->compile() . ";\n";
         }
 
@@ -507,7 +499,9 @@ class Model {
 
         DB::query(null, $sql)->execute($this->DBinstance);
 
-        $this->_updateFields = $this->_insertFields = $this->_deleteFields = [];
+        $this->_updateFields = [];
+        $this->_insertFields = [];
+        $this->_deleteFields = [];
     }
 
     /**
@@ -527,26 +521,6 @@ class Model {
         return (bool)$query->execute($this->DBinstance, $this->resultObject)->get('total_count');
     }
 
-    /**
-     * Converting date fields to sql format
-     * @param array $post
-     * @param array $fields
-     * @return array converted post data
-     */
-    public function convertPostDate($post, array $fields)
-    {
-         foreach ($fields as $field) {
-            $value = val($field, $post);
-
-            if ($value !== false) {
-                $new = Date::create($value)->toSql('sql');
-                $post[$field] = $new ?: null;
-            }
-        }
-
-        return $post;
-    }
-
     protected function initValidation()
     {
         return new Validation($this);
@@ -564,7 +538,9 @@ class Model {
         return $this->_validation;
     }
 
-    public function initFormValidation(Form $form){}
+    public function initFormValidation(Form $form)
+    {
+    }
 
     /**
      * Get table columns
@@ -585,15 +561,16 @@ class Model {
 
 
     protected static $nullTypes = ['int', 'tinyint', 'bigint', 'float', 'datetime', 'date', 'time'];
+
     protected function setNullValues(array $post)
     {
         $structure = $this->getStructure();
 
         foreach ($post as $field => $value) {
-            $type = valr($field.'.dataType', $structure);
-            $default = valr($field.'.default', $structure);
-            $allowNull = valr($field.'.allowNull', $structure);
-            if ($allowNull && $value === '' && in_array($type, self::$nullTypes)) {
+            $type = valr($field . '.dataType', $structure);
+            $default = valr($field . '.default', $structure);
+            $allowNull = valr($field . '.allowNull', $structure);
+            if ($allowNull && $value === '' && \in_array($type, self::$nullTypes, true)) {
                 $post[$field] = $default ?: null;
             }
         }
@@ -603,12 +580,12 @@ class Model {
 
     protected function insertDefaultFields(array $data)
     {
-        if (!val($this->fieldDateInserted, $data)) {
-            $data[$this->fieldDateInserted] = DB::expr('now()');
+        if (!isset($data[$this->fieldCreatedDate])) {
+            $data[$this->fieldCreatedDate] = DB::expr('now()');
         }
 
-        if (!val($this->fieldUserInserted, $data)) {
-            $data[$this->fieldUserInserted] = $this->userID;
+        if (!isset($data[$this->fieldCreatedUser])) {
+            $data[$this->fieldCreatedUser] = $this->userID;
         }
 
         return $data;
@@ -616,12 +593,12 @@ class Model {
 
     protected function updateDefaultFields(array $data)
     {
-        if (!val($this->fieldDateUpdated, $data)) {
-            $data[$this->fieldDateUpdated] = DB::expr('now()');
+        if (!isset($data[$this->fieldUpdatedDate])) {
+            $data[$this->fieldUpdatedDate] = DB::expr('now()');
         }
 
-        if (!val($this->fieldUserUpdated, $data)) {
-            $data[$this->fieldUserUpdated] = $this->userID;
+        if (!isset($data[$this->fieldUpdatedUser])) {
+            $data[$this->fieldUpdatedUser] = $this->userID;
         }
 
         return $data;
@@ -629,42 +606,23 @@ class Model {
 
     protected function _where($field, $value = null, $alias = null)
     {
-        if (!is_array($field)) {
+        if (!\is_array($field)) {
             $field = [$field => $value];
         }
 
         foreach ($field as $subField => $subValue) {
-            if (is_array($subValue) && empty($subValue)) {
+            if (\is_array($subValue) && empty($subValue)) {
                 continue;
             }
 
             if ($alias && !strpos($subField, '.')) {
-                $subField = $alias.'.'.$subField;
+                $subField = $alias . '.' . $subField;
             }
 
             $expr = $this->conditionExpr($subField, $subValue);
             $this->_query->where($expr[0], $expr[1], $expr[2]);
         }
         return $this;
-    }
-
-    /**
-     * Clears the $array of extra
-     *
-     * @param array $array
-     * @param array $fields POST data
-     * @return array fixed array
-     */
-    protected function checkArray(array $array, $fields)
-    {
-        $result = [];
-        foreach ($array as $key => $value) {
-            if (in_array($key, $fields)) {
-                $result[$key] = $value;
-            }
-        }
-
-        return $result;
     }
 
     /**
@@ -679,23 +637,23 @@ class Model {
         $fieldOpRegex = "/(?:\s*(=|!=|<>|>|<|>=|<=)\s*$)|\s+(like|not\s+like)\s*$|\s+(?:(is)(\s+null)?|(is\s+not)(\s+null)?|(not\s+in))\s*$/i";
         $split = preg_split($fieldOpRegex, $field, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
 
-        if (count($split) > 1) {
+        if (\count($split) > 1) {
             list($field, $op) = $split;
 
-            if (count($split) > 2) {
+            if (\count($split) > 2) {
                 $value = null;
             }
         } else {
             $op = '=';
         }
 
-        if ($op == '=' && $value === null) {
+        if ($op === '=' && $value === null) {
             // this is a special case where the value sql is checking for an is null operation.
             $op = 'is';
             $value = null;
         }
 
-        if ($op != 'not in' && is_array($value)) {
+        if ($op !== 'not in' && \is_array($value)) {
             $op = 'in';
         }
 

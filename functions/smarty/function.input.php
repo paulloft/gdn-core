@@ -8,8 +8,8 @@ function smarty_function_input($params, Smarty_Internal_Template $template)
         return '<div class="alert alert-danger">' . \Garden\Translate::get('Form class not initialized') . '</div>';
     }
 
-    $name = \Garden\Helpers\Arr::extract('name', $params);
-    $type = \Garden\Helpers\Arr::extract('type', $params);
+    $name = \Garden\Helpers\Arr::extract($params, 'name');
+    $type = \Garden\Helpers\Arr::extract($params, 'type');
 
     return $form->input($name, $type, $params);
 }

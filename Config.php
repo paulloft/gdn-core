@@ -35,7 +35,7 @@ class Config {
      */
     public static function get(string $key, $default = null)
     {
-        return Arr::path($key, self::$data, $default);
+        return Arr::path(self::$data, $key, $default);
     }
 
     /**

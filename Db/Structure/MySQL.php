@@ -3,8 +3,8 @@
 namespace Garden\Db\Structure;
 
 use Garden\Config;
-use \Garden\Exception;
-use \Garden\Db\Database;
+use Garden\Exception;
+use Garden\Db\Database;
 use Garden\Helpers\Arr;
 use Garden\Helpers\Text;
 
@@ -82,8 +82,8 @@ class MySQL extends \Garden\Db\Structure {
 
         // Get the schema for this table
         $schema = $this->getColumns($this->_table);
-        $oldColumn = Arr::get($oldname, $schema);
-        $newColumn = Arr::get($newname, $schema);
+        $oldColumn = Arr::get($schema, $oldname);
+        $newColumn = Arr::get($schema, $newname);
 
         // Make sure that one column, or the other exists
         if (!$oldColumn && !$newColumn) {
@@ -220,7 +220,7 @@ class MySQL extends \Garden\Db\Structure {
             if (!isset($existingColumns[$columnName])) {
 
                 // This column name is not in the existing column collection, so add the column
-                $addColumnSql = 'add ' . $this->defineColumn(Arr::get($columnName, $this->_columns));
+                $addColumnSql = 'add ' . $this->defineColumn(Arr::get($this->_columns, $columnName));
                 if ($prevColumnName !== false) {
                     $addColumnSql .= " after `$prevColumnName`";
                 } else {
@@ -238,7 +238,7 @@ class MySQL extends \Garden\Db\Structure {
 
                 if ($existingColumnDef !== $columnDef) {
                     // The existing & new column types do not match, so modify the column.
-                    $alterSql[] = $comment . 'change `' . $columnName . '` ' . $this->defineColumn(Arr::get($columnName, $this->_columns));
+                    $alterSql[] = $comment . 'change `' . $columnName . '` ' . $this->defineColumn(Arr::get($this->_columns, $columnName));
                     // Check for a modification from an enum to an int.
                     if (strcasecmp($existingColumn->type, 'enum') === 0 && in_array(strtolower($column->type), $this->types('int'))) {
                         $sql = "UPDATE `$px{$this->_table}` SET `$columnName` = case `$columnName`";
@@ -347,7 +347,7 @@ class MySQL extends \Garden\Db\Structure {
             foreach ($columnKeyTypes as $columnKeyType) {
                 $keyTypeParts = explode('.', $columnKeyType, 2);
                 $columnKeyType = $keyTypeParts[0];
-                $indexGroup = Arr::get(1, $keyTypeParts, '');
+                $indexGroup = Arr::get($keyTypeParts, 1, '');
 
                 if ($columnKeyType === 'primary' && !$column->autoIncrement) {
                     $primaryKey[] = $columnName;
@@ -376,7 +376,7 @@ class MySQL extends \Garden\Db\Structure {
         }
         // Build the rest of the keys.
         foreach ($indexes as $indexType => $indexGroups) {
-            $createString = Arr::get($indexType, ['FK' => 'key', 'IX' => 'index']);
+            $createString = Arr::get(['FK' => 'key', 'IX' => 'index'], $indexType);
             foreach ($indexGroups as $indexGroup => $columnNames) {
                 if (!$indexGroup) {
                     foreach ($columnNames as $columnName) {
@@ -449,7 +449,7 @@ class MySQL extends \Garden\Db\Structure {
             foreach ($columnKeyTypes as $columnKeyType) {
                 $parts = explode('.', $columnKeyType, 2);
                 $columnKeyType = $parts[0];
-                $indexGroup = Arr::get(1, $parts, '');
+                $indexGroup = Arr::get($parts, 1, '');
 
                 if (!$columnKeyType || ($keyType && $keyType !== $columnKeyType)) {
                     continue;
@@ -470,7 +470,7 @@ class MySQL extends \Garden\Db\Structure {
 
         // Make the multi-column keys into sql statements.
         foreach ($indexes as $columnKeyType => $indexGroups) {
-            $createType = Arr::get($columnKeyType, self::$columnTypes);
+            $createType = Arr::get(self::$columnTypes, $columnKeyType);
 
             if ($columnKeyType === 'primary') {
                 $result['PRIMARY'] = 'primary key (`' . implode('`, `', $indexGroups['']) . '`)';
@@ -534,7 +534,7 @@ class MySQL extends \Garden\Db\Structure {
 
                         break;
                 }
-                $column = Arr::get($row->Column_name, $this->_columns);
+                $column = Arr::get($this->_columns, $row->Column_name);
 
                 if (!$column) {
                     continue;

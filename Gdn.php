@@ -1,6 +1,8 @@
 <?php
 namespace Garden;
 
+use Addons\Dashboard\Models\Session;
+
 /**
  * Framework superobject
  *
@@ -52,14 +54,6 @@ class Gdn {
     }
 
     /**
-     * @return Session
-     */
-    public static function session()
-    {
-        return Session::instance();
-    }
-
-    /**
      * @return Response
      */
     public static function response()
@@ -97,14 +91,6 @@ class Gdn {
     public static function users()
     {
         return \Addons\Dashboard\Models\Users::instance();
-    }
-
-    /**
-     * @return bool
-     */
-    public static function authLoaded()
-    {
-        return class_exists('Addons\\Dashboard\\Models\\Auth') ? \Addons\Dashboard\Models\Auth::loaded() : false;
     }
 
 }
