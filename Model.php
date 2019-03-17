@@ -2,7 +2,6 @@
 
 namespace Garden;
 
-use Garden\Helpers\Date;
 use Garden\Db\DB;
 
 /**
@@ -88,8 +87,6 @@ class Model {
         }
 
         $this->userID = Request::current()->getEnvKey('USER_ID');
-
-        $this->setFields($this->allowedFields);
     }
 
     /**
