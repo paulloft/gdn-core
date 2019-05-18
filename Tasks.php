@@ -28,9 +28,9 @@ class Tasks
     {
         $config = Config::get('tasks');
 
-        ini_set('memory_limit', val('memorylimit', $config, '256M'));
-        set_time_limit(val('timelimit', $config, 15 * 60));
-        $this->lockfile = val('lockfile', $config, GDN_CACHE . '/.tasklock');
+        ini_set('memory_limit', $config['memorylimit'] ?? '256M');
+        set_time_limit($config['timelimit'] ?? 15 * 60);
+        $this->lockfile = $config['lockfile'] ?? GDN_CACHE . '/.tasklock';
     }
 
     /**

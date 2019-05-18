@@ -2,7 +2,15 @@
 
 namespace Garden;
 
+use Garden\Db\Database;
+use Garden\Db\Database\Query\Builder\Select;
+use Garden\Db\Database\Result;
 use Garden\Db\DB;
+use Garden\Helpers\Arr;
+use stdClass;
+use function in_array;
+use function count;
+use function is_array;
 
 /**
  * Model base class
@@ -13,11 +21,6 @@ use Garden\Db\DB;
  * @package Garden
  */
 class Model {
-
-    protected $table;
-    protected $primaryKey = 'id';
-    public $allowedFields = [];
-
     /**
      * @var int current user id
      */
@@ -27,11 +30,29 @@ class Model {
      * @var bool if true getWhere() returns data with object
      */
     public $resultObject = false;
+    public $triggers = true;
+
+    public $fieldCreatedDate = 'created_at';
+    public $fieldUpdatedDate = 'updated_at';
+    public $fieldCreatedUser = 'created_by';
+    public $fieldUpdatedUser = 'updated_by';
+
+    protected $table;
+    protected $primaryKey = 'id';
+    protected $DBinstance;
+
+    protected static $nullTypes = ['int', 'tinyint', 'bigint', 'float', 'datetime', 'date', 'time'];
 
     /**
-     * @var \Garden\Db\Database\Query\Builder\Select
+     * @var Validation
+     */
+    protected $_validation;
+
+    /**
+     * @var Select
      */
     protected $_query;
+
     protected $_select = ['*'];
     protected $_allowedFields;
 
@@ -40,23 +61,11 @@ class Model {
     private $_insupdFields = [];
     private $_deleteFields = [];
 
-    /**
-     * @var Validation
-     */
-    protected $_validation;
-
-    public $fieldCreatedDate = 'created_at';
-    public $fieldUpdatedDate = 'updated_at';
-    public $fieldCreatedUser = 'created_by';
-    public $fieldUpdatedUser = 'updated_by';
-
-    public $DBinstance;
-    public $triggers = true;
-
     private static $instances;
 
     /**
      * Returns the application singleton or null if the singleton has not been created yet.
+     *
      * @return $this
      */
     public static function instance($table = null, $primaryKey = null)
@@ -74,6 +83,7 @@ class Model {
 
     /**
      * Class constructor. Defines the related database table name.
+     *
      * @param string $table table name
      */
     public function __construct($table = null, $primaryKey = null)
@@ -91,12 +101,14 @@ class Model {
 
     /**
      * List of columns to be selected for the next query
+     *
      * @param array $columns
      * @return $this
      */
-    public function select(array $columns)
+    public function select(array $columns): self
     {
         $this->_select = $columns;
+
         return $this;
     }
 
@@ -107,6 +119,7 @@ class Model {
 
     /**
      * Set using table
+     *
      * @param string $table table name
      */
     public function setTable($table = null)
@@ -114,11 +127,20 @@ class Model {
         $this->table = $table;
     }
 
-    public function getPrimaryKey()
+    /**
+     * Returns a primary key name
+     *
+     * @return string
+     */
+    public function getPrimaryKey(): string
     {
         return $this->primaryKey;
     }
 
+    /**
+     * Sets the name of the primary key
+     * @param $primaryKey
+     */
     public function setPrimaryKey($primaryKey)
     {
         $this->primaryKey = $primaryKey;
@@ -128,7 +150,7 @@ class Model {
      * Get the data from the table based on its primary key
      *
      * @param int $id Element ID
-     * @return array|\stdClass
+     * @return array|stdClass
      */
     public function getID($id)
     {
@@ -146,7 +168,7 @@ class Model {
      * @param array $order Array('order' => 'direction')
      * @param int $limit
      * @param int $offset
-     * @return \Garden\Db\Database\Result
+     * @return Result
      */
     public function get(array $order = [], $limit = 0, $offset = 0)
     {
@@ -160,7 +182,7 @@ class Model {
      * @param array $order Array('order' => 'direction')
      * @param int $limit
      * @param int $offset
-     * @return \Garden\Db\Database\Result
+     * @return Result
      */
     public function getWhere(array $where = [], array $order = [], $limit = 0, $offset = 0)
     {
@@ -181,7 +203,7 @@ class Model {
     }
 
     /**
-     * get count of rows from table with a where filter.
+     * Get count of rows from table with a where filter.
      *
      * @param array $where Array('field' => 'value') .
      * @return int
@@ -302,6 +324,7 @@ class Model {
 
     /**
      * Insert or update record
+     *
      * @param int $id update fields
      * @return int id record
      */
@@ -310,7 +333,7 @@ class Model {
         $result = $this->getID($id);
 
         if ($result) {
-            $id = val($this->primaryKey, $result);
+            $id = $result[$this->primaryKey];
             $this->update($id, $fields);
         } else {
             $fields['id'] = $id;
@@ -327,7 +350,7 @@ class Model {
      * @param array $post
      * @return array
      */
-    public function fixPostData(array $post)
+    public function fixPostData(array $post): array
     {
         $allowedFields = $this->getAllowedFields();
         $post = array_intersect_key($post, array_flip($allowedFields));
@@ -341,7 +364,7 @@ class Model {
      *
      * @return array
      */
-    public function getTableFields()
+    public function getTableFields(): array
     {
         $cacheKey = 'table_columns_' . $this->table;
         $result = Gdn::cache()->get($cacheKey);
@@ -376,10 +399,11 @@ class Model {
 
     /**
      * removes records of the $where condition
+     *
      * @param array $where
      * @return int number of rows affected
      */
-    public function delete(array $where)
+    public function deleteWhere(array $where): int
     {
         if ($this->triggers) {
             Event::fire('gdn_model_deleteWhere', $this, $where);
@@ -398,14 +422,14 @@ class Model {
      * @param int|string $id
      * @return int number of rows affected
      */
-    public function deleteID($id)
+    public function deleteID($id): int
     {
-        return (int)$this->delete([$this->primaryKey => $id]);
+        return $this->deleteWhere([$this->primaryKey => $id]);
     }
 
-
     /**
-     * enqueues addition data
+     * Enqueues addition data
+     *
      * @param array $fields array fields
      */
     public function queueInsert(array $fields = [])
@@ -418,7 +442,8 @@ class Model {
     }
 
     /**
-     * enqueues update data
+     * Enqueues update data
+     *
      * @param array $where
      * @param array $fields
      */
@@ -432,7 +457,8 @@ class Model {
     }
 
     /**
-     * enqueues insert or update data
+     * Enqueues insert or update data
+     *
      * @param array $fields
      */
     public function queueInsertOrUpdate(array $fields)
@@ -445,7 +471,8 @@ class Model {
     }
 
     /**
-     * enqueues delete data
+     * Enqueues delete data
+     *
      * @param array $where
      */
     public function queueDelete(array $where)
@@ -456,7 +483,7 @@ class Model {
     }
 
     /**
-     * start all pending operations
+     * Start all pending operations
      *
      * @param string $table
      */
@@ -507,7 +534,7 @@ class Model {
      * @param $where
      * @return bool
      */
-    public function unique(array $where)
+    public function unique(array $where): bool
     {
         $query = DB::select(['COUNT("*")', 'total_count'])->from($this->table);
 
@@ -518,7 +545,7 @@ class Model {
         return (bool)$query->execute($this->DBinstance, $this->resultObject)->get('total_count');
     }
 
-    protected function initValidation()
+    protected function initValidation(): Validation
     {
         return new Validation($this);
     }
@@ -526,7 +553,7 @@ class Model {
     /**
      * @return Validation
      */
-    public function validation()
+    public function validation(): Validation
     {
         if (!$this->_validation) {
             $this->_validation = $this->initValidation();
@@ -543,31 +570,28 @@ class Model {
      * Get table columns
      * @return array
      */
-    public function getStructure()
+    public function getStructure(): array
     {
-        $cacheKey = 'table_structure_' . $this->table;
+        $cacheKey = "table_structure_{$this->table}";
         $result = Gdn::cache()->get($cacheKey);
 
         if (!$result) {
-            $result = Gdn::database()->listColumns($this->table);
+            $result = Database::instance($this->DBinstance)->listColumns($this->table);
             Gdn::cache()->set($cacheKey, $result);
         }
 
         return $result;
     }
 
-
-    protected static $nullTypes = ['int', 'tinyint', 'bigint', 'float', 'datetime', 'date', 'time'];
-
-    protected function setNullValues(array $post)
+    protected function setNullValues(array $post): array
     {
         $structure = $this->getStructure();
 
         foreach ($post as $field => $value) {
-            $type = valr($field . '.dataType', $structure);
-            $default = valr($field . '.default', $structure);
-            $allowNull = valr($field . '.allowNull', $structure);
-            if ($allowNull && $value === '' && \in_array($type, self::$nullTypes, true)) {
+            $type = Arr::path($structure, "$field.dataType");
+            $default = Arr::path($structure, "$field.default");
+            $allowNull = Arr::path($structure, "$field.allowNull");
+            if ($allowNull && $value === '' && in_array($type, self::$nullTypes, true)) {
                 $post[$field] = $default ?: null;
             }
         }
@@ -575,7 +599,7 @@ class Model {
         return $post;
     }
 
-    protected function insertDefaultFields(array $data)
+    protected function insertDefaultFields(array $data): array
     {
         if (!isset($data[$this->fieldCreatedDate])) {
             $data[$this->fieldCreatedDate] = DB::expr('now()');
@@ -588,7 +612,7 @@ class Model {
         return $data;
     }
 
-    protected function updateDefaultFields(array $data)
+    protected function updateDefaultFields(array $data): array
     {
         if (!isset($data[$this->fieldUpdatedDate])) {
             $data[$this->fieldUpdatedDate] = DB::expr('now()');
@@ -603,12 +627,12 @@ class Model {
 
     protected function _where($field, $value = null, $alias = null)
     {
-        if (!\is_array($field)) {
+        if (!is_array($field)) {
             $field = [$field => $value];
         }
 
         foreach ($field as $subField => $subValue) {
-            if (\is_array($subValue) && empty($subValue)) {
+            if (is_array($subValue) && empty($subValue)) {
                 continue;
             }
 
@@ -619,6 +643,7 @@ class Model {
             $expr = $this->conditionExpr($subField, $subValue);
             $this->_query->where($expr[0], $expr[1], $expr[2]);
         }
+
         return $this;
     }
 
@@ -628,16 +653,16 @@ class Model {
      * @param $value
      * @return array [field, operator, value]
      */
-    public function conditionExpr($field, $value)
+    public function conditionExpr($field, $value): array
     {
         // Try and split an operator out of $Field.
         $fieldOpRegex = "/(?:\s*(=|!=|<>|>|<|>=|<=)\s*$)|\s+(like|not\s+like)\s*$|\s+(?:(is)(\s+null)?|(is\s+not)(\s+null)?|(not\s+in))\s*$/i";
         $split = preg_split($fieldOpRegex, $field, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
 
-        if (\count($split) > 1) {
+        if (count($split) > 1) {
             list($field, $op) = $split;
 
-            if (\count($split) > 2) {
+            if (count($split) > 2) {
                 $value = null;
             }
         } else {
@@ -650,7 +675,7 @@ class Model {
             $value = null;
         }
 
-        if ($op !== 'not in' && \is_array($value)) {
+        if ($op !== 'not in' && is_array($value)) {
             $op = 'in';
         }
 

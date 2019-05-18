@@ -1,8 +1,10 @@
 <?php
 
+use Garden\Helpers\Arr;
+
 function smarty_function_css($Params, Smarty_Internal_Template $template)
 {
-    $css = \Garden\Helpers\Arr::get($template->getTemplateVars('gdn'), 'css');
+    $css = Arr::get($template->getTemplateVars('gdn'), 'css');
 
     if(empty($css)) {
         return false;

@@ -6,23 +6,27 @@
 
 namespace Garden\Helpers;
 
+use DateInterval;
+use DateTime;
 use DateTimeZone;
+use Exception;
 
-class Date extends \DateTime {
+class Date extends DateTime {
 
     const FORMAT_SQL = 'Y-m-d H:i:s';
-    const FORMAT_SQL_DATE = '%Y-%M-%D';
-    const FORMAT_DATE = '%D.%M.%Y';
+    const FORMAT_SQL_DATE = 'Y-m-d';
+    const FORMAT_DATE = 'd.m.Y';
     const FORMAT_DATE_TIME = 'd.m.Y H:i';
     const FORMAT_DATE_TIME_SEC = 'd.m.Y H:i:s';
-    const FORMAT_TIME = '%H:%I';
-    const FORMAT_TIME_SEC = '%H:%I:%S';
+    const FORMAT_TIME = 'H:i';
+    const FORMAT_TIME_SEC = 'H:i:s';
 
     /**
+     * Create new Datetime object from string
      * @param string $date
      * @param null $timezone
      * @return $this
-     * @throws \Exception
+     * @throws Exception
      */
     public static function create($date = 'now', $timezone = null): self
     {
@@ -30,10 +34,22 @@ class Date extends \DateTime {
     }
 
     /**
+     * Create new Datetime object from timestamp
+     * @param int $timestamp
+     * @param null $timezone
+     * @return Date
+     */
+    public static function createTimestamp(int $timestamp, $timezone = null): self
+    {
+        $date = new self('now', $timezone);
+        return $date->setTimestamp($timestamp);
+    }
+
+    /**
      * Date constructor.
      * @param string $time
      * @param DateTimeZone|null $timezone
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct(string $time = 'now', DateTimeZone $timezone = null)
     {
@@ -56,17 +72,17 @@ class Date extends \DateTime {
      */
     public function addSeconds(int $seconds): self
     {
-        return $this->add(new \DateInterval("PT{$seconds}S"));
+        return $this->add(new DateInterval("PT{$seconds}S"));
     }
 
     /**
      * @param string $intevalSpec
      * @return Date
-     * @throws \Exception
+     * @throws Exception
      */
     public function addInterval(string $intevalSpec): self
     {
-        return $this->add(new \DateInterval($intevalSpec));
+        return $this->add(new DateInterval($intevalSpec));
     }
 
     /**
@@ -113,11 +129,11 @@ class Date extends \DateTime {
      * @param $birthday
      * @param bool $label
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     public function getAges(): string
     {
-        return $this->diff(new \DateTime())->format('%y');
+        return $this->diff(new DateTime())->format('%y');
     }
 
     /**
@@ -127,7 +143,7 @@ class Date extends \DateTime {
      */
     public function passed()
     {
-        $diff = $this->diff(new \DateTime());
+        $diff = $this->diff(new DateTime());
 
         if ($diff->format('%r')) { // future
             return $this->format(self::FORMAT_DATE_TIME);

@@ -57,7 +57,7 @@ class Client extends \Exception implements \JsonSerializable {
      * @return string Returns the description of the exception or an empty string if there isn't one.
      */
     public function getDescription() {
-        return val('description', $this->context, '');
+        return $this->context['description'] ?? '';
     }
 
     /**

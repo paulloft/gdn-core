@@ -62,36 +62,6 @@ function val($key, $array, $default = false)
     return $default;
 }
 
-/**
- * Return the value from an associative array.
- *
- * This function differs from val() in that $key can be an array that will be used to walk a nested array.
- *
- * @param array|string $keys The keys or property names of the value. This can be an array or dot-seperated string.
- * @param array|object $array The array or object to search.
- * @param mixed $default The value to return if the key does not exist.
- * @return mixed The value from the array or object.
- * @category Array Functions
- */
-function valr($keys, $array, $default = false)
-{
-    if (is_string($keys)) {
-        $keys = explode('.', $keys);
-    }
-
-    $value = $array;
-    foreach ($keys as $subKey) {
-        if (is_array($value) && isset($value[$subKey])) {
-            $value = $value[$subKey];
-        } elseif (is_object($value) && isset($value->$subKey)) {
-            $value = $value->$subKey;
-        } else {
-            return $default;
-        }
-    }
-    return $value;
-}
-
 if (!function_exists('p')) {
     function p(...$args) {
         foreach ($args as $a) {

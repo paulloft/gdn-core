@@ -173,7 +173,7 @@ class Request implements JsonSerializable {
      */
     public function getEnvironmentKey(string $key)
     {
-        return val($key, self::$defaultEnv);
+        return self::$defaultEnv[$key] ?? null;
     }
 
     /**
@@ -204,14 +204,14 @@ class Request implements JsonSerializable {
         $env = static::defaultEnvironment();
 
         // REQUEST_METHOD.
-        $env['REQUEST_METHOD'] = val('REQUEST_METHOD', $_SERVER) ?: 'CONSOLE';
+        $env['REQUEST_METHOD'] = Arr::get($_SERVER, 'REQUEST_METHOD') ?: 'CONSOLE';
 
         // SCRIPT_NAME: This is the root directory of the application.
-        $script_name = Text::rtrimSubstr($_SERVER['SCRIPT_NAME'], 'index.php');
-        $env['SCRIPT_NAME'] = rtrim($script_name, '/');
+        $scriptName = Text::rtrimSubstr($_SERVER['SCRIPT_NAME'], 'index.php');
+        $env['SCRIPT_NAME'] = rtrim($scriptName, '/');
 
         // PATH_INFO.
-        $path = val('REQUEST_URI', $_SERVER, '');
+        $path = Arr::get($_SERVER, 'REQUEST_URI', '');
         $qpos = strpos($path, '?');
 
         if ($qpos) {
@@ -235,24 +235,24 @@ class Request implements JsonSerializable {
         $env = array_replace($env, static::extractHeaders($_SERVER));
 
         // URL_SCHEME.
-        $url_scheme = 'http';
+        $scheme = 'http';
         // Web server-originated SSL.
         if (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) === 'on') {
-            $url_scheme = 'https';
+            $scheme = 'https';
         }
 
-        $url_scheme = Arr::select($_SERVER, [
+        $scheme = Arr::select($_SERVER, [
             'HTTP_X_ORIGINALLY_FORWARDED_PROTO', // varnish modifies the scheme
             'HTTP_X_FORWARDED_PROTO' // load balancer-originated (and terminated) ssl
-        ], $url_scheme);
-        $env['URL_SCHEME'] = $url_scheme;
+        ], $scheme);
+        $env['URL_SCHEME'] = $scheme;
 
         // SERVER_PORT.
-        $env['SERVER_PORT'] = (int)val('SERVER_PORT', $_SERVER, $url_scheme === 'https' ? 443 : 80);
+        $env['SERVER_PORT'] = (int)Arr::get($_SERVER, 'SERVER_PORT', $scheme === 'https' ? 443 : 80);
 
         // INPUT: The entire input.
         // Input stream (readable one time only; not available for multipart/form-data requests)
-        if (val('CONTENT_TYPE', $env) === 'application/json') {
+        if (Arr::get($env, 'CONTENT_TYPE') === 'application/json') {
             $input_raw = @file_get_contents('php://input');
             $input = @json_decode($input_raw, true);
         } else {
@@ -325,7 +325,7 @@ class Request implements JsonSerializable {
      */
     public function getEnvKey(string $key, $default = null)
     {
-        return val(strtoupper($key), $this->env, $default);
+        return $this->env[strtoupper($key)] ?? $default;
     }
 
     /**
@@ -783,7 +783,7 @@ class Request implements JsonSerializable {
             return $this->env['QUERY'];
         }
 
-        return val($key, $this->env['QUERY'], $default);
+        return $this->env['QUERY'][$key] ?? $default;
     }
 
     /**
@@ -828,7 +828,7 @@ class Request implements JsonSerializable {
             return $this->env['INPUT'];
         }
 
-        return val($key, $this->env['INPUT'], $default);
+        return $this->env['INPUT'][$key] ?? $default;
     }
 
     /**
@@ -1134,7 +1134,7 @@ class Request implements JsonSerializable {
      */
     public function renderType(): string
     {
-        $type = strtolower(val('renderType', $_REQUEST, 'all'));
+        $type = strtolower(Arr::get($_REQUEST, 'renderType', 'all'));
 
         if ($type === self::RENDER_VIEW) {
             return self::RENDER_VIEW;

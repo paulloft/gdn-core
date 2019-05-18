@@ -1,13 +1,16 @@
 <?php
+
 namespace Garden\Cache;
 
+use Garden\Cache;
 use Garden\Config;
-use \Garden\Exception;
+use Garden\Exception;
+use Garden\Gdn;
 
 /**
  *
  */
-class Memcache extends \Garden\Cache {
+class Memcache extends Cache {
     protected $lifetime;
 
     protected $host = 'localhost';
@@ -30,17 +33,17 @@ class Memcache extends \Garden\Cache {
      */
     public function __construct(array $config = [])
     {
-        $this->lifetime = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
-        $this->persistent = val('persistent', $config, $this->persistent);
+        $this->lifetime = $config['defaultLifetime'] ?? parent::DEFAULT_LIFETIME;
+        $this->persistent = $config['persistent'] ?? $this->persistent;
 
-        $this->host = val('host', $config, $this->host);
-        $this->port = val('port', $config, $this->port);
-        $this->prefix = val('keyPrefix', $config, $this->prefix);
-        $this->cache = val('connection', $config, null);
+        $this->host = $config['host'] ?? $this->host;
+        $this->port = $config['port'] ?? $this->port;
+        $this->prefix = $config['keyPrefix'] ?? $this->prefix;
+        $this->cache = $config['connection'] ?? null;
 
         $this->salt = Config::get('main.hashsalt', 'gdn');
 
-        $this->dirty = \Garden\Gdn::dirtyCache();
+        $this->dirty = Gdn::dirtyCache();
 
         $this->connect();
     }

@@ -338,8 +338,8 @@ abstract class Route {
      * Convert a path pattern into its regex.
      *
      * @param string $pattern The route pattern to convert into a regular expression.
-     * @throws \Exception
      * @return string Returns the regex pattern for the route.
+     * @throws \Exception
      */
     protected function getPatternRegex(string $pattern = null): string
     {
@@ -356,7 +356,7 @@ abstract class Route {
                 throw new \Exception("Invalid route parameter: $match[1].", 500);
             }
 
-            $patternParam = val($param, $this->conditions, val($param, self::$globalConditions, '[^/]+?'));
+            $patternParam = $this->conditions[$param] ?? self::$globalConditions[$param] ?? '[^/]+?';
 
             return "(?<$param>$before{$patternParam}$after)";
         }, $pattern);

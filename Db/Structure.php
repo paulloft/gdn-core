@@ -3,7 +3,6 @@
 namespace Garden\Db;
 
 use Garden\Exception;
-use Garden\Gdn;
 use Garden\Helpers\Arr;
 use Garden\Helpers\Object;
 
@@ -48,7 +47,7 @@ abstract class Structure {
         }
 
         if (!isset(self::$instances[$name])) {
-            $database = Gdn::database($name);
+            $database = Database::instance($name);
 
             self::$instances[$name] = new Structure\MySQL($database);
         }
@@ -64,7 +63,7 @@ abstract class Structure {
      */
     public function __construct($database = null)
     {
-        $this->database = $database ?? Gdn::database();
+        $this->database = $database ?: Database::instance();
         $this->prefix($this->database->tablePrefix());
         $this->reset();
     }

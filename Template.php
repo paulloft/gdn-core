@@ -1,4 +1,5 @@
 <?php
+
 namespace Garden;
 
 use Garden\Helpers\Validate;
@@ -60,11 +61,11 @@ class Template extends Controller {
      */
     public function template($template = false, $addonName = false)
     {
-        if($template)  {
+        if ($template) {
             $this->template = $template;
         }
 
-        if($addonName) {
+        if ($addonName) {
             $this->addon = $addonName;
         }
 
@@ -81,14 +82,14 @@ class Template extends Controller {
         $title = $this->data('title');
 
         return [
-            'h1'       => $title,
-            'title'    => strip_tags($title.' '.$separator.' '.$sitename),
-            'meta'     => $this->meta,
-            'js'       => val('js', $this->resources, []),
-            'css'      => val('css', $this->resources, []),
+            'h1' => $title,
+            'title' => strip_tags("$title $separator $sitename"),
+            'meta' => $this->meta,
+            'js' => $this->resources['js'] ?? [],
+            'css' => $this->resources['css'] ?? [],
 
-            'action'     => strtolower($this->callerMethod()),
-            'addon'      => strtolower($this->controllerInfo('addon')),
+            'action' => strtolower($this->callerMethod()),
+            'addon' => strtolower($this->controllerInfo('addon')),
             'controller' => strtolower($this->controllerInfo('controller'))
         ];
     }
@@ -113,7 +114,7 @@ class Template extends Controller {
         $this->setData('gdn', $data);
         $this->setData('sitename', Config::get('main.sitename'));
 
-        return $this->fetchView($this->template, '/', $addonFolder?: $this->addon);
+        return $this->fetchView($this->template, '/', $addonFolder ?: $this->addon);
     }
 
     /**
@@ -167,12 +168,12 @@ class Template extends Controller {
         $addon = $addon ?? strtolower($this->getAddonName());
         $local = Validate::localUrl($src);
         $version = (strpos($src, '?') === false ? '?' : '&') . 'v=' . $this->getCacheVersion();
-        if ($local && $addon && file_exists(GDN_ADDONS . '/' . ucfirst($addon) . '/Assets/' . $resource . '/' . $src)) {
+        if ($local && $addon && file_exists(GDN_ADDONS . '/' . ucfirst($addon) . "/Assets/$resource/$src")) {
             return "/assets/$addon/$resource/$src$version";
         }
 
-        if (!$local || file_exists(PATH_PUBLIC . '/' . $src)) {
-            return $src.$version;
+        if (!$local || file_exists(PATH_PUBLIC . "/$src")) {
+            return $src . $version;
         }
 
         return false;

@@ -1,5 +1,7 @@
 <?php
 
+use Garden\Helpers\Date;
+
 function smarty_modifier_date_convert($dateString, $format = 'date_time')
 {
     if (empty($dateString)) {
@@ -8,32 +10,32 @@ function smarty_modifier_date_convert($dateString, $format = 'date_time')
 
     switch ($format) {
         case 'sql':
-            $format = \Garden\Helpers\Date::FORMAT_SQL;
+            $format = Date::FORMAT_SQL;
             break;
 
         case 'sql_date':
-            $format = \Garden\Helpers\Date::FORMAT_SQL_DATE;
+            $format = Date::FORMAT_SQL_DATE;
             break;
         case 'date':
-            $format = \Garden\Helpers\Date::FORMAT_DATE;
+            $format = Date::FORMAT_DATE;
             break;
 
         case 'date_time':
-            $format = \Garden\Helpers\Date::FORMAT_DATE_TIME;
+            $format = Date::FORMAT_DATE_TIME;
             break;
 
         case 'date_time_sec':
-            $format = \Garden\Helpers\Date::FORMAT_DATE_TIME_SEC;
+            $format = Date::FORMAT_DATE_TIME_SEC;
             break;
 
         case 'time':
-            $format = \Garden\Helpers\Date::FORMAT_TIME;
+            $format = Date::FORMAT_TIME;
             break;
 
         case 'time_sec':
-            $format = \Garden\Helpers\Date::FORMAT_TIME_SEC;
+            $format = Date::FORMAT_TIME_SEC;
             break;
     }
 
-    return \Garden\Helpers\Date::create($dateString)->format($format);
+    return Date::create($dateString)->format($format);
 }

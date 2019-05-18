@@ -1,21 +1,24 @@
 <?php
 
+use Garden\Exception\NotFound;
+use Garden\Helpers\Arr;
 use Garden\Interfaces\Module as ModuleInterface;
+use Garden\Translate;
 
 function smarty_function_module($params)
 {
-    $path = explode('/', \Garden\Helpers\Arr::extract($params, 'name'), 2);
+    $path = explode('/', Arr::extract($params, 'name'), 2);
 
-    if (\count($path) === 2) {
+    if (count($path) === 2) {
         list($addon, $name) = $path;
     } else {
         list($name) = $path;
-        $addon = \Garden\Helpers\Arr::extract($params, 'addon');
+        $addon = Arr::extract($params, 'addon');
     }
     $name = ucfirst($name);
     $addon = ucfirst($addon);
 
-    $id = \Garden\Helpers\Arr::extract($params, 'id');
+    $id = Arr::extract($params, 'id');
     /**
      * @var ModuleInterface $moduleName
      */
@@ -23,16 +26,16 @@ function smarty_function_module($params)
 
     if (class_exists($moduleName)) {
         $module = $id ? $moduleName::instance($id) : $moduleName::instance();
-        if (!$module instanceof ModuleInterface) {
-            echo '<div class="alert alert-warning">' . \Garden\Translate::getSprintf('Module %s must implements %s', $name, ModuleInterface::class) . '</div>';
-        } else {
+        if ($module instanceof ModuleInterface) {
             try {
                 echo $module->render($params);
-            } catch (\Garden\Exception\NotFound $exception) {
+            } catch (NotFound $exception) {
                 echo '<div class="alert alert-danger">Module <b>' . $moduleName . '</b>: ' . $exception->getDescription() . '</div>';
             }
+        } else {
+            echo '<div class="alert alert-warning">' . Translate::getSprintf('Module %s must implements %s', $name, ModuleInterface::class) . '</div>';
         }
     } else {
-        echo '<div class="alert alert-warning">' . \Garden\Translate::getSprintf('Module %s not found!', $name) . '</div>';
+        echo '<div class="alert alert-warning">' . Translate::getSprintf('Module %s not found!', $name) . '</div>';
     }
 }

@@ -266,7 +266,7 @@ class Response implements JsonSerializable {
      */
     public static function statusMessage($statusCode, $header = false): string
     {
-        $message = val($statusCode, self::$messages, 'Unknown');
+        $message = self::$messages[$statusCode] ?? 'Unknown';
 
         if ($header) {
             return "HTTP/1.1 $statusCode $message";
@@ -288,10 +288,10 @@ class Response implements JsonSerializable {
         $this->cookies[$name] = [
             $value,
             $lifetime > 0 ? time() + $lifetime : 0,
-            val('path', $options, $this->defaultCookiePath),
-            val('domain', $options, $this->defaultCookieDomain),
-            val('secure', $options),
-            val('httponly', $options)
+            $options['path'] ?? $this->defaultCookiePath,
+            $options['domain'] ?? $this->defaultCookieDomain,
+            $options['secure'] ?? false,
+            $options['httponly'] ?? false
         ];
     }
 
@@ -367,7 +367,7 @@ class Response implements JsonSerializable {
      */
     public function header($name): string
     {
-        return val($name, $this->headers, null);
+        return $this->headers[$name] ?? null;
     }
 
     /**

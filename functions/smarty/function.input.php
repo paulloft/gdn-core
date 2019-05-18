@@ -1,15 +1,18 @@
 <?php
 
+use Garden\Helpers\Arr;
+use Garden\Translate;
+
 function smarty_function_input($params, Smarty_Internal_Template $template)
 {
     $form = $template->getTemplateVars('gdn_form');
 
     if (!$form) {
-        return '<div class="alert alert-danger">' . \Garden\Translate::get('Form class not initialized') . '</div>';
+        return '<div class="alert alert-danger">' . Translate::get('Form class not initialized') . '</div>';
     }
 
-    $name = \Garden\Helpers\Arr::extract($params, 'name');
-    $type = \Garden\Helpers\Arr::extract($params, 'type');
+    $name = Arr::extract($params, 'name');
+    $type = Arr::extract($params, 'type');
 
     return $form->input($name, $type, $params);
 }

@@ -1,9 +1,15 @@
 <?php
+
 namespace Garden;
+
+use function count;
 use Garden\Exception;
 use Garden\Helpers\Files;
 use Garden\Helpers\Text;
 use Garden\Traits\Instance;
+use stdClass;
+use function is_array;
+use function is_string;
 
 class Controller {
 
@@ -41,7 +47,9 @@ class Controller {
      * class properties, do authorization checks, and execute other custom code.
      *
      */
-    public function initialize(){}
+    public function initialize()
+    {
+    }
 
     /**
      * Assign template data by key
@@ -50,7 +58,7 @@ class Controller {
      */
     public function setData($key, $value = null)
     {
-        if (\is_array($key)) {
+        if (is_array($key)) {
             foreach ((array)$key as $k => $v) {
                 $this->_data[$k] = $v;
             }
@@ -65,9 +73,9 @@ class Controller {
      * @param mixed $default
      * @return mixed
      */
-    public function data($key, $default = false)
+    public function data($key, $default = null)
     {
-        return val($key, $this->_data, $default);
+        return $this->_data[$key] ?? $default;
     }
 
     /**
@@ -116,16 +124,16 @@ class Controller {
     public function fetchView($view, $controllerName = false, $addonName = false)
     {
         $viewPath = $this->getViewPath($view, $controllerName, $addonName);
-        $realPath = realpath(PATH_ROOT.'/'.$viewPath);
+        $realPath = realpath(PATH_ROOT . "/$viewPath");
 
         if (!$this->viewExists($view, $controllerName, $addonName)) {
-            throw new Exception\NotFound('Page', 'View template "'.$view.'" not found in '.$viewPath);
+            throw new Exception\NotFound('Page', "View template \"$view\" not found in $viewPath");
         }
 
-        if (Text::strEnds($realPath, '.'.$this->_viewExt)) {
+        if (Text::strEnds($realPath, '.' . $this->_viewExt)) {
             try {
                 $smarty = $this->smarty();
-                $smarty->setTemplateDir(PATH_ROOT.'/'.$this->_templateBaseDir);
+                $smarty->setTemplateDir(PATH_ROOT . "/{$this->_templateBaseDir}");
                 $smarty->assign($this->_data);
                 $view = $smarty->fetch($realPath);
             } catch (\Exception $e) {
@@ -147,7 +155,7 @@ class Controller {
     public function viewExists($view, $controllerName = false, $addonName = false)
     {
         $viewPath = $this->getViewPath($view, $controllerName, $addonName);
-        $realPath = realpath(PATH_ROOT.'/'.$viewPath);
+        $realPath = realpath(PATH_ROOT . "/$viewPath");
 
         return is_file($realPath);
     }
@@ -164,7 +172,7 @@ class Controller {
         $addonName = ucfirst($addonName ?: $this->_addonName);
         $controllerName = $controllerName ?: $this->_controllerName;
 
-        $addonFolder = $addonName ? $this->_addonFolder.'/'.$addonName : $this->controllerInfo('folder');
+        $addonFolder = $addonName ? "{$this->_addonFolder}/$addonName" : $this->controllerInfo('folder');
         $controllerName = $controllerName ?: $this->controllerInfo('controller');
 
         if (Text::strEnds($controllerName, 'controller')) {
@@ -172,13 +180,13 @@ class Controller {
         }
 
         $pathinfo = pathinfo($view);
-        $dir = val('dirname', $pathinfo);
-        $filename = val('filename', $pathinfo, 'index');
-        $ext = val('extension', $pathinfo, $this->_viewExt);
+        $dir = $pathinfo['dirname'];
+        $filename = $pathinfo['filename'] ?? 'index';
+        $ext = $pathinfo['extension'] ?? $this->_viewExt;
 
-        $this->_templateBaseDir = $addonFolder.'/Views/'.strtolower($controllerName).'/'.$dir;
+        $this->_templateBaseDir = "$addonFolder/Views/" . strtolower($controllerName) . "/$dir";
 
-        return $this->_templateBaseDir.'/'.$filename.'.'.$ext;
+        return "$this->_templateBaseDir/$filename.$ext";
     }
 
     /**
@@ -219,12 +227,12 @@ class Controller {
 
     /**
      * @param string|Model $model
-     * @param array|\stdClass|Db\Database\Result $data
+     * @param array|stdClass|Db\Database\Result $data
      * @return Form
      */
     public function form($model = false, $data = false)
     {
-        $tablename = \is_string($model) ? $model : false;
+        $tablename = is_string($model) ? $model : false;
         $this->form = new Form($tablename);
 
         if ($model instanceof Model) {
@@ -252,7 +260,7 @@ class Controller {
      * @param bool $default
      * @return mixed
      */
-    protected function controllerInfo($key = false, $default = false)
+    protected function controllerInfo($key = false, $default = null)
     {
         $className = static::class;
 
@@ -260,10 +268,10 @@ class Controller {
             $space = explode('\\', $className);
 
             $result = false;
-            if (\count($space) >= 3) {
+            if (count($space) >= 3) {
                 $result = [
                     'addon' => $space[1],
-                    'folder' => strtolower($space[0]).'/'.$space[1],
+                    'folder' => strtolower($space[0]) . "/{$space[1]}",
                     'controller' => array_pop($space)
                 ];
             }
@@ -271,9 +279,8 @@ class Controller {
             Gdn::dirtyCache()->set($className, $result);
         }
 
-        return $key ? val($key, $result, $default) : $result;
+        return $key ? ($result[$key] ?? $default) : $result;
     }
-
 
 
 }

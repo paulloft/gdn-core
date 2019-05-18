@@ -104,7 +104,7 @@ class Config {
         $files = glob($path . '/*.' . self::$defaultExtension);
         foreach ($files as $file) {
             $info = pathinfo($file);
-            $group = val('filename', $info);
+            $group = $info['filename'] ?? false;
 
             if ($group) {
                 self::load($group, $file);

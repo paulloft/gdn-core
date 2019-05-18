@@ -8,6 +8,9 @@
 
 namespace Garden\Helpers;
 
+use function is_array;
+use function is_object;
+use function is_string;
 
 class Object {
     /**
@@ -28,11 +31,11 @@ class Object {
      */
     public static function val($object, $key, $default = null)
     {
-        if (\is_array($object)) {
+        if (is_array($object)) {
             return $object[$key] ?? $default;
         }
 
-        if (\is_object($object)) {
+        if (is_object($object)) {
             return $object->$key ?? $default;
         }
 

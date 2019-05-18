@@ -1,8 +1,11 @@
 <?php
 
+use Garden\Helpers\Arr;
+use Garden\Helpers\Text;
+
 function smarty_function_javascript($Params, Smarty_Internal_Template $template)
 {
-    $js = \Garden\Helpers\Arr::get($template->getTemplateVars('gdn'), 'js');
+    $js = Arr::get($template->getTemplateVars('gdn'), 'js');
 
     if (empty($js)) {
         return false;
@@ -13,7 +16,7 @@ function smarty_function_javascript($Params, Smarty_Internal_Template $template)
     $i = 0;
     foreach ($js as $id => $src) {
         $i++;
-        $static = \Garden\Helpers\Text::strBegins('static_', $id) ? ' data-static="true"' : '';
+        $static = Text::strBegins('static_', $id) ? ' data-static="true"' : '';
         $html .= '<script src="' . $src . '" type="text/javascript" id="' . $id . '"' . $static . '></script>' . ($i == $c ? null : "\n    ");
     }
 

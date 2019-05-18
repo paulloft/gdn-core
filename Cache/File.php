@@ -1,10 +1,15 @@
 <?php
+
 namespace Garden\Cache;
+
+use Garden\Cache;
+use Garden\Gdn;
+use function count;
+
 /**
  *
  */
-class File extends \Garden\Cache
-{
+class File extends Cache {
     public $lifetime;
     public $cacheDir;
 
@@ -17,26 +22,26 @@ class File extends \Garden\Cache
 
     public function __construct($config)
     {
-        $this->lifetime       = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
-        $this->packFunction   = val('packFunction', $config, $this->packFunction);
-        $this->unpackFunction = val('unpackFunction', $config, $this->unpackFunction);
+        $this->lifetime = $config['defaultLifetime'] ?? parent::DEFAULT_LIFETIME;
+        $this->packFunction = $config['packFunction'] ?? $this->packFunction;
+        $this->unpackFunction = $config['unpackFunction'] ?? $this->unpackFunction;
 
-        $cacheDir = val('cacheDir', $config);
+        $cacheDir = $config['cacheDir'] ?? false;
 
-        $this->cacheDir = $cacheDir ? realpath(PATH_ROOT . '/' . $cacheDir) : GDN_CACHE;
+        $this->cacheDir = $cacheDir ? realpath(PATH_ROOT . "/$cacheDir") : GDN_CACHE;
 
         /** @see https://github.com/kalessil/phpinspectionsea/blob/master/docs/probable-bugs.md#mkdir-race-condition */
         if (!is_dir($this->cacheDir)) {
             mkdir($this->cacheDir, 0777, true) && is_dir($this->cacheDir);
         }
 
-        $this->dirty = \Garden\Gdn::dirtyCache();
+        $this->dirty = Gdn::dirtyCache();
     }
 
     /**
      * Replaces troublesome characters with underscores.
      *
-     * @param   string $id id of cache to sanitize
+     * @param string $id id of cache to sanitize
      * @return  string
      */
     protected function fixID($id): string
@@ -50,14 +55,14 @@ class File extends \Garden\Cache
         $id = $this->fixID($id);
         $salt = substr(md5($id), 0, 10);
 
-        return $id . '-' . $salt . '.cache';
+        return "$id-$salt.cache";
     }
 
     /**
      * Retrieve a cached value entry by id.
      *
-     * @param   string $id id of cache to entry
-     * @param   string $default default value to return if cache miss
+     * @param string $id id of cache to entry
+     * @param string $default default value to return if cache miss
      * @return  mixed
      */
     public function get($id, $default = null)
@@ -67,7 +72,7 @@ class File extends \Garden\Cache
 
         if (!self::$clear && !$data = $this->dirty->get($fileName)) {
 
-            $file = $this->cacheDir . '/' . $fileName;
+            $file = "{$this->cacheDir}/$fileName";
 
             if (!is_file($file)) {
                 return $default;
@@ -77,8 +82,8 @@ class File extends \Garden\Cache
 
             $result = file_get_contents($file);
             $result = $unpackFunction($result);
-            $expire = val('expire', $result, 0);
-            $data = val('data', $result, null);
+            $expire = $result['expire'] ?? 0;
+            $data = $result['data'] ?? null;
 
             if ($expire !== false && time() > $expire) {
                 $this->delete($id);
@@ -94,7 +99,7 @@ class File extends \Garden\Cache
 
     public function exists($id): bool
     {
-        $file = $this->cacheDir . '/' . $this->getFileName($id);
+        $file = "{$this->cacheDir}/" . $this->getFileName($id);
 
         return (!self::$clear && is_file($file));
     }
@@ -102,9 +107,9 @@ class File extends \Garden\Cache
     /**
      * Set a value to cache with id and lifetime
      *
-     * @param   string $id id of cache entry
-     * @param   string $data data to set to cache
-     * @param   integer $lifetime lifetime in seconds
+     * @param string $id id of cache entry
+     * @param string $data data to set to cache
+     * @param integer $lifetime lifetime in seconds
      * @return  boolean
      */
     public function set($id, $data, $lifetime = null): bool
@@ -114,14 +119,14 @@ class File extends \Garden\Cache
         }
 
         $cacheData = [
-            'expire' => $lifetime === false ? false : (time() + (int)$lifetime),
+            'expire' => $lifetime === null ? false : (time() + (int)$lifetime),
             'data' => $data
         ];
         $packFunction = $this->packFunction;
         $cacheData = $packFunction($cacheData);
 
         $fileName = $this->getFileName($id);
-        $cachePath = $this->cacheDir . '/' . $fileName;
+        $cachePath = "{$this->cacheDir}/$fileName";
 
         $result = file_put_contents($cachePath, $cacheData, LOCK_EX);
         chmod($cachePath, 0664);
@@ -143,12 +148,12 @@ class File extends \Garden\Cache
     /**
      * Delete a cache entry based on id
      *
-     * @param   string  $id  id to remove from cache
+     * @param string $id id to remove from cache
      * @return  boolean
      */
     public function delete($id): bool
     {
-        $return = unlink($this->cacheDir . '/' . $this->getFileName($id));
+        $return = unlink("{$this->cacheDir}/" . $this->getFileName($id));
         self::reset_opcache();
 
         return $return;
@@ -165,7 +170,7 @@ class File extends \Garden\Cache
      */
     public function deleteAll(): bool
     {
-        $files = glob($this->cacheDir . '/*' . $this->extention);
+        $files = glob("{$this->cacheDir}/*{$this->extention}");
 
         $deleted = 0;
         foreach ($files as $file) {
@@ -175,6 +180,6 @@ class File extends \Garden\Cache
         }
         self::reset_opcache();
 
-        return \count($files) === $deleted;
+        return count($files) === $deleted;
     }
 }

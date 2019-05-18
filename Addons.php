@@ -7,8 +7,13 @@
 
 namespace Garden;
 
+use DirectoryIterator;
 use Garden\Exception;
 use Garden\Helpers\Arr;
+use function in_array;
+use InvalidArgumentException;
+use function is_array;
+use function is_string;
 
 /**
  * Contains functionality that allows addons to enhance or change an application's functionality.
@@ -21,8 +26,7 @@ use Garden\Helpers\Arr;
  * 3. If the addon declares any classes ending in *Plugin then those plugins will automatically
  *    bind their event handlers. (also *Hooks)
  */
-class Addons
-{
+class Addons {
     /// Constants ///
     const K_BOOTSTRAP = 'bootstrap'; // bootstrap path key
     const K_CONFIG = 'config'; // config path key
@@ -75,12 +79,10 @@ class Addons
      */
     public static function all($addonKey = null, $key = null)
     {
-        if (self::$all === null) {
+        if (self::$all === null && !self::$all = Gdn::cache('system')->get('addons-all')) {
+            self::$all = self::scanAddons();
+            Gdn::cache('system')->set('addons-all', self::$all);
 
-            if (!self::$all = Gdn::cache('system')->get('addons-all')) {
-                self::$all = self::scanAddons();
-                Gdn::cache('system')->set('addons-all', self::$all);
-            }
         }
 
         // The array should be built now return the addon.
@@ -88,9 +90,9 @@ class Addons
             return self::$all;
         }
 
-        $addon = val(strtolower($addonKey), self::$all);
+        $addon = self::$all[strtolower($addonKey)] ?? false;
         if ($addon && $key) {
-            return val($key, $addon);
+            return $addon[$key] ?? null;
         }
 
         if ($addon) {
@@ -142,12 +144,12 @@ class Addons
      * Start up the addon framework.
      *
      * @param array $enabledAddons An array of enabled addons.
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public static function bootstrap($enabledAddons = null)
     {
         // Load the addons from the config if they aren't passed in.
-        if (!\is_array($enabledAddons)) {
+        if (!is_array($enabledAddons)) {
             $enabledAddons = Config::get('addons', []);
         }
 
@@ -203,17 +205,17 @@ class Addons
         if ($classname !== null) {
             $basename = trim($classname, '\\');
 
-            $row = val($basename, self::$classMap);
+            $row = self::$classMap[$basename] ?? null;
 
             if ($row === null) {
                 return ['', ''];
             }
 
-            if (\is_string($row)) {
+            if (is_string($row)) {
                 return [$classname, $row];
             }
 
-            if (\is_array($row)) {
+            if (is_array($row)) {
                 return $row;
             }
 
@@ -243,7 +245,7 @@ class Addons
                         self::$enabled[$key] = $row;
                     }
                 }
-            // Build the enabled array by walking the addons.
+                // Build the enabled array by walking the addons.
             } elseif (!self::$enabled = Gdn::cache('system')->get('addons-enabled')) {
                 self::$enabled = self::scanAddons(null, self::$enabledKeys);
                 Gdn::cache('system')->set('addons-enabled', self::$enabled);
@@ -255,9 +257,9 @@ class Addons
             return self::$enabled;
         }
 
-        $addon = val(strtolower($addonKey), self::$enabled);
+        $addon = self::$enabled[strtolower($addonKey)] ?? null;
         if ($addon && $key) {
-            return val($key, $addon);
+            return $addon[$key] ?? null;
         }
 
         if ($addon) {
@@ -384,7 +386,7 @@ class Addons
             $addons = [];
         }
 
-        foreach (new \DirectoryIterator($dir) as $subdir) {
+        foreach (new DirectoryIterator($dir) as $subdir) {
             if ($subdir->isDir() && !$subdir->isDot()) {
                 static::scanAddonRecursive($subdir->getPathname(), $addons, $enabled);
             }
@@ -408,23 +410,23 @@ class Addons
         $namespaceFound = $classFound = false;
 
         foreach ($tokens as $token) {
-            if (\is_array($token) && $token[0] == T_NAMESPACE) {
+            if (is_array($token) && $token[0] == T_NAMESPACE) {
                 $namespaceFound = true;
             }
 
-            if (\is_array($token) && $token[0] == T_CLASS) {
+            if (is_array($token) && $token[0] == T_CLASS) {
                 $classFound = true;
             }
 
             if ($namespaceFound) {
-                if (\is_array($token) && \in_array($token[0], [T_STRING, T_NS_SEPARATOR], true)) {
+                if (is_array($token) && in_array($token[0], [T_STRING, T_NS_SEPARATOR], true)) {
                     $namespace .= $token[1];
                 } elseif ($token === ';') {
                     $namespaceFound = false;
                 }
             }
 
-            if ($classFound && \is_array($token) && $token[0] == T_STRING) {
+            if ($classFound && is_array($token) && $token[0] == T_STRING) {
                 $class = $token[1];
                 break;
             }
@@ -454,7 +456,7 @@ class Addons
         $cache = Gdn::cache('system');
         // load config.
         if (!$cache->get('config-autoload')) {
-            $configPath = val(self::K_CONFIG, $addon);
+            $configPath = $addon[self::K_CONFIG] ?? null;
             if ($configPath) {
                 Config::load($addonKey, $configPath, true);
             }
@@ -463,12 +465,12 @@ class Addons
         // load translations
         if (!$cache->get('translations')) {
             $locale = Config::get('main.locale', 'en_US');
-            $localePath = val('dir', $addon);
+            $localePath = $addon['dir'] ?? '';
             Translate::load("$localePath/Locales/$locale." . Translate::$defaultExtension);
         }
 
         // Run the class' bootstrap.
-        $bootstrapPath = val(self::K_BOOTSTRAP, $addon);
+        $bootstrapPath = $addon[self::K_BOOTSTRAP] ?? null;
         if ($bootstrapPath) {
             include_once $bootstrapPath;
         }

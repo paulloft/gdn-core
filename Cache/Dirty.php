@@ -1,24 +1,27 @@
 <?php
+
 namespace Garden\Cache;
+
+use Garden\Cache;
 use Garden\Helpers\Arr;
 
 /**
-* 
-*/
-class Dirty extends \Garden\Cache
-{
+ *
+ */
+class Dirty extends Cache {
     protected $config;
     protected $data = [];
 
-    public function __construct(array $config = []){
+    public function __construct(array $config = [])
+    {
         $this->config = $config;
     }
 
     public function get($id, $default = null)
     {
-        return val($id, $this->data, $default);
+        return $this->data[$id] ?? $default;
     }
-    
+
     public function set($id, $data, $lifetime = 3600): bool
     {
         $this->data[$id] = $data;
@@ -27,7 +30,7 @@ class Dirty extends \Garden\Cache
 
     public function add($id, $data, $lifetime = 3600): bool
     {
-        if(!isset($this->data[$id])) {
+        if (!isset($this->data[$id])) {
             $this->data[$id] = $data;
             return true;
         }
@@ -52,9 +55,10 @@ class Dirty extends \Garden\Cache
         return true;
     }
 
-    public function cacheGet($key, callable $cache_cb) {
-        $cache_path = GDN_CACHE."/$key.json";
-        if(!$result = $this->get($key)) {
+    public function cacheGet($key, callable $cache_cb)
+    {
+        $cache_path = GDN_CACHE . "/$key.json";
+        if (!$result = $this->get($key)) {
             if (file_exists($cache_path)) {
                 $result = Arr::load($cache_path);
             } else {

@@ -2,9 +2,16 @@
 
 namespace Garden;
 
+use Exception;
 use Garden\Helpers\Arr;
 use Garden\Helpers\Date;
+use Garden\Helpers\Object;
 use Garden\Helpers\Text;
+use stdClass;
+use function count;
+use function in_array;
+use function is_array;
+use function is_object;
 
 class Form {
     /**
@@ -23,7 +30,7 @@ class Form {
     public $protection = false;
 
     /**
-     * @var \Garden\Model
+     * @var Model
      */
     protected $model;
     protected $data;
@@ -72,36 +79,45 @@ class Form {
 
     /**
      * set form data
-     * @param array|\stdClass|Db\Database\Result $data
+     * @param array|stdClass|Db\Database\Result $data
      */
     public function setData($data)
     {
-        if (\is_object($data)) {
+        if (is_object($data)) {
             if ($data instanceof Db\Database\Result) {
                 $this->data = $data->current();
-            } elseif ($data instanceof \stdClass) {
+            } elseif ($data instanceof stdClass) {
                 $this->data = (array)$data;
             }
-        } elseif (\is_array($data)) {
+        } elseif (is_array($data)) {
             $this->data = $data;
         }
 
         $primaryKey = $this->primaryKey();
 
         if ($primaryKey) {
-            $id = val($primaryKey, $this->data, null);
+            $id = $this->data[$primaryKey] ?? null;
             $this->addHidden($primaryKey, $id, true);
         }
     }
 
     /**
-     * gets initial form data
-     * @param bool $key
+     * gets initial field form data
+     * @param bool $field
      * @param bool $default
      */
-    public function getData($key = false, $default = false)
+    public function getDataField($field, $default = null)
     {
-        return $key ? val($key, $this->data, $default) : $this->data;
+        return $this->data[$field] ?? $default;
+    }
+
+    /**
+     * gets initial form data
+     * @return array
+     */
+    public function getData(): array
+    {
+        return $this->data;
     }
 
 
@@ -109,20 +125,18 @@ class Form {
      * sets form value if field not exists in post (see force param)
      * @param $field
      * @param $value
-     * @return bool
      */
     public function setFormValue($field, $value)
     {
         $this->getFormValues();
         $this->formValues[$field] = trim($value);
-        return true;
     }
 
     /**
      * return form validation class
      * @return Validation
      */
-    public function validation()
+    public function validation(): Validation
     {
         if (!$this->_validation) {
             if ($this->model && $this->model instanceof Model) {
@@ -140,7 +154,7 @@ class Form {
      * Check the form submission
      * @return bool
      */
-    public function submitted()
+    public function submitted(): bool
     {
         $method = strtoupper($this->method);
 
@@ -148,7 +162,7 @@ class Form {
             return (bool)Request::current()->getQuery('form-submitted', 0);
         }
 
-        return Gdn::request()->getMethod() === $method;
+        return Request::current()->getMethod() === $method;
     }
 
     /**
@@ -159,7 +173,7 @@ class Form {
      */
     public function getFormValue($name, $default = '')
     {
-        return valr($name, $this->getFormValues(), $default);
+        return Arr::path($this->getFormValues(), $name, $default);
     }
 
     private $magicQuotes;
@@ -171,12 +185,12 @@ class Form {
      */
     public function getFormValues($force = false)
     {
-        if ($force || !\is_array($this->formValues)) {
+        if ($force || !is_array($this->formValues)) {
             $this->magicQuotes = get_magic_quotes_gpc();
 
             $this->formValues = [];
             $var = '_' . strtoupper($this->method);
-            $formData = val($var, $GLOBALS, []);
+            $formData = Arr::get($GLOBALS, $var, []);
 
             $this->formValues = $this->clearFormData($formData, $this->protection);
         }
@@ -196,7 +210,7 @@ class Form {
             return $this->getFormValue($name, $default);
         }
 
-        return valr($name, $this->data, $default);
+        return Arr::path($this->data, $name, $default);
     }
 
     /**
@@ -226,7 +240,7 @@ class Form {
      * check data to valid
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         if ($this->_valid === null) {
             $data = $this->getFormValues();
@@ -238,7 +252,7 @@ class Form {
                 $this->addError(Translate::get('Form session timeout'));
             }
 
-            $this->_valid = $this->validation()->validate($data) && !\count($this->errors);
+            $this->_valid = $this->validation()->validate($data) && !count($this->errors);
         }
 
         return $this->_valid;
@@ -268,12 +282,12 @@ class Form {
         $html = [];
         foreach ($errors as $field => $fieldErrors) {
             foreach ((array)$fieldErrors as $error) {
-                if (\is_array($error)) {
-                    $errField = val(0, $error);
-                    $error = val(1, $error);
+                if (is_array($error)) {
+                    list($errField, $error) = $error;
                 } else {
-                    $errField = Translate::get(($this->model ? val('table', $this->model, 'form') : 'form') . '.' . $field, $field);
+                    $errField = Translate::get(($this->model ? $this->model->getTable() : 'form') . '.' . $field, $field);
                 }
+
                 if ($text) {
                     $html[] = $errField . ' ' . $error;
                 } else {
@@ -309,7 +323,7 @@ class Form {
                 $post = $this->fixPostData($post);
                 try {
                     $result = $this->model->save($post, $id);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     if (Config::get('main.debug', true)) {
                         $this->addError(Translate::getSprintf('form_save_error_debug', $e->getMessage()));
                     } else {
@@ -331,7 +345,7 @@ class Form {
      * @param array $post
      * @return string md5 hash
      */
-    public function generateSecureKey($data)
+    public function generateSecureKey($data): string
     {
         $keys = array_keys($data);
         $key = md5(implode(';', $keys) . Config::get('main.hashsalt'));
@@ -348,9 +362,9 @@ class Form {
     public function getSecureKey()
     {
         $var = '_' . strtoupper($this->method);
-        $formData = val($var, $GLOBALS, []);
+        $formData = Arr::get($GLOBALS, $var, []);
 
-        return val('secureKey', $formData);
+        return $formData['secureKey'] ?? null;
     }
 
     /**
@@ -358,7 +372,7 @@ class Form {
      * @param string $secureKey
      * @return array
      */
-    public function getSecureFields($secureKey = false)
+    public function getSecureFields($secureKey = false): array
     {
         if (!$secureKey) {
             $secureKey = $this->getSecureKey();
@@ -387,13 +401,13 @@ class Form {
      * @param array $attributes form attributes
      * @return string
      */
-    public function open(array $attributes = [])
+    public function open(array $attributes = []): string
     {
         $return = '<form ';
-        $currentPath = Gdn::request()->getPath();
+        $currentPath = Request::current()->getPath();
         Arr::touch($attributes, 'action', $currentPath);
         Arr::touch($attributes, 'method', $this->method);
-        $this->method = val('method', $attributes);
+        $this->method = $attributes['method'];
 
         $return .= $this->attrToString($attributes);
 
@@ -409,7 +423,7 @@ class Form {
      * html tag close form
      * @return string
      */
-    public function close()
+    public function close(): string
     {
         $return = '';
         foreach ($this->hiddenInputs as $name => $value) {
@@ -433,13 +447,13 @@ class Form {
      * @param array $attributes input attributes
      * @return string
      */
-    public function input($name, $type = 'text', array $attributes = [])
+    public function input($name, $type = 'text', array $attributes = []): string
     {
         if ($type !== 'radio' && $type !== 'checkbox' && $type !== 'hidden') {
             Arr::touch($attributes, 'class', $this->inputClass);
         }
 
-        $inputValue = val('value', $attributes);
+        $inputValue = $attributes['value'] ?? null;
         $correctName = $this->correctName($name);
 
         $attributes['name'] = $name;
@@ -447,8 +461,8 @@ class Form {
 
         if ($type === 'radio' || $type === 'checkbox') {
             $value = $this->getValue($correctName);
-            $checked = \is_array($value) ? in_array($inputValue, $value) : (string)$inputValue == (string)$value;
-            if ($inputValue !== false && $checked) {
+            $checked = is_array($value) ? in_array($inputValue, $value) : (string)$inputValue === (string)$value;
+            if ($inputValue !== null && $checked) {
                 Arr::touch($attributes, 'checked', 'checked');
             }
         } else {
@@ -466,13 +480,13 @@ class Form {
      * @param array $attributes textarea attributes
      * @return string
      */
-    public function textarea($name, array $attributes = [])
+    public function textarea($name, array $attributes = []): string
     {
         Arr::touch($attributes, 'class', $this->inputClass);
         Arr::touch($attributes, 'rows', '5');
 
         $attributes['name'] = $name;
-        $value = val('value', $attributes);
+        $value = $attributes['value'] ?? null;
         unset($attributes['type'], $attributes['value']);
 
         $correctName = $this->correctName($name);
@@ -491,10 +505,10 @@ class Form {
      * @param array $attributes checkbox attributes
      * @return string
      */
-    public function checkbox($name, array $attributes = [])
+    public function checkbox($name, array $attributes = []): string
     {
         Arr::touch($attributes, 'value', 1);
-        $defaultValue = Arr::extract($attributes, 'defaultValue', null);
+        $defaultValue = Arr::extract($attributes, 'defaultValue');
 
         $html = '<input type="hidden" name="' . $name . '" value="' . $defaultValue . '" />';
         $html .= $this->input($name, 'checkbox', $attributes);
@@ -520,7 +534,7 @@ class Form {
      * @param array $attributes
      * @return string
      */
-    public function select($name, array $options = [], array $attributes = [])
+    public function select($name, array $options = [], array $attributes = []): string
     {
         Arr::touch($attributes, 'class', $this->inputClass);
         $attributes['name'] = $name;
@@ -541,10 +555,10 @@ class Form {
         $fieldValue = $this->getValue($correctName);
 
         foreach ($options as $key => $option) {
-            $optionValue = $keyName && $keyValue ? val($keyValue, $option) : $key;
-            $optionName = $keyName && $keyValue ? val($keyName, $option) : $option;
+            $optionValue = $keyName && $keyValue ? $option[$keyValue] ?? '' : $key;
+            $optionName = $keyName && $keyValue ? $option[$keyName] ?? '' : $option;
 
-            $selected = \is_array($fieldValue) ? in_array($optionValue, $fieldValue) : (string)$optionValue === (string)$fieldValue;
+            $selected = is_array($fieldValue) ? in_array($optionValue, $fieldValue) : (string)$optionValue === (string)$fieldValue;
 
             $html .= '<option value="' . $optionValue . '" ' . ($selected ? 'selected' : '') . '>' . $optionName . '</option>';
         }
@@ -573,9 +587,9 @@ class Form {
         $this->hiddenInputs[$name] = $value;
     }
 
-    protected function _value($name, $value = false)
+    protected function _value($name, $value = null): string
     {
-        return Text::safe($value === false ? $this->getValue($name) : $value);
+        return Text::safe($value ?? $this->getValue($name));
     }
 
     /**
@@ -583,7 +597,7 @@ class Form {
      * @param array $attributes
      * @return string
      */
-    protected function attrToString(array $attributes)
+    protected function attrToString(array $attributes): string
     {
         foreach ($attributes as $attr => $value) {
             if ($attributes[$attr] === false) {
@@ -599,12 +613,13 @@ class Form {
      * @param array $post
      * @return array fixed $post data
      */
-    protected function fixPostData($post)
+    protected function fixPostData($post): array
     {
         if ($this->model instanceof Model) {
             $structure = $this->validation()->getStructure();
             foreach ($post as $field => $value) {
-                if ($value && $options = val($field, $structure)) {
+                $options = Object::val($structure, $field);
+                if ($value && $options) {
                     switch ($options->dataType) {
                         case 'time':
                             $post[$field] = Date::create($value)->format(Date::FORMAT_TIME);
@@ -629,7 +644,7 @@ class Form {
      * @param array $formData
      * @return array $formData
      */
-    protected function clearFormData($formData, $protected = false)
+    protected function clearFormData($formData, $protected = false): array
     {
         unset($formData['secureKey'], $formData['form-submitted']);
 
@@ -640,7 +655,7 @@ class Form {
                 unset($formData[$name]);
                 continue;
             }
-            if (\is_array($value)) {
+            if (is_array($value)) {
                 $formData[$name] = $this->clearFormData($value);
             } else {
                 $value = trim($value);

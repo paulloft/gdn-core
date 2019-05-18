@@ -1,7 +1,6 @@
 <?php
-namespace Garden;
 
-use Addons\Dashboard\Models\Session;
+namespace Garden;
 
 /**
  * Framework superobject
@@ -10,37 +9,10 @@ use Addons\Dashboard\Models\Session;
 class Gdn {
 
     /**
-     * @param string $name
-     * @param array|null $config
-     * @return Db\Database
-     */
-    public static function database($name = null, array $config = null)
-    {
-        return Db\Database::instance($name, $config);
-    }
-
-    /**
-     * @param string $name
-     * @return DB\Structure
-     */
-    public static function structure($name = false)
-    {
-        return Db\Structure::instance($name);
-    }
-
-    /**
-     * @return Application
-     */
-    public static function app()
-    {
-        return Application::instance();
-    }
-
-    /**
      * @param string $driver
      * @return Cache
      */
-    public static function cache($driver = null)
+    public static function cache($driver = null): Cache
     {
         return Cache::instance($driver);
     }
@@ -48,7 +20,7 @@ class Gdn {
     /**
      * @return Cache
      */
-    public static function dirtyCache()
+    public static function dirtyCache(): Cache
     {
         return Cache::instance('dirty');
     }
@@ -56,7 +28,7 @@ class Gdn {
     /**
      * @return Response
      */
-    public static function response()
+    public static function response(): Response
     {
         return Response::current();
     }
@@ -64,33 +36,9 @@ class Gdn {
     /**
      * @return Request
      */
-    public static function request()
+    public static function request(): Request
     {
         return Request::current();
-    }
-
-    /**
-     * @return \Addons\Dashboard\Models\Permission
-     */
-    public static function permission()
-    {
-        return \Addons\Dashboard\Models\Permission::instance();
-    }
-
-    /**
-     * @return \Addons\Dashboard\Models\Auth
-     */
-    public static function auth()
-    {
-        return \Addons\Dashboard\Models\Auth::instance();
-    }
-
-    /**
-     * @return \Addons\Dashboard\Models\Users
-     */
-    public static function users()
-    {
-        return \Addons\Dashboard\Models\Users::instance();
     }
 
 }

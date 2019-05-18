@@ -1,9 +1,8 @@
 <?php
 
 // Translate function
+use Garden\Config;
+
 function smarty_function_config($Params) {
-    $code = val('code', $Params);
-    $default = val('default', $Params);
-    
-    return \Garden\Config::get($code, $default);
+    return Config::get($Params['code'], $Params['default'] ?? null);
 }

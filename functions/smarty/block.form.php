@@ -1,5 +1,7 @@
 <?php
 
+use Garden\Translate;
+
 function smarty_block_form($params, $content, Smarty_Internal_Template $template, &$repeat)
 {
     if ($repeat) {
@@ -9,7 +11,7 @@ function smarty_block_form($params, $content, Smarty_Internal_Template $template
     $form = $template->getTemplateVars('gdn_form');
 
     if (!$form) {
-        return '<div class="alert alert-danger">' . \Garden\Translate::get('Form class not initialized') . '</div>';
+        return '<div class="alert alert-danger">' . Translate::get('Form class not initialized') . '</div>';
     }
 
     return $form->open($params) . $content . $form->close();

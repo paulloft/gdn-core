@@ -1,11 +1,14 @@
 <?php
+
 namespace Garden\Cache;
 
+use Garden\Cache;
 use Garden\Config;
-use \Garden\Exception;
+use Garden\Exception;
+use Garden\Gdn;
+use function function_exists;
 
-class Redis extends \Garden\Cache
-{
+class Redis extends Cache {
     /**
      * @var \Redis
      */
@@ -32,21 +35,21 @@ class Redis extends \Garden\Cache
      */
     public function __construct($config)
     {
-        $this->lifetime = val('defaultLifetime', $config, parent::DEFAULT_LIFETIME);
-        $this->host = val('host', $config, $this->host);
-        $this->port = val('port', $config, $this->port);
-        $this->prefix = val('keyPrefix', $config, $this->prefix);
+        $this->lifetime = $config['defaultLifetime'] ?? parent::DEFAULT_LIFETIME;
+        $this->host = $config['host'] ?? $this->host;
+        $this->port = $config['port'] ?? $this->port;
+        $this->prefix = $config['keyPrefix'] ?? $this->prefix;
 
-        $this->timeout = val('timeout', $config, $this->timeout);
-        $this->reserved = val('reserved', $config, $this->reserved);
-        $this->retry_interval = val('retry_interval', $config, $this->retry_interval);
+        $this->timeout = $config['timeout'] ?? $this->timeout;
+        $this->reserved = $config['reserved'] ?? $this->reserved;
+        $this->retry_interval = $config['retry_interval'] ?? $this->retry_interval;
 
-        $this->cache = val('connection', $config, null);
+        $this->cache = $config['connection'] ?? null;
 
         $this->salt = Config::get('main.hashsalt', 'gdn');
-        $this->dirty = \Garden\Gdn::dirtyCache();
+        $this->dirty = Gdn::dirtyCache();
 
-        $this->_igbinary = \function_exists('igbinary_serialize');
+        $this->_igbinary = function_exists('igbinary_serialize');
 
         $this->connect();
     }
@@ -82,6 +85,7 @@ class Redis extends \Garden\Cache
             $result = $this->unserialize($this->cache->get($id));
             $this->dirty->add($id, $result);
         }
+
         return $result ?: $default;
     }
 
