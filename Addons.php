@@ -10,8 +10,8 @@ namespace Garden;
 use DirectoryIterator;
 use Garden\Exception;
 use Garden\Helpers\Arr;
-use function in_array;
 use InvalidArgumentException;
+use function in_array;
 use function is_array;
 use function is_string;
 
@@ -326,10 +326,10 @@ class Addons {
     {
         $dir = rtrim($dir, '/');
         $addon_key = strtolower(basename($dir));
-        $settings = $dir . '/' . self::DIR_SETTINGS;
+        $settings = "$dir/" . self::DIR_SETTINGS;
 
         // Look for the addon info array.
-        $infoPath = $settings . '/about.json';
+        $infoPath = "$settings/about.json";
         if (file_exists($infoPath)) {
             $info = json_decode(file_get_contents($infoPath), true) ?: [];
         } else {
@@ -365,7 +365,7 @@ class Addons {
 
     protected static function checkFile($dir, $filename)
     {
-        $file = $dir . '/' . $filename . '.php';
+        $file = "$dir/$filename.php";
         return !file_exists($file) ? null : $file;
     }
 
@@ -432,7 +432,7 @@ class Addons {
             }
         }
 
-        return $namespace ? $namespace . '\\' . $class : $class;
+        return $namespace ? "$namespace\\$class" : $class;
     }
 
     /**

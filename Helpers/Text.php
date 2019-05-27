@@ -6,6 +6,9 @@
 
 namespace Garden\Helpers;
 
+use function count;
+use function strlen;
+
 class Text {
 
     public static $transliterations = [
@@ -82,7 +85,7 @@ class Text {
      * @return string
      * @global array $transliterations An array of translations from other scripts into url friendly characters.
      */
-    public static function translit($str): string
+    public static function translit(string $str): string
     {
         global $transliterations;
 

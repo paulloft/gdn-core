@@ -25,7 +25,7 @@ class ErrorHandler {
         $handler->register();
 
         if (Config::get('main.logs', true)) {
-            $handler->on('fatal', function ($exception) {
+            $handler->on('fatal', static function ($exception) {
                 /**
                  * @var \Exception $exception
                  */

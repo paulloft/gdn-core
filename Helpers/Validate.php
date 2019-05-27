@@ -6,6 +6,9 @@
 
 namespace Garden\Helpers;
 
+use Garden\Model;
+use function in_array;
+use function is_int;
 
 class Validate {
     public static $emptyValues = [null, false, '', []];
@@ -236,7 +239,7 @@ class Validate {
     public static function unique($value, array $params): bool
     {
         /**
-         * @var $model \Garden\Model
+         * @var $model Model
          */
         list($id, $field, $model) = $params;
         $count = $model->getCount([

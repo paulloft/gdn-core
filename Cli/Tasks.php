@@ -1,25 +1,26 @@
 <?php
 
-namespace Garden;
+namespace Garden\Cli;
 
+use Garden\Config;
+use Garden\Event;
 use Garden\Traits\Instance;
 
-class Tasks
-{
+class Tasks {
     use Instance;
 
     const ticks = [
-        60    => 'minute',
-        3600  => 'hour',
+        60 => 'minute',
+        3600 => 'hour',
         86400 => 'day'
     ];
 
     const matches = [
         'minutes' => 'i',
-        'hours'   => 'H',
+        'hours' => 'H',
         'dayname' => 'l',
-        'day'     => 'j',
-        'month'   => 'n'
+        'day' => 'j',
+        'month' => 'n'
     ];
 
     private $lockfile;
@@ -98,7 +99,7 @@ class Tasks
      * Checks lock tasks
      * @return bool
      */
-    public function locked()
+    public function locked(): bool
     {
         if (file_exists($this->lockfile)) {
             $modifyTime = filemtime($this->lockfile);
@@ -138,6 +139,9 @@ class Tasks
         print($line);
     }
 
+    /**
+     * @param $event
+     */
     protected static function fireEvent($event)
     {
         $handlers = Event::getHandlers($event);

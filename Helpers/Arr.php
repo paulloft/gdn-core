@@ -6,6 +6,13 @@
 
 namespace Garden\Helpers;
 
+use Iterator;
+use InvalidArgumentException;
+use function array_key_exists;
+use function defined;
+use function in_array;
+use function is_array;
+use function is_int;
 
 class Arr {
 
@@ -68,7 +75,7 @@ class Arr {
      *
      * @param string $path The path to load the file from.
      * @return array The configuration data.
-     * @throws \InvalidArgumentException Throws an exception when the file type isn't supported.
+     * @throws InvalidArgumentException Throws an exception when the file type isn't supported.
      */
     public static function load($path): array
     {
@@ -96,7 +103,7 @@ class Arr {
                 $loaded = yaml_parse_file($path);
                 break;
             default:
-                throw new \InvalidArgumentException("Invalid config extension $ext on $path.", 500);
+                throw new InvalidArgumentException("Invalid config extension $ext on $path.", 500);
         }
         return $loaded;
     }
@@ -139,7 +146,7 @@ class Arr {
                 $result = file_put_contents($path, $yml, LOCK_EX);
                 break;
             default:
-                throw new \InvalidArgumentException("Invalid config extension $ext on $path.", 500);
+                throw new InvalidArgumentException("Invalid config extension $ext on $path.", 500);
         }
         return $result;
     }
@@ -234,7 +241,7 @@ class Arr {
         foreach ($array as $key => $val) {
             if (is_array($val)) {
                 $array[$key] = self::map($callbacks, $array[$key]);
-            } elseif (!is_array($keys) || \in_array($key, $keys)) {
+            } elseif (!is_array($keys) || in_array($key, $keys)) {
                 if (is_array($callbacks)) {
                     foreach ($callbacks as $cb) {
                         $array[$key] = $cb($array[$key]);
@@ -296,7 +303,7 @@ class Arr {
         }
 
         foreach (explode($delimiter, $path) as $segment) {
-            if (\is_array($array) && array_key_exists($segment, $array)) {
+            if (is_array($array) && array_key_exists($segment, $array)) {
                 $array = $array[$segment];
             } else {
                 return $default;
@@ -319,12 +326,12 @@ class Arr {
 
     /**
      * array_column from user function
-     * @param \Iterator $array
+     * @param Iterator $array
      * @param callable $callback
      * @param string $key
      * @return array
      */
-    public static function ucolumn(\Iterator $array, callable $callback, $key = false): array
+    public static function ucolumn(Iterator $array, callable $callback, $key = false): array
     {
         $result = [];
 

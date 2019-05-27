@@ -6,6 +6,8 @@
 
 namespace Garden\Helpers;
 
+use Exception;
+use Garden\Exception\FileSystem;
 
 class Files {
     /**
@@ -14,21 +16,21 @@ class Files {
      * @param string $dir The name of the directory.
      * @param int $mode The file permissions on the folder if it's created.
      * @param bool $recursive
-     * @throws \Exception Throws an exception when {@link $dir} is a file.
+     * @throws Exception Throws an exception when {@link $dir} is a file.
      * @category Filesystem Functions
      */
     public static function touchdir($dir, $mode = 0777, $recursive = true)
     {
         if (file_exists($dir)) {
             if (!is_dir($dir)) {
-                throw new \Exception("The specified directory already exists as a file. ($dir)", 400);
+                throw new FileSystem("The specified directory already exists as a file. ($dir)", 400);
             }
 
             return;
         }
 
         if (!mkdir($dir, $mode, $recursive) && !is_dir($dir)) {
-            throw new \Exception("Failed to create directory. ($dir)", 400);
+            throw new FileSystem("Failed to create directory. ($dir)", 400);
         }
     }
 
@@ -40,16 +42,13 @@ class Files {
      */
     public static function getInclude($path, array $variables = []): string
     {
-        $func = function ($path, array $data) {
+        $func = static function ($path, array $data) {
             ob_start();
             extract($data, EXTR_OVERWRITE);
 
             include $path;
 
-            $result = ob_get_contents();
-            ob_end_clean();
-
-            return $result;
+            return ob_get_clean();
         };
 
         return $func($path, $variables);

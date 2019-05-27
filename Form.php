@@ -33,7 +33,7 @@ class Form {
      * @var Model
      */
     protected $model;
-    protected $data;
+    protected $data = [];
     protected $formValues;
     /**
      * @var Validation
@@ -103,8 +103,8 @@ class Form {
 
     /**
      * gets initial field form data
-     * @param bool $field
-     * @param bool $default
+     * @param string $field
+     * @param mixed $default
      */
     public function getDataField($field, $default = null)
     {
@@ -123,8 +123,8 @@ class Form {
 
     /**
      * sets form value if field not exists in post (see force param)
-     * @param $field
-     * @param $value
+     * @param string $field
+     * @param string $value
      */
     public function setFormValue($field, $value)
     {
@@ -357,7 +357,7 @@ class Form {
 
     /**
      * return posted form secure key
-     * @return string
+     * @return string|null
      */
     public function getSecureKey()
     {
@@ -372,9 +372,9 @@ class Form {
      * @param string $secureKey
      * @return array
      */
-    public function getSecureFields($secureKey = false): array
+    public function getSecureFields($secureKey = null): array
     {
-        if (!$secureKey) {
+        if ($secureKey === null) {
             $secureKey = $this->getSecureKey();
         }
 
@@ -522,7 +522,7 @@ class Form {
      * @param array $attributes radio attributes
      * @return string
      */
-    public function radio($name, array $attributes = [])
+    public function radio($name, array $attributes = []): string
     {
         return $this->input($name, 'radio', $attributes);
     }

@@ -7,6 +7,7 @@ use Garden\Db\Database\Query\Builder\Select;
 use Garden\Db\Database\Result;
 use Garden\Db\DB;
 use Garden\Helpers\Arr;
+use function get_called_class;
 use stdClass;
 use function in_array;
 use function count;

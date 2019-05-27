@@ -7,6 +7,16 @@
 
 namespace Garden;
 
+use Closure;
+use InvalidArgumentException;
+use function array_key_exists;
+use function call_user_func_array;
+use function function_exists;
+use function get_class;
+use function is_array;
+use function is_object;
+use function is_string;
+
 /**
  * Contains methods for binding and firing to events.
  *
@@ -63,32 +73,32 @@ class Event {
     public static function callUserFuncArray($callback, array $args = [])
     {
         // Figure out the event name from the callback.
-        $event_name = static::getEventname($callback);
-        if (!$event_name) {
-            return \call_user_func_array($callback, $args);
+        $eventName = static::getEventname($callback);
+        if (!$eventName) {
+            return call_user_func_array($callback, $args);
         }
 
         // The events could have different args because the event handler can take the object as the first parameter.
-        $event_args = $args;
+        $eventArgs = $args;
         // If the callback is an object then it gets passed as the first argument.
-        if (\is_array($callback) && \is_object($callback[0])) {
-            array_unshift($event_args, $callback[0]);
+        if (is_array($callback) && is_object($callback[0])) {
+            array_unshift($eventArgs, $callback[0]);
         }
 
         // Fire before events.
-        self::fireArray($event_name . '_before', $event_args);
+        self::fireArray("{$eventName}_before", $eventArgs);
 
         // Call the function.
-        if (static::hasHandler($event_name)) {
+        if (static::hasHandler($eventName)) {
             // The callback was overridden so fire it.
-            $result = static::fireArray($event_name, $event_args);
+            $result = static::fireArray($eventName, $eventArgs);
         } else {
             // The callback was not overridden so just call the passed callback.
-            $result = \call_user_func_array($callback, $args);
+            $result = call_user_func_array($callback, $args);
         }
 
         // Fire after events.
-        self::fireArray($event_name . '_after', $event_args);
+        self::fireArray("{$eventName}_after", $eventArgs);
 
         return $result;
     }
@@ -127,29 +137,29 @@ class Event {
      *
      * @param mixed $class The class name or an object instance.
      * @param int $priority The priority of the event.
-     * @throws \InvalidArgumentException Throws an exception when binding to a class name with no `instance()` method.
+     * @throws InvalidArgumentException Throws an exception when binding to a class name with no `instance()` method.
      */
     public static function bindClass($class, $priority = Event::PRIORITY_NORMAL)
     {
-        $method_names = get_class_methods($class);
+        $methodNames = get_class_methods($class);
 
         // Grab an instance of the class so there is something to bind to.
-        if (\is_string($class)) {
+        if (is_string($class)) {
             if (method_exists($class, 'instance')) {
                 $instance = $class::instance();
             } else {
-                throw new \InvalidArgumentException('Event::bindClass(): The class for argument #1 must have an instance() method or be passed as an object.', 422);
+                throw new InvalidArgumentException('Event::bindClass(): The class for argument #1 must have an instance() method or be passed as an object.', 422);
             }
         } else {
             $instance = $class;
         }
 
-        foreach ($method_names as $method_name) {
-            if (strpos($method_name, '_') === false) {
+        foreach ($methodNames as $methodName) {
+            if (strpos($methodName, '_') === false) {
                 continue;
             }
 
-            $parts = explode('_', strtolower($method_name));
+            $parts = explode('_', strtolower($methodName));
             switch (end($parts)) {
                 case 'handler':
                 case 'create':
@@ -166,7 +176,7 @@ class Event {
 
             // Bind the event if we have one.
             if ($event_name) {
-                static::bind($event_name, [$instance, $method_name], $priority);
+                static::bind($event_name, [$instance, $methodName], $priority);
             }
         }
     }
@@ -178,13 +188,13 @@ class Event {
      *
      * @return array Returns an array of all handlers indexed by event name.
      */
-    public static function dumpHandlers()
+    public static function dumpHandlers(): array
     {
         $result = [];
 
         foreach (self::$handlers as $event_name => $nested) {
             $handlers = array_merge(...static::getHandlers($event_name));
-            $result[$event_name] = array_map(function ($callback) {
+            $result[$event_name] = array_map(static function ($callback) {
                 if (is_string($callback)) {
                     return $callback . '()';
                 }
@@ -197,7 +207,7 @@ class Event {
                     return $callback[0] . '::' . $callback[1] . '()';
                 }
 
-                if ($callback instanceof \Closure) {
+                if ($callback instanceof Closure) {
                     return 'closure()';
                 }
 
@@ -240,7 +250,7 @@ class Event {
         // Grab the handlers and call them.
         $result = null;
         foreach ($handlers as $callbacks) {
-            foreach ($callbacks as $callback) {
+            foreach ((array)$callbacks as $callback) {
                 $result = $callback(...$args);
             }
         }
@@ -256,20 +266,19 @@ class Event {
      *
      * @param string $event The name of the event to fire.
      * @param mixed $value The value to pass into the filter.
+     * @param mixed ...$args
      * @return mixed The result of the chained event or `$value` if there were no handlers.
      */
-    public static function fireFilter($event, $value)
+    public static function fireFilter($event, $value, ...$args)
     {
         $handlers = self::getHandlers($event);
         if (!$handlers) {
             return $value;
         }
 
-        $args = \array_slice(\func_get_args(), 1);
         foreach ($handlers as $callbacks) {
-            foreach ($callbacks as $callback) {
-                $value = $callback(...$args);
-                $args[0] = $value;
+            foreach ((array)$callbacks as $callback) {
+                $value = $callback($value, ...$args);
             }
         }
         return $value;
@@ -278,17 +287,18 @@ class Event {
     /**
      * Checks if a function exists or there is a replacement event for it.
      *
-     * @param string $function_name The function name.
-     * @param bool $only_events Whether or not to only check events.
+     * @param string $functionName The function name.
+     * @param bool $onlyEvents Whether or not to only check events.
      * @return boolean Returns `true` if the function given by `function_name` has been defined, `false` otherwise.
      * @see http://ca1.php.net/manual/en/function.function-exists.php
      */
-    public static function functionExists($function_name, $only_events = false)
+    public static function functionExists($functionName, $onlyEvents = false): bool
     {
-        if (!$only_events && \function_exists($function_name)) {
+        if (!$onlyEvents && function_exists($functionName)) {
             return true;
         }
-        return static::hasHandler($function_name);
+
+        return static::hasHandler($functionName);
     }
 
     /**
@@ -297,23 +307,26 @@ class Event {
      * @param string|array|callable $callback The callback or an array in the form of a callback.
      * @return string The name of the callback.
      */
-    protected static function getEventname($callback)
+    protected static function getEventname($callback): string
     {
-        if (\is_string($callback)) {
+        if (is_string($callback)) {
             return strtolower($callback);
         }
-        if (\is_array($callback)) {
-            if (\is_string($callback[0])) {
+
+        if (is_array($callback)) {
+            if (is_string($callback[0])) {
                 $classname = $callback[0];
             } else {
-                $classname = \get_class($callback[0]);
+                $classname = get_class($callback[0]);
             }
             $eventclass = trim(strrchr($classname, '\\'), '\\');
             if (!$eventclass) {
                 $eventclass = $classname;
             }
-            return strtolower($eventclass . '_' . $callback[1]);
+
+            return strtolower("{$eventclass}_{$callback[1]}");
         }
+
         return '';
     }
 
@@ -323,7 +336,7 @@ class Event {
      * @param string $name The name of the event.
      * @return array Returns the handlers that are watching {@link $name}.
      */
-    public static function getHandlers($name)
+    public static function getHandlers($name): array
     {
         $name = strtolower($name);
 
@@ -346,7 +359,7 @@ class Event {
      * @param string $event The name of the event.
      * @return bool Returns `true` if the event has at least one handler, `false` otherwise.
      */
-    public static function hasHandler($event)
+    public static function hasHandler($event): bool
     {
         $event = strtolower($event);
         return array_key_exists($event, self::$handlers) && !empty(self::$handlers[$event]);
@@ -356,19 +369,19 @@ class Event {
      * Checks if a class method exists or there is a replacement event for it.
      *
      * @param mixed $object An object instance or a class name.
-     * @param string $method_name The method name.
-     * @param bool $only_events Whether or not to only check events.
+     * @param string $methodName The method name.
+     * @param bool $onlyEvents Whether or not to only check events.
      * @return boolean Returns `true` if the method given by method_name has been defined for the given object,
      * `false` otherwise.
      * @see http://ca1.php.net/manual/en/function.method-exists.php
      */
-    public static function methodExists($object, $method_name, $only_events = false)
+    public static function methodExists($object, $methodName, $onlyEvents = false): bool
     {
-        if (!$only_events && method_exists($object, $method_name)) {
+        if (!$onlyEvents && method_exists($object, $methodName)) {
             return true;
         }
         // Check to see if there is an event bound to the method.
-        $event_name = self::getEventname([$object, $method_name]);
+        $event_name = self::getEventname([$object, $methodName]);
         return static::hasHandler($event_name);
     }
 

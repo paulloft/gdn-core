@@ -9,6 +9,6 @@
 namespace Garden\Exception;
 
 
-class InvalidArgument extends \InvalidArgumentException {
+class InvalidArgument extends Client {
 
 }

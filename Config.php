@@ -88,7 +88,7 @@ class Config {
         }
 
         // Remove null config values.
-        $config = array_filter($config, function ($value) {
+        $config = array_filter($config, static function ($value) {
             return $value !== null;
         });
 

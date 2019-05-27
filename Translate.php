@@ -10,13 +10,14 @@ class Translate {
 
     /**
      * Return translated code
+     *
      * @param string $code
      * @param string $default
      * @return string
      */
     public static function get($code, $default = null): string
     {
-        if (strpos($code, '@') === 0) {
+        if (strncmp($code, '@', 1) === 0) {
             return substr($code, 1);
         }
 
@@ -55,6 +56,37 @@ class Translate {
         return vsprintf(self::get($code, $default), $args);
     }
 
+    /**
+     * Autoload transaltions from path
+     *
+     * @param string $path
+     */
+    public static function autoload($path = GDN_LOCALE)
+    {
+        $cache = Cache::instance('system');
+        $locale = Config::get('main.locale', 'en_US');
+        $translations = $cache->get('translations');
+
+        if ($translations) {
+            self::$translations = $cache->get('translations');
+        } else {
+            $locales_path = "$path/$locale/*." . self::$defaultExtension;
+
+            $files = glob($locales_path);
+            foreach ($files as $file) {
+                self::load($file);
+            }
+
+            $cache->set('translations', self::$translations);
+        }
+    }
+
+    /**
+     * Load transaltions from file
+     *
+     * @param $path
+     * @param bool $underlay
+     */
     public static function load($path, $underlay = false)
     {
         $translations = Arr::load($path);
@@ -65,26 +97,6 @@ class Translate {
             } else {
                 self::$translations = array_replace($translations, self::$translations);
             }
-        }
-    }
-
-    public static function autoload($path = GDN_LOCALE)
-    {
-        $cache = Cache::instance('system');
-        $locale = Config::get('main.locale', 'en_US');
-        $translations = $cache->get('translations');
-
-        if (!$translations) {
-            $locales_path = $path . "/$locale/*." . self::$defaultExtension;
-
-            $files = glob($locales_path);
-            foreach ($files as $file) {
-                self::load($file);
-            }
-
-            $cache->set('translations', self::$translations);
-        } else {
-            self::$translations = $cache->get('translations');
         }
     }
 }

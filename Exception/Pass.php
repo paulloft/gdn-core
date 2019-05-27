@@ -4,6 +4,7 @@
  * @copyright 2009-2014 Vanilla Forums Inc.
  * @license MIT
  */
+
 namespace Garden\Exception;
 /**
  * This exception is thrown from within a dispatched method to tell the application

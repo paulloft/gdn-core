@@ -2,6 +2,10 @@
 
 namespace Garden;
 
+use Garden\Exception;
+use InvalidArgumentException;
+use function is_string;
+
 class Application {
     /// Properties ///
     protected static $instances;
@@ -91,16 +95,16 @@ class Application {
      * @param callable|string|null $callback Either a callback to map the route to or a string representing
      * a format for {@link sprintf()}.
      * @return Route Returns the route that was added.
-     * @throws \InvalidArgumentException Throws an exceptio if {@link $path} isn't a string or {@link Route}.
+     * @throws InvalidArgumentException Throws an exceptio if {@link $path} isn't a string or {@link Route}.
      */
     public function route($pathOrRoute, $callback = null): Route
     {
         if ($pathOrRoute instanceof Route) {
             $route = $pathOrRoute;
-        } elseif (\is_string($pathOrRoute) && $callback !== null) {
+        } elseif (is_string($pathOrRoute) && $callback !== null) {
             $route = Route::create($pathOrRoute, $callback);
         } else {
-            throw new \InvalidArgumentException("Argument #1 must be either a Garden\\Route or a string.", 500);
+            throw new InvalidArgumentException("Argument #1 must be either a Garden\\Route or a string.", 500);
         }
         $this->routes[] = $route;
         return $route;
@@ -111,7 +115,7 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Route Returns the new route.
      */
     public function get($pattern, callable $callback): Route
@@ -124,7 +128,7 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Route Returns the new route.
      */
     public function post($pattern, callable $callback): Route
@@ -137,7 +141,7 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Route Returns the new route.
      */
     public function put($pattern, callable $callback): Route
@@ -150,7 +154,7 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Route Returns the new route.
      */
     public function patch($pattern, callable $callback): Route
@@ -163,7 +167,7 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Route Returns the new route.
      */
     public function delete($pattern, callable $callback): Route
