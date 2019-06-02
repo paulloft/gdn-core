@@ -53,4 +53,15 @@ class Files {
 
         return $func($path, $variables);
     }
+
+    /**
+     * @param string $path
+     * @return mixed
+     */
+    public static function getPathExtention(string $path)
+    {
+        $chunks = explode('.', $path);
+
+        return array_pop($chunks);
+    }
 }

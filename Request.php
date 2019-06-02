@@ -10,6 +10,10 @@ namespace Garden;
 use Garden\Helpers\Arr;
 use Garden\Helpers\Text;
 use JsonSerializable;
+use InvalidArgumentException;
+use function in_array;
+use function is_array;
+use function strlen;
 
 /**
  * A class that contains the information in an http request.
@@ -111,7 +115,7 @@ class Request implements JsonSerializable {
             if ($method) {
                 $this->setMethod($method);
             }
-            if (\is_array($data)) {
+            if (is_array($data)) {
                 $this->setData($data);
             }
         } else {
@@ -120,7 +124,7 @@ class Request implements JsonSerializable {
             if ($method) {
                 $this->setMethod($method);
             }
-            if (\is_array($data)) {
+            if (is_array($data)) {
                 $this->setData($data);
             }
         }
@@ -290,7 +294,7 @@ class Request implements JsonSerializable {
             $getMethods = [self::METHOD_GET, self::METHOD_HEAD, self::METHOD_OPTIONS];
 
             // Don't allow get style methods to be overridden to post style methods.
-            if (!\in_array($env['REQUEST_METHOD'], $getMethods) || \in_array($method, $getMethods)) {
+            if (!in_array($env['REQUEST_METHOD'], $getMethods) || in_array($method, $getMethods)) {
                 static::replaceEnv($env, 'REQUEST_METHOD', $method);
             } else {
                 $env['X_METHOD_BLOCKED'] = true;
@@ -321,7 +325,7 @@ class Request implements JsonSerializable {
      * @param string $key The key to get or null to get the entire environment.
      * @param mixed $default The default value if {@link $key} is not found.
      * @return mixed|array Returns the value at {@link $key}, {$link $default} or the entire environment array.
-     * @see Request::setEnv()
+     * @see Request::setEnvKey()
      */
     public function getEnvKey(string $key, $default = null)
     {
@@ -341,14 +345,11 @@ class Request implements JsonSerializable {
      *
      * @param string $key The key to set or an array to set the entire environment.
      * @param mixed $value The value to set.
-     * @return Request Returns $this for fluent calls.
      * @see Request::getEnvKey()
      */
-    public function setEnv(string $key, $value = null)
+    public function setEnvKey(string $key, $value = null)
     {
         $this->env[strtoupper($key)] = $value;
-
-        return $this;
     }
 
     /**
@@ -410,7 +411,7 @@ class Request implements JsonSerializable {
 
         foreach ($arr as $key => $value) {
             $key = strtoupper($key);
-            if (strpos($key, 'X_') === 0 || strpos($key, 'HTTP_') === 0 || \in_array($key, static::$specialHeaders)) {
+            if (strpos($key, 'X_') === 0 || strpos($key, 'HTTP_') === 0 || in_array($key, static::$specialHeaders)) {
                 if ($key === 'HTTP_CONTENT_TYPE' || $key === 'HTTP_CONTENT_LENGTH') {
                     continue;
                 }
@@ -714,9 +715,9 @@ class Request implements JsonSerializable {
 
         if ($root &&
             strpos($fullPath, $root) === 0 &&
-            (\strlen($fullPath) === \strlen($root) || substr($fullPath, \strlen($root), 1) === '/')
+            (strlen($fullPath) === strlen($root) || substr($fullPath, strlen($root), 1) === '/')
         ) {
-            $this->setPathExt(substr($fullPath, \strlen($root)));
+            $this->setPathExt(substr($fullPath, strlen($root)));
         } else {
             $this->setRoot('');
             $this->setPathExt($fullPath);
@@ -847,7 +848,7 @@ class Request implements JsonSerializable {
      * @param string|array $key Either a string key or an array to set the entire input.
      * @param mixed|null $value The value to set.
      * @return Request Returns $this for fluent call.
-     * @throws \InvalidArgumentException Throws an exception when {@link $key is invalid}.
+     * @throws InvalidArgumentException Throws an exception when {@link $key is invalid}.
      */
     public function setInput($key, $value = null)
     {
@@ -856,7 +857,7 @@ class Request implements JsonSerializable {
         } elseif (is_array($key)) {
             $this->env['INPUT'] = $key;
         } else {
-            throw new \InvalidArgumentException('Argument 1 must be a string or array.', 422);
+            throw new InvalidArgumentException('Argument 1 must be a string or array.', 422);
         }
         return $this;
     }

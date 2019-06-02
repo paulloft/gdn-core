@@ -198,9 +198,11 @@ class Application {
             ob_start();
             $handled = Event::fire('exception', $ex);
             ob_get_clean();
-            $response->setBody($handled);
 
-            if (!$handled) {
+            if ($handled) {
+                $body = $response->render($handled);
+                $response->setBody($body);
+            } else {
                 throw $ex;
             }
         }

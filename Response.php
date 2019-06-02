@@ -8,7 +8,12 @@
 
 namespace Garden;
 
+use Garden\Interfaces\Renderer;
+use Garden\Renderers\Json;
 use JsonSerializable;
+use Exception;
+use function is_array;
+use function is_string;
 
 /**
  * A class that contains the information in an http response.
@@ -170,19 +175,19 @@ class Response implements JsonSerializable {
         if ($result instanceof Exception\Client) {
             $response->setStatus($result->getCode());
             $response->setHeaders($result->getHeaders());
-            $response->setData($result->jsonSerialize());
-        } elseif ($result instanceof \Exception) {
+            $response->setDataArray($result->jsonSerialize(), true);
+        } elseif ($result instanceof Exception) {
             $response->setStatus($result->getCode());
-            $response->setData([
+            $response->setDataArray([
                 'exception' => $result->getMessage(),
                 'code' => $result->getCode()
-            ]);
+            ], true);
         } else {
             $response->setStatus(422);
-            $response->setData([
+            $response->setDataArray([
                 'exception' => 'Unknown result type for response.',
                 'code' => $response->status()
-            ]);
+            ], true);
         }
 
         return $response;
@@ -215,7 +220,7 @@ class Response implements JsonSerializable {
      */
     public function contentType(): string
     {
-        return $this->header('Content-Type');
+        return $this->getHeader('Content-Type');
     }
 
     /**
@@ -311,7 +316,7 @@ class Response implements JsonSerializable {
      *
      * @return array Returns either the meta
      */
-    public function meta(): array
+    public function getMeta(): array
     {
         return $this->meta;
     }
@@ -333,20 +338,31 @@ class Response implements JsonSerializable {
      *
      * @return Response|array Returns either the data or `$this` when setting the data.
      */
-    public function data()
+    public function getData()
     {
         return $this->data;
+    }
+
+    /**
+     *  Set the data for the response.
+     *
+     * @param string $key
+     * @param mixed $value
+     */
+    public function setData(string $key, $value)
+    {
+        $this->data[$key] = $value;
     }
 
     /**
      * Set the data for the response.
      *
      * @param array $data Pass a new data value
-     * @param bool $merge Whether or not to merge new data with the current data when setting.
+     * @param bool $replace Whether or not to merge new data with the current data when setting.
      */
-    public function setData(array $data, $merge = false)
+    public function setDataArray(array $data, $replace = false)
     {
-        $this->data = $merge ? array_merge($this->data, $data) : $data;
+        $this->data = $replace ? $data : array_merge($this->data, $data);
     }
 
     /**
@@ -354,7 +370,7 @@ class Response implements JsonSerializable {
      *
      * @return array
      */
-    public function headers(): array
+    public function getHeaders(): array
     {
         return $this->headers;
     }
@@ -365,7 +381,7 @@ class Response implements JsonSerializable {
      * @param string $name The name of the header or an array of headers.
      * @return string
      */
-    public function header($name): string
+    public function getHeader($name): string
     {
         return $this->headers[$name] ?? null;
     }
@@ -426,11 +442,7 @@ class Response implements JsonSerializable {
     {
         $name = str_replace(['-', '_'], ' ', strtolower($name));
 
-        if (isset(self::$specialHeaders[$name])) {
-            return self::$specialHeaders[$name];
-        }
-
-        return str_replace(' ', '-', ucwords($name));
+        return self::$specialHeaders[$name] ?? str_replace(' ', '-', ucwords($name));
     }
 
     /**
@@ -533,5 +545,33 @@ class Response implements JsonSerializable {
         header("Location: $url");
 
         exit;
+    }
+
+    /**
+     * Render content by type
+     *
+     * @param Response $response
+     * @param mixed $result
+     * @return string
+     */
+    public function render($result): string
+    {
+        Event::fire('render_before', $result);
+
+        if (is_string($result)) {
+            return $result;
+        }
+
+        if (is_array($result)) {
+            $jsonRenderer = new Json();
+            $jsonRenderer->setDataArray($result);
+            return $jsonRenderer->fetch($this);
+        }
+
+        if ($result instanceof Renderer) {
+            return $result->fetch($this);
+        }
+
+        return '';
     }
 }

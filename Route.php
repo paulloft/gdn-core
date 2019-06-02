@@ -1,5 +1,13 @@
 <?php namespace Garden;
 
+use Exception;
+use Garden\Exception\Error;
+use Garden\Renderers\Json;
+use function in_array;
+use function is_array;
+use function is_callable;
+use function is_string;
+
 abstract class Route {
     /// Constants ///
 
@@ -62,7 +70,7 @@ abstract class Route {
      * @param Request $request The current request we are dispatching against.
      * These are the arguments returned from {@link Route::matches()}.
      * @return Response dispatched response
-     * @throws \Exception
+     * @throws Exception
      */
     abstract public function dispatch(Request $request): Response;
 
@@ -84,7 +92,7 @@ abstract class Route {
      */
     public static function create($pattern, $callback): self
     {
-        if (\is_callable($callback)) {
+        if (is_callable($callback)) {
             $route = new Route\Callback($pattern, $callback);
         } else {
             $route = new Route\Resource($pattern, $callback);
@@ -162,7 +170,7 @@ abstract class Route {
             self::$globalConditions = [];
         }
 
-        if (\is_array($conditions)) {
+        if (is_array($conditions)) {
             $conditions = array_change_key_case($conditions);
 
             self::$globalConditions = array_replace(
@@ -186,7 +194,7 @@ abstract class Route {
             $this->mappings = [];
         }
 
-        if (\is_array($mappings)) {
+        if (is_array($mappings)) {
             $mappings = array_change_key_case($mappings);
 
             $this->mappings = array_replace(
@@ -217,79 +225,6 @@ abstract class Route {
         }
 
         return self::$globalMappings;
-    }
-
-    /**
-     * Determine whether or not a parameter is mapped to special request data.
-     *
-     * @param string $name The name of the parameter to check.
-     * @return bool Returns true if the parameter is mapped, false otherwise.
-     */
-    protected function isMapped($name): bool
-    {
-        $name = strtolower($name);
-        return isset($this->mappings[$name]) || isset(self::$globalMappings[$name]);
-    }
-
-    /**
-     * Get the mapped data for a parameter.
-     *
-     * @param string $name The name of the parameter.
-     * @param Request $request The {@link Request} to get the data from.
-     * @return array|null Returns the mapped data or null if there is no data.
-     */
-    protected function mappedData($name, Request $request, Response $response)
-    {
-        $name = strtolower($name);
-
-        if (isset($this->mappings[$name])) {
-            $mapping = $this->mappings[$name];
-        } elseif (isset(self::$globalMappings[$name])) {
-            $mapping = self::$globalMappings[$name];
-        } else {
-            return null;
-        }
-
-        switch (strtolower($mapping)) {
-            case self::MAP_DATA:
-                $result = $request->getData();
-                break;
-
-            case self::MAP_INPUT:
-                $result = $request->getInputData();
-                break;
-
-            case self::MAP_QUERY:
-                $result = $request->getQuery();
-                break;
-
-            case self::MAP_REQUEST:
-                $result = $request;
-                break;
-
-            case self::MAP_RESPONSE;
-                $result = $response;
-                break;
-
-            default:
-                return null;
-        }
-        return $result;
-    }
-
-    /**
-     * Tests whether or not a route matches the allowed methods for this route.
-     *
-     * @param Request $request The request to test.
-     * @return bool Returns `true` if the route allows the method, otherwise `false`.
-     */
-    protected function matchesMethods(Request $request): bool
-    {
-        if (empty($this->methods)) {
-            return true;
-        }
-
-        return \in_array($request->getMethod(), $this->methods, true);
     }
 
     /**
@@ -335,11 +270,78 @@ abstract class Route {
     }
 
     /**
+     * Determine whether or not a parameter is mapped to special request data.
+     *
+     * @param string $name The name of the parameter to check.
+     * @return bool Returns true if the parameter is mapped, false otherwise.
+     */
+    protected function isMapped($name): bool
+    {
+        $name = strtolower($name);
+        return isset($this->mappings[$name]) || isset(self::$globalMappings[$name]);
+    }
+
+    /**
+     * Get the mapped data for a parameter.
+     *
+     * @param string $name The name of the parameter.
+     * @param Request $request The {@link Request} to get the data from.
+     * @return mixed Returns the mapped data or null if there is no data.
+     */
+    protected function mappedData($name, Request $request, Response $response)
+    {
+        $name = strtolower($name);
+
+        if (isset($this->mappings[$name])) {
+            $mapping = $this->mappings[$name];
+        } elseif (isset(self::$globalMappings[$name])) {
+            $mapping = self::$globalMappings[$name];
+        } else {
+            return null;
+        }
+
+        switch (strtolower($mapping)) {
+            case self::MAP_DATA:
+                return $request->getData();
+
+            case self::MAP_INPUT:
+                return $request->getInputData();
+
+            case self::MAP_QUERY:
+                return $request->getQuery();
+
+            case self::MAP_REQUEST:
+                return $request;
+
+            case self::MAP_RESPONSE;
+                return $response;
+
+            default:
+                return $mapping;
+        }
+    }
+
+    /**
+     * Tests whether or not a route matches the allowed methods for this route.
+     *
+     * @param Request $request The request to test.
+     * @return bool Returns `true` if the route allows the method, otherwise `false`.
+     */
+    protected function matchesMethods(Request $request): bool
+    {
+        if (empty($this->methods)) {
+            return true;
+        }
+
+        return in_array($request->getMethod(), $this->methods, true);
+    }
+
+    /**
      * Convert a path pattern into its regex.
      *
      * @param string $pattern The route pattern to convert into a regular expression.
      * @return string Returns the regex pattern for the route.
-     * @throws \Exception
+     * @throws Error
      */
     protected function getPatternRegex(string $pattern = null): string
     {
@@ -353,7 +355,7 @@ abstract class Route {
                 $param = $matches[2];
                 $after = preg_quote($matches[3], '`');
             } else {
-                throw new \Exception("Invalid route parameter: $match[1].", 500);
+                throw new Error("Invalid route parameter: $match[1].", 500);
             }
 
             $patternParam = $this->conditions[$param] ?? self::$globalConditions[$param] ?? '[^/]+?';

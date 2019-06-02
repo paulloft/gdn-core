@@ -11,11 +11,20 @@ use Garden\Event;
 use Garden\Exception;
 use Garden\Request;
 use Garden\Response;
+use Garden\Route;
+use ReflectionException;
+use ReflectionFunction;
+use ReflectionMethod;
+use Closure;
+use function count;
+use function get_class;
+use function is_array;
+use function is_string;
 
 /**
  * A route that maps urls to callbacks.
  */
-class Callback extends \Garden\Route {
+class Callback extends Route {
 
     /**
      * @var callable The callback to call on a matching pattern.
@@ -65,19 +74,22 @@ class Callback extends \Garden\Route {
      */
     public function dispatch(Request $request): Response
     {
-        $response = new \Garden\Response;
-        \Garden\Response::current($response);
+        $response = new Response;
+        Response::current($response);
 
         ob_start();
 
         $callArgs = $this->getCallArguments($this->callback);
-        if (\is_array($this->callback) && method_exists($this->callback[0], 'initialize')) {
+        if (is_array($this->callback) && method_exists($this->callback[0], 'initialize')) {
             Event::callUserFuncArray([$this->callback[0], 'initialize'], $callArgs);
         }
 
-        Event::callUserFuncArray($this->callback, $callArgs);
+        $body = ob_get_clean();
 
-        $response->setBody(ob_get_clean());
+        $result = Event::callUserFuncArray($this->callback, $callArgs);
+        $body .= $response->render($result);
+
+        $response->setBody($body);
 
         return $response;
     }
@@ -118,19 +130,19 @@ class Callback extends \Garden\Route {
      * @param $callback
      * @return array
      * @throws Exception\InvalidArgument
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     protected function getCallArguments($callback): array
     {
-        if ($callback instanceof \Closure || \is_string($callback)) {
-            $method = new \ReflectionFunction($callback);
+        if ($callback instanceof Closure || is_string($callback)) {
+            $method = new ReflectionFunction($callback);
             $methodName = $method;
         } else {
-            $method = new \ReflectionMethod($callback[0], $callback[1]);
-            if (\is_string($callback[0])) {
+            $method = new ReflectionMethod($callback[0], $callback[1]);
+            if (is_string($callback[0])) {
                 $methodName = $callback[0] . '::' . $method->getName();
             } else {
-                $methodName = \get_class($callback[0]) . '->' . $method->getName();
+                $methodName = get_class($callback[0]) . '->' . $method->getName();
             }
         }
 
@@ -156,11 +168,11 @@ class Callback extends \Garden\Route {
             $callArgs[$paramName] = $paramValue;
         }
 
-        if (\count($missArgs) > 0) {
+        if (count($missArgs) > 0) {
             throw new Exception\InvalidArgument("$methodName() expects the following parameters: " . implode(', ', $missArgs) . '.', $missArgs);
         }
 
-        for ($index = \count($callArgs); array_key_exists($index, $this->arguments); $index++) {
+        for ($index = count($callArgs); array_key_exists($index, $this->arguments); $index++) {
             $callArgs[$index] = $this->arguments[$index];
         }
 

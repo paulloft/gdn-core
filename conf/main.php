@@ -6,4 +6,5 @@ return [
     'locale' => 'en_US',
     'logs' => true,
     'debug' => true,
+    'title_separator' => '-',
 ];

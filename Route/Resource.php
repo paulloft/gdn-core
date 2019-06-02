@@ -12,6 +12,11 @@ use Garden\Request;
 use Garden\Addons;
 use Garden\Event;
 use Garden\Response;
+use Garden\Route;
+use ReflectionException;
+use ReflectionMethod;
+use function in_array;
+use function is_callable;
 
 /**
  * Maps paths to controllers that act as RESTful resources.
@@ -22,7 +27,7 @@ use Garden\Response;
  * - GET /controller -> index
  * - METHOD /controller/action -> methodAction
  */
-class Resource extends \Garden\Route {
+class Resource extends Route {
     protected $controllerPattern = '%sController';
 
     /**
@@ -87,7 +92,7 @@ class Resource extends \Garden\Route {
         $action = $sysArgs['action'] ?? false;
 
         // Special actions should not be considered.
-        if (\in_array($action, self::$specialActions, true)) {
+        if (in_array($action, self::$specialActions, true)) {
             return false;
         }
 
@@ -97,7 +102,7 @@ class Resource extends \Garden\Route {
             $this->action = $this->actionExists($this->controller, self::$defaultActons[$method]);
         }
 
-        return $this->action && \is_callable([$this->controller, $this->action]);
+        return $this->action && is_callable([$this->controller, $this->action]);
     }
 
     /**
@@ -110,11 +115,20 @@ class Resource extends \Garden\Route {
     public function dispatch(Request $request): Response
     {
         $controller = new $this->controller();
-        $request->setEnv('ACTION', $this->action);
-        $request->setEnv('CONTROLLER', $this->controller);
+        $request->setEnvKey('action', $this->action);
+        $request->setEnvKey('controller', $this->controller);
+
+        $nameSpacing = explode('\\', ltrim($this->controller, '\\'));
+
+        list($type, $addon) = $nameSpacing;
+
+        if ($type === 'Addons') {
+            $request->setEnvKey('addon', $addon);
+            $request->setEnvKey('controller_name', array_pop($nameSpacing));
+        }
 
         $response = new Response();
-        Response::current($response);
+        Response::current($response); // set current
 
         $actionArgs = $this->getActionArguments($controller, $request, $response);
 
@@ -125,9 +139,12 @@ class Resource extends \Garden\Route {
             Event::callUserFuncArray([$controller, 'initialize'], $initArgs);
         }
 
-        Event::callUserFuncArray([$controller, $this->action], $actionArgs);
+        $result = Event::callUserFuncArray([$controller, $this->action], $actionArgs);
+        $body = ob_get_clean();
 
-        $response->setBody(ob_get_clean());
+        $body .= $response->render($result);
+
+        $response->setBody($body);
 
         return $response;
     }
@@ -153,7 +170,9 @@ class Resource extends \Garden\Route {
             throw new Exception\Pass();
         }
 
-        $args = $sysArgs = $printArgs = [];
+        $args = [];
+        $sysArgs = [];
+        $printArgs = [];
 
         foreach ($matchesArgs as $arg => $value) {
             if (is_numeric($arg)) {
@@ -201,14 +220,14 @@ class Resource extends \Garden\Route {
      * @param Request $request
      * @return array
      * @throws Exception\InvalidArgument
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     protected function getActionArguments($controller, Request $request, Response $response): array
     {
         $actionArgs = $this->arguments;
 
         // Make sure the number of action arguments match the action method.
-        $actionMethod = new \ReflectionMethod($controller, $this->action);
+        $actionMethod = new ReflectionMethod($controller, $this->action);
         $this->action = $actionMethod->getName(); // make correct case.
         $actionParams = $actionMethod->getParameters();
 
@@ -243,18 +262,6 @@ class Resource extends \Garden\Route {
      */
     protected function actionExists($controller, $action, $method = ''): string
     {
-        $reserved = [];
-
-        if ($controller instanceof \Garden\Template) {
-            $reserved = get_class_methods(\Garden\Template::class);
-        } elseif ($controller instanceof \Garden\Controller) {
-            $reserved = get_class_methods(\Garden\Controller::class);
-        }
-
-        if (\in_array($action, $reserved, true)) {
-            return '';
-        }
-
         // Short circuit on a badly named action.
         if (!preg_match('`[_a-zA-Z][_a-zA-Z0-9]{0,30}`i', $action)) {
             return '';

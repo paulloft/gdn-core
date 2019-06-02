@@ -3,6 +3,7 @@
 namespace Garden;
 
 use Exception;
+use Garden\Db\Database\Result;
 use Garden\Helpers\Arr;
 use Garden\Helpers\Date;
 use Garden\Helpers\Object;
@@ -51,11 +52,19 @@ class Form {
      * Form constructor.
      * @param string $tablename table name for form model
      */
-    public function __construct($tablename = false)
+    /**
+     * Form constructor.
+     * @param Model|null $model
+     * @param array|stdClass|Result $data
+     */
+    public function __construct(Model $model = null, $data = [])
     {
-        if ($tablename) {
-            $model = new Model($tablename);
-            $this->setModel($model);
+        if ($model) {
+            $this->model = $model;
+        }
+
+        if ($data) {
+            $this->setData($data);
         }
     }
 
@@ -70,21 +79,21 @@ class Form {
 
     /**
      * return model primary key
-     * @return bool|mixed
+     * @return string
      */
-    public function primaryKey()
+    public function primaryKey(): string
     {
-        return $this->model ? $this->model->getPrimaryKey() : false;
+        return $this->model ? $this->model->getPrimaryKey() : '';
     }
 
     /**
      * set form data
-     * @param array|stdClass|Db\Database\Result $data
+     * @param array|stdClass|Result $data
      */
     public function setData($data)
     {
         if (is_object($data)) {
-            if ($data instanceof Db\Database\Result) {
+            if ($data instanceof Result) {
                 $this->data = $data->current();
             } elseif ($data instanceof stdClass) {
                 $this->data = (array)$data;

@@ -3,10 +3,12 @@
 namespace Garden\Db\Structure;
 
 use Garden\Config;
+use Garden\Db\Structure;
 use Garden\Exception;
 use Garden\Db\Database;
 use Garden\Helpers\Arr;
 use Garden\Helpers\Text;
+use function count;
 
 /**
  * MySQL structure driver
@@ -20,7 +22,7 @@ use Garden\Helpers\Text;
  * @package Garden
  * @since 2.0
  */
-class MySQL extends \Garden\Db\Structure {
+class MySQL extends Structure {
     public static $allowedTypes = [
         'tinyint',
         'smallint',
@@ -434,7 +436,7 @@ class MySQL extends \Garden\Db\Structure {
 
     protected function alphaNumeric($string)
     {
-        return preg_replace('/([^\w\d_-])/', '', $string);
+        return preg_replace('/([^\w\_-])/', '', $string);
     }
 
     protected function indexSql($columns, $keyType = false)

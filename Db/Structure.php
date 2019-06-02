@@ -2,9 +2,15 @@
 
 namespace Garden\Db;
 
+use Garden\Event;
 use Garden\Exception;
 use Garden\Helpers\Arr;
 use Garden\Helpers\Object;
+use stdClass;
+use function count;
+use function in_array;
+use function is_string;
+use function is_array;
 
 /**
  * Database Structure tools
@@ -151,9 +157,9 @@ abstract class Structure {
                 $keyTypes1[] = $keyType1;
             }
         }
-        if (count($keyTypes1) == 0) {
+        if (count($keyTypes1) === 0) {
             $keyType = false;
-        } elseif (count($keyTypes1) == 1) {
+        } elseif (count($keyTypes1) === 1) {
             $keyType = $keyTypes1[0];
         } else {
             $keyType = $keyTypes1;
@@ -178,7 +184,7 @@ abstract class Structure {
     public function set($explicit = true, $drop = false)
     {
         /// Throw an event so that the structure can be overridden.
-        \Garden\Event::fire('structure_before_set', $explicit, $drop);
+        Event::fire('structure_before_set', $explicit, $drop);
 
         if (!$this->addonEnabled) {
             $this->reset();
@@ -483,7 +489,7 @@ abstract class Structure {
             }
         }
 
-        $column = new \stdClass();
+        $column = new stdClass();
         $column->name = $name;
         $column->type = is_array($type) ? 'enum' : $type;
         $column->length = $length;
@@ -541,7 +547,7 @@ abstract class Structure {
         foreach ($columns as $name => $column) {
             $unsigned = is_string($column->type) && stripos($column->type, 'u') === 0;
 
-            $obj = new \stdClass();
+            $obj = new stdClass();
             $obj->name = $column->name;
             $obj->type = $column->dataType;
             $obj->length = $column->length;
