@@ -42,7 +42,7 @@ class Memcached extends Cache {
         $this->cache = $config['connection'] ?? null;
 
         $this->salt = Config::get('main.hashsalt', 'gdn');
-        $this->dirty = Gdn::dirtyCache();
+        $this->dirty = Cache::instance('dirty');
 
         $this->connect();
     }

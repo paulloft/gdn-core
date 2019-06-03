@@ -2,16 +2,20 @@
 
 namespace Garden;
 
+use function extension_loaded;
+
 abstract class Cache implements Interfaces\Cache {
     const DEFAULT_LIFETIME = 3600;
 
-    public static $instances = [];
     public static $clear = false;
 
+    private static $lazyData = [];
+    private static $instances = [];
     private static $clearFile = GDN_CACHE . '/.clear_cache';
 
     /**
-     * get singletone cache class
+     * Get singletone cache class
+     *
      * @param string $driver driver name
      * @param array $options initial driver options
      * @return self
@@ -48,6 +52,29 @@ abstract class Cache implements Interfaces\Cache {
         touch(self::$clearFile);
     }
 
+    /**
+     * Get lazy cache
+     *
+     * @param string $name
+     * @param mixed $default
+     * @return mixed
+     */
+    public static function lazyGet(string $name, $default = null)
+    {
+        return self::$lazyData[$name] ?? $default;
+    }
+
+    /**
+     * Set lazy cache data
+     *
+     * @param string $name
+     * @param $data
+     */
+    public static function lazySet(string $name, $data)
+    {
+        self::$lazyData[$name] = $data;
+    }
+
     protected static function flush()
     {
         if (isset($_GET['nocache']) || file_exists(self::$clearFile)) {
@@ -62,7 +89,7 @@ abstract class Cache implements Interfaces\Cache {
 
     protected static function reset_opcache()
     {
-        if (\extension_loaded('Zend OPcache')) {
+        if (extension_loaded('Zend OPcache')) {
             opcache_reset();
         }
     }

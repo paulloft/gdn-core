@@ -115,8 +115,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws InvalidArgumentException
      * @return Route Returns the new route.
+     * @throws InvalidArgumentException
      */
     public function get($pattern, callable $callback): Route
     {
@@ -128,8 +128,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws InvalidArgumentException
      * @return Route Returns the new route.
+     * @throws InvalidArgumentException
      */
     public function post($pattern, callable $callback): Route
     {
@@ -141,8 +141,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws InvalidArgumentException
      * @return Route Returns the new route.
+     * @throws InvalidArgumentException
      */
     public function put($pattern, callable $callback): Route
     {
@@ -154,8 +154,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws InvalidArgumentException
      * @return Route Returns the new route.
+     * @throws InvalidArgumentException
      */
     public function patch($pattern, callable $callback): Route
     {
@@ -167,8 +167,8 @@ class Application {
      *
      * @param string $pattern The url pattern to match.
      * @param callable $callback The callback to execute on the route.
-     * @throws InvalidArgumentException
      * @return Route Returns the new route.
+     * @throws InvalidArgumentException
      */
     public function delete($pattern, callable $callback): Route
     {
@@ -184,32 +184,59 @@ class Application {
      */
     public function run(Request $request = null)
     {
-        $this->request = Request::current($request ?: new Request());
+        $this->request = Request::current($request ?? new Request());
 
         Event::fire('dispatch_before');
 
         try {
-            $route = $this->findRoute();
-            $args = $route->getMathedArguments();
-            Event::fire('dispatch', $request, $args);
-            $response = $route->dispatch($this->request);
+            $response = $this->dispatchRequest();
         } catch (\Exception $ex) {
-            $response = Response::create($ex);
-            ob_start();
-            $handled = Event::fire('exception', $ex);
-            ob_get_clean();
-
-            if ($handled) {
-                $body = $response->render($handled);
-                $response->setBody($body);
-            } else {
-                throw $ex;
-            }
+            $response = $this->dispatchException($ex);
         }
 
         Event::fire('dispatch_after');
 
         $this->finalize($response);
+    }
+
+    /**
+     * try to dispatch request
+     *
+     * @return Response
+     * @throws Exception\NotFound
+     * @throws \Exception
+     */
+    protected function dispatchRequest(): Response
+    {
+        $route = $this->findRoute();
+        $args = $route->getMathedArguments();
+        Event::fire('dispatch', $this->request, $args);
+        return $route->dispatch($this->request);
+    }
+
+    /**
+     * try to dispatch exception
+     *
+     * @param \Exception $exception
+     * @return Response
+     * @throws \Exception
+     */
+    protected function dispatchException(\Exception $exception): Response
+    {
+        $response = Response::current(Response::create($exception));
+
+        ob_start();
+        $handled = Event::fire('exception', $exception);
+        ob_get_clean();
+
+        if (!$handled) {
+            throw $exception;
+        }
+
+        $body = $response->render($handled);
+        $response->setBody($body);
+
+        return $response;
     }
 
     /**

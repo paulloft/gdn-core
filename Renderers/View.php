@@ -54,6 +54,7 @@ class View implements Renderer {
      */
     public function fetch(Response $response): string
     {
+        $response->setContentType('text/html');
         $viewPath = $this->getViewPath();
         $realPath = realpath(GDN_ADDONS . $viewPath);
 

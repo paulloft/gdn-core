@@ -1,13 +1,16 @@
 <?php
 namespace Garden\Cache;
 
-class System extends \Garden\Cache
+use Exception;
+use Garden\Cache;
+
+class System extends Cache
 {
     protected $dirty;
 
     public function __construct($config)
     {
-        $this->dirty = \Garden\Gdn::dirtyCache();
+        $this->dirty = Cache::instance('dirty');
     }
 
     protected function getFile($id): string
@@ -34,7 +37,7 @@ class System extends \Garden\Cache
 
                 //save to temporary cache
                 $this->dirty->add($file, $data);
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 //do nothing
             }
         }
@@ -53,7 +56,7 @@ class System extends \Garden\Cache
         try {
             $result = file_put_contents($filePath, $cacheData);
             chmod($filePath, 0664);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $result = null;
         }
 

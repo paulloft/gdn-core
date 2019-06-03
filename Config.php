@@ -118,7 +118,7 @@ class Config {
      */
     public static function autoload($path = GDN_CONF)
     {
-        $cached = Gdn::cache('system')->get('config-autoload');
+        $cached = Cache::instance('system')->get('config-autoload');
         if ($cached) {
             self::$data = $cached;
         } else {
@@ -136,8 +136,9 @@ class Config {
      */
     public static function cache()
     {
-        if (!Cache::instance('system')->get('config-autoload')) {
-            Cache::instance('system')->set('config-autoload', self::$data);
+        $cache = Cache::instance('system');
+        if (!$cache->get('config-autoload')) {
+            $cache->set('config-autoload', self::$data);
         }
     }
 }

@@ -35,7 +35,7 @@ class File extends Cache {
             mkdir($this->cacheDir, 0777, true) && is_dir($this->cacheDir);
         }
 
-        $this->dirty = Gdn::dirtyCache();
+        $this->dirty = Cache::instance('dirty');
     }
 
     /**

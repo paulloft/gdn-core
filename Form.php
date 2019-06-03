@@ -359,7 +359,7 @@ class Form {
         $keys = array_keys($data);
         $key = md5(implode(';', $keys) . Config::get('main.hashsalt'));
 
-        Gdn::cache()->set("form_$key", $keys, self::KEY_LIFE_TIME);
+        Cache::instance()->set("form_$key", $keys, self::KEY_LIFE_TIME);
 
         return $key;
     }
@@ -391,7 +391,7 @@ class Form {
             return [];
         }
 
-        return Gdn::cache()->get("form_$secureKey", []);
+        return Cache::instance()->get("form_$secureKey", []);
     }
 
     /**

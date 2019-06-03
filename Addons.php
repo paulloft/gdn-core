@@ -79,10 +79,10 @@ class Addons {
      */
     public static function all($addonKey = null, $key = null)
     {
-        if (self::$all === null && !self::$all = Gdn::cache('system')->get('addons-all')) {
+        $cache = Cache::instance('system');
+        if (self::$all === null && !self::$all = $cache->get('addons-all')) {
             self::$all = self::scanAddons();
-            Gdn::cache('system')->set('addons-all', self::$all);
-
+            $cache->set('addons-all', self::$all);
         }
 
         // The array should be built now return the addon.
@@ -236,6 +236,7 @@ class Addons {
     {
         // Lazy build the enabled array.
         if (self::$enabled === null) {
+            $cache = Cache::instance('system');
             if (self::$all !== null || self::$sharedEnvironment) {
                 // Build the enabled array by filtering the all array.
                 self::$enabled = [];
@@ -246,9 +247,9 @@ class Addons {
                     }
                 }
                 // Build the enabled array by walking the addons.
-            } elseif (!self::$enabled = Gdn::cache('system')->get('addons-enabled')) {
+            } elseif (!self::$enabled = $cache->get('addons-enabled')) {
                 self::$enabled = self::scanAddons(null, self::$enabledKeys);
-                Gdn::cache('system')->set('addons-enabled', self::$enabled);
+                $cache->set('addons-enabled', self::$enabled);
             }
         }
 
@@ -453,7 +454,7 @@ class Addons {
             return false;
         }
 
-        $cache = Gdn::cache('system');
+        $cache = Cache::instance('system');
         // load config.
         if (!$cache->get('config-autoload')) {
             $configPath = $addon[self::K_CONFIG] ?? null;

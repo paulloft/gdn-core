@@ -19,7 +19,7 @@ class Files {
      * @throws Exception Throws an exception when {@link $dir} is a file.
      * @category Filesystem Functions
      */
-    public static function touchdir($dir, $mode = 0777, $recursive = true)
+    public static function touchdir(string $dir, int $mode = 0777, bool $recursive = true)
     {
         if (file_exists($dir)) {
             if (!is_dir($dir)) {
@@ -36,11 +36,11 @@ class Files {
 
     /**
      * Isolated include file
-     * @param $path
+     * @param string $path
      * @param array $variables
      * @return string
      */
-    public static function getInclude($path, array $variables = []): string
+    public static function getInclude(string $path, array $variables = []): string
     {
         $func = static function ($path, array $data) {
             ob_start();

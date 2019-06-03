@@ -368,13 +368,14 @@ class Model {
     public function getTableFields(): array
     {
         $cacheKey = 'table_columns_' . $this->table;
-        $result = Gdn::cache()->get($cacheKey);
+        $cache = Cache::instance();
+        $result = $cache->get($cacheKey);
 
         if (!$result) {
             $structure = $this->getStructure();
             $result = array_column($structure, 'name');
 
-            Gdn::cache()->set($cacheKey, $result);
+            $cache->set($cacheKey, $result);
         }
 
         return $result;
@@ -573,12 +574,13 @@ class Model {
      */
     public function getStructure(): array
     {
+        $cache = Cache::instance();
         $cacheKey = "table_structure_{$this->table}";
-        $result = Gdn::cache()->get($cacheKey);
+        $result = $cache->get($cacheKey);
 
         if (!$result) {
             $result = Database::instance($this->DBinstance)->listColumns($this->table);
-            Gdn::cache()->set($cacheKey, $result);
+            $cache->set($cacheKey, $result);
         }
 
         return $result;

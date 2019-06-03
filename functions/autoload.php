@@ -3,5 +3,17 @@ define('APP_VERSION', '1.1');
 define('GDN_SRC', dirname(__DIR__));
 
 
-// Include the core functions.
-require_once __DIR__.'/core-functions.php';
+if (!function_exists('p')) {
+    function p(...$args) {
+        foreach ($args as $a) {
+            \Dumphper\Dumphper::dump($a);
+        }
+    }
+}
+
+if (!function_exists('d')) {
+    function d(...$args) {
+        p(...$args);
+        exit();
+    }
+}
