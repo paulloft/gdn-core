@@ -12,7 +12,7 @@ use function is_array;
 use function is_object;
 use function is_string;
 
-class Object {
+class Obj {
     /**
      * Safely get a value out of an array.
      *
@@ -23,7 +23,7 @@ class Object {
      *
      * This function uses optimizations found in the [facebook libphputil library](https://github.com/facebook/libphutil).
      *
-     * @param array|object $object The array to get the value from.
+     * @param array|Obj $object The array to get the value from.
      * @param string|int $key The array key.
      * @param mixed $default The default value to return if the key doesn't exist.
      * @return mixed The item from the array or `$default` if the array key doesn't exist.
@@ -47,7 +47,7 @@ class Object {
      *
      * This function differs from val() in that $key can be an array that will be used to walk a nested array.
      *
-     * @param array|object $object The array or object to search.
+     * @param array|Obj $object The array or object to search.
      * @param array|string $keys The keys or property names of the value. This can be an array or dot-seperated string.
      * @param mixed $default The value to return if the key does not exist.
      * @return mixed The value from the array or object.

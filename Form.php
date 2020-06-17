@@ -6,7 +6,7 @@ use Exception;
 use Garden\Db\Database\Result;
 use Garden\Helpers\Arr;
 use Garden\Helpers\Date;
-use Garden\Helpers\Object;
+use Garden\Helpers\Obj;
 use Garden\Helpers\Text;
 use stdClass;
 use function count;
@@ -627,7 +627,7 @@ class Form {
         if ($this->model instanceof Model) {
             $structure = $this->validation()->getStructure();
             foreach ($post as $field => $value) {
-                $options = Object::val($structure, $field);
+                $options = Obj::val($structure, $field);
                 if ($value && $options) {
                     switch ($options->dataType) {
                         case 'time':
