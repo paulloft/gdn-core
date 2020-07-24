@@ -10,13 +10,34 @@ use Garden\Model;
 use function in_array;
 use function is_int;
 
-class Validate {
+class Validate
+{
+    public const RULE_EMAIL = 'email';
+    public const RULE_IP = 'ip';
+    public const RULE_URL = 'url';
+    public const RULE_MAC = 'mac';
+    public const RULE_IS_EMPTY = 'isEmpty';
+    public const RULE_REQUIRED = 'required';
+    public const RULE_NOT_IN = 'notIn';
+    public const RULE_IN = 'in';
+    public const RULE_MIN_LENGTH = 'minLength';
+    public const RULE_MAX_LENGTH = 'maxLength';
+    public const RULE_LENGTH = 'length';
+    public const RULE_INT = 'int';
+    public const RULE_NUMERIC = 'numeric';
+    public const RULE_MIN_VALUE = 'minValue';
+    public const RULE_MAX_VALUE = 'maxValue';
+    public const RULE_REGEXP = 'regexp';
+    public const RULE_DATESQL = 'dateSql';
+    public const RULE_MIN_DATE = 'minDate';
+    public const RULE_MAX_DATE = 'maxDate';
+    public const RULE_UNIQUE = 'unique';
+
     public static $emptyValues = [null, false, '', []];
 
     /**
      * is email string
      * @param $value
-     * @param $params
      * @return bool
      */
     public static function email($value): bool
@@ -27,7 +48,6 @@ class Validate {
     /**
      * is ip string
      * @param $value
-     * @param $params
      * @return bool
      */
     public static function ip($value): bool
@@ -52,7 +72,7 @@ class Validate {
      */
     public static function localUrl($value): bool
     {
-        return !preg_match('#^(http|\/\/)#', $value);
+        return !preg_match('#^(http|//)#', $value);
     }
 
     /**
@@ -157,7 +177,6 @@ class Validate {
 
     /**
      * @param $value
-     * @param $params
      * @return bool
      */
     public static function numeric($value): bool
@@ -202,8 +221,8 @@ class Validate {
      */
     public static function dateSql($value): bool
     {
-        $date = '/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/';
-        $datetime = '/^(\\d{4})-(\\d{2})-(\\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/';
+        $date = '/^(\\d{4})-(\\d{2})-(\\d{2})$/';
+        $datetime = '/^(\\d{4})-(\\d{2})-(\\d{2}) ([01]\\d|2[0-3]):([0-5]\\d):([0-5]\\d)$/';
 
         return (preg_match($date, $value, $matches) && checkdate($matches[2], $matches[3], $matches[1]))
             ||
@@ -241,7 +260,7 @@ class Validate {
         /**
          * @var $model Model
          */
-        list($id, $field, $model) = $params;
+        [$id, $field, $model] = $params;
         $count = $model->getCount([
             $field => $value,
             $model->getPrimaryKey() . '!=' => $id

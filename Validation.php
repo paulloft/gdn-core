@@ -10,7 +10,8 @@ use Garden\Helpers\Validate;
 use function is_array;
 use function is_float;
 
-class Validation {
+class Validation
+{
     /**
      * @var Model
      */
@@ -263,8 +264,8 @@ class Validation {
                     $ruleFunc = [Validate::class, $type];
                 }
 
-                if ($type === 'unique') {
-                    $params = [':id', $field, $this->model];
+                if ($type === 'unique' && $this->model) {
+                    $params = [':' . $this->model->getPrimaryKey(), $field, $this->model];
                 }
 
                 $params = $this->replaceParams($params, $this->data);

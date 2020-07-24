@@ -11,24 +11,24 @@ use DateTime;
 use DateTimeZone;
 use Exception;
 
-class Date extends DateTime {
-
-    const FORMAT_SQL = 'Y-m-d H:i:s';
-    const FORMAT_SQL_DATE = 'Y-m-d';
-    const FORMAT_DATE = 'd.m.Y';
-    const FORMAT_DATE_TIME = 'd.m.Y H:i';
-    const FORMAT_DATE_TIME_SEC = 'd.m.Y H:i:s';
-    const FORMAT_TIME = 'H:i';
-    const FORMAT_TIME_SEC = 'H:i:s';
+class Date extends DateTime
+{
+    public const FORMAT_SQL = 'Y-m-d H:i:s';
+    public const FORMAT_SQL_DATE = 'Y-m-d';
+    public const FORMAT_DATE = 'd.m.Y';
+    public const FORMAT_DATE_TIME = 'd.m.Y H:i';
+    public const FORMAT_DATE_TIME_SEC = 'd.m.Y H:i:s';
+    public const FORMAT_TIME = 'H:i';
+    public const FORMAT_TIME_SEC = 'H:i:s';
 
     /**
      * Create new Datetime object from string
-     * @param string $date
-     * @param null $timezone
+     * @param string|DateTime $date
+     * @param DateTimeZone $timezone
      * @return $this
      * @throws Exception
      */
-    public static function create($date = 'now', $timezone = null): self
+    public static function create(string $date = 'now', DateTimeZone $timezone = null): self
     {
         return new self($date, $timezone);
     }
@@ -36,13 +36,23 @@ class Date extends DateTime {
     /**
      * Create new Datetime object from timestamp
      * @param int $timestamp
-     * @param null $timezone
+     * @param DateTimeZone $timezone
      * @return Date
      */
-    public static function createTimestamp(int $timestamp, $timezone = null): self
+    public static function createTimestamp(int $timestamp, DateTimeZone $timezone = null): self
     {
         $date = new self('now', $timezone);
         return $date->setTimestamp($timestamp);
+    }
+
+    /**
+     * Create new Datetime object from Datetime
+     * @param DateTime $dateTime
+     * @return static
+     */
+    public static function createDateTime(DateTime $dateTime): self
+    {
+        return (new self())->setTimestamp($dateTime->getTimestamp());
     }
 
     /**
@@ -72,7 +82,67 @@ class Date extends DateTime {
      */
     public function addSeconds(int $seconds): self
     {
-        return $this->add(new DateInterval("PT{$seconds}S"));
+        return $this->addInterval("PT{$seconds}S");
+    }
+
+    /**
+     * Add minutes to current datetime
+     * @param int $minutes
+     * @return Date
+     */
+    public function addMinutes(int $minutes): self
+    {
+        return $this->addInterval("PT{$minutes}M");
+    }
+
+    /**
+     * Add hours to current datetime
+     * @param int $hours
+     * @return Date
+     */
+    public function addHours(int $hours): self
+    {
+        return $this->addInterval("PT{$hours}H");
+    }
+
+    /**
+     * Add weeks to current datetime
+     * @param int $weeks
+     * @return Date
+     */
+    public function addWeeks(int $weeks): self
+    {
+        return $this->addInterval("P{$weeks}W");
+    }
+
+    /**
+     * Add days to current datetime
+     * @param int $days
+     * @return Date
+     */
+    public function addDays(int $days): self
+    {
+        return $this->addInterval("P{$days}D");
+    }
+
+    /**
+     * Add months to current datetime
+     * @param int $months
+     * @return Date
+     */
+    public function addMonths(int $months): self
+    {
+        return $this->addInterval("P{$months}M");
+    }
+
+    /**
+     * Add years to current datetime
+     * @param int $years
+     * @return Date
+     */
+    public function addYears(int $years): self
+    {
+        return $this->addInterval("P{$years}Y");
     }
 
     /**
@@ -83,6 +153,86 @@ class Date extends DateTime {
     public function addInterval(string $intevalSpec): self
     {
         return $this->add(new DateInterval($intevalSpec));
+    }
+
+    /**
+     * Subtracts seconds to current datetime
+     * @param int $seconds
+     * @return Date
+     */
+    public function subSeconds(int $seconds): self
+    {
+        return $this->subInterval("PT{$seconds}S");
+    }
+
+    /**
+     * Subtracts minutes to current datetime
+     * @param int $minutes
+     * @return Date
+     */
+    public function subMinutes(int $minutes): self
+    {
+        return $this->subInterval("PT{$minutes}M");
+    }
+
+    /**
+     * Subtracts hours to current datetime
+     * @param int $hours
+     * @return Date
+     */
+    public function subHours(int $hours): self
+    {
+        return $this->subInterval("PT{$hours}H");
+    }
+
+    /**
+     * Subtracts weeks to current datetime
+     * @param int $weeks
+     * @return Date
+     */
+    public function subWeeks(int $weeks): self
+    {
+        return $this->subInterval("P{$weeks}W");
+    }
+
+    /**
+     * Subtracts days to current datetime
+     * @param int $days
+     * @return Date
+     */
+    public function subDays(int $days): self
+    {
+        return $this->subInterval("P{$days}D");
+    }
+
+    /**
+     * Subtracts months to current datetime
+     * @param int $months
+     * @return Date
+     */
+    public function subMonths(int $months): self
+    {
+        return $this->subInterval("P{$months}M");
+    }
+
+    /**
+     * sub Subtracts to current datetime
+     * @param int $years
+     * @return Date
+     */
+    public function subYears(int $years): self
+    {
+        return $this->subInterval("P{$years}Y");
+    }
+
+    /**
+     * @param string $intevalSpec
+     * @return Date
+     * @throws Exception
+     */
+    public function subInterval(string $intevalSpec): self
+    {
+        return $this->sub(new DateInterval($intevalSpec));
     }
 
     /**
@@ -126,8 +276,6 @@ class Date extends DateTime {
 
     /**
      * Retruns full years after birthday
-     * @param $birthday
-     * @param bool $label
      * @return string
      * @throws Exception
      */
@@ -138,10 +286,9 @@ class Date extends DateTime {
 
     /**
      * Returns how much time has passed
-     * @param $date
      * @return string
      */
-    public function passed()
+    public function passed(): ?string
     {
         $diff = $this->diff(new DateTime());
 

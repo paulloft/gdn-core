@@ -4,8 +4,9 @@ namespace Garden;
 
 use function extension_loaded;
 
-abstract class Cache implements Interfaces\Cache {
-    const DEFAULT_LIFETIME = 3600;
+abstract class Cache implements Interfaces\Cache
+{
+    public const DEFAULT_LIFETIME = 3600;
 
     public static $clear = false;
 
@@ -73,6 +74,26 @@ abstract class Cache implements Interfaces\Cache {
     public static function lazySet(string $name, $data)
     {
         self::$lazyData[$name] = $data;
+    }
+
+    /**
+     * @param string $key
+     * @param \Closure $fuction
+     * @return mixed
+     */
+    public static function getClosure(string $key, \Closure $fuction)
+    {
+        $cache = self::instance();
+        $result = $cache->get($key);
+
+        if ($result !== null) {
+            return $result;
+        }
+
+        $result = $fuction();
+        $cache->set($key, $result);
+
+        return $result;
     }
 
     protected static function flush()

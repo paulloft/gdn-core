@@ -23,10 +23,10 @@ class Template implements Renderer {
     private $meta = [];
 
     /**
-     * Template constructor
-     *
-     * @param string $templateName file name of template
-     * @param string $addonName addon name
+     * Template constructor.
+     * @param string $templateName
+     * @param string $templateFolder
+     * @param string|null $addonName
      */
     public function __construct(string $templateName, string $templateFolder = '', string $addonName = null)
     {
@@ -166,7 +166,7 @@ class Template implements Renderer {
      */
     protected function getResourcePath(string $resource, string $src, string $addon = null): string
     {
-        $addon = $addon ?? strtolower($this->addon);
+        $addon = $addon ?? strtolower(Request::current()->getEnvKey('addon'));
         $isLocal = Validate::localUrl($src);
 
         if (!$isLocal) {

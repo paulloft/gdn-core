@@ -264,7 +264,7 @@ class Text {
      * @param string $ip The ip string to look at.
      * @return string|null The ipv4 address or null if {@link $ip} is empty.
      */
-    public static function ipv4($ip): string
+    public static function ipv4($ip): ?string
     {
         if (!$ip) {
             return null;
