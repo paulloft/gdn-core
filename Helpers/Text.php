@@ -9,7 +9,8 @@ namespace Garden\Helpers;
 use function count;
 use function strlen;
 
-class Text {
+class Text
+{
 
     public static $transliterations = [
         '–' => '-', '—' => '-', 'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'Ae', 'Å' => 'A',
@@ -46,10 +47,18 @@ class Text {
         'э' => 'e', 'ю' => 'yu', 'я' => 'ya'
     ];
 
+    protected static $to = [
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M',
+    ];
+
+    protected static $from = [
+        '_q', '_w', '_e', '_r', '_t', '_y', '_u', '_i', '_o', '_p', '_a', '_s', '_d', '_f', '_g', '_h', '_j', '_k', '_l', '_z', '_x', '_c', '_v', '_b', '_n', '_m',
+    ];
+
     /**
      * Format a span of time that comes from a timer.
      *
-     * @param float $seconds The number of seconds that elapsed.
+     * @param float|int $seconds The number of seconds that elapsed.
      * @return string
      * @see microtime()
      */
@@ -105,7 +114,7 @@ class Text {
      * @param string $string
      * @return string
      */
-    public static function safe($string): string
+    public static function safe(string $string): string
     {
         return nl2br(htmlspecialchars($string, ENT_QUOTES));
     }
@@ -116,7 +125,7 @@ class Text {
      * @param array $exp ['for a value ending at 0', 'for a value ending at 1', 'for a value ending at 2']
      * @return string
      */
-    public static function declension($num, array $exp): string
+    public static function declension(int $num, array $exp): string
     {
         if (count($exp) < 3) {
             return '';
@@ -143,7 +152,7 @@ class Text {
      * @param string $endLine
      * @return string
      */
-    public static function substr($string, $limit = 120, $endLine = '… '): string
+    public static function substr(string $string, int $limit = 120, string $endLine = '… '): string
     {
         $string = strip_tags($string);
         $string = mb_substr($string, 0, $limit);
@@ -170,7 +179,7 @@ class Text {
      * @param int $precision The number of decimal places in the formatted number.
      * @return string the formatted filesize.
      */
-    public static function formatFilesize($bytes, $precision = 1): string
+    public static function formatFilesize(int $bytes, int $precision = 1): string
     {
         $units = ['B', 'K', 'M', 'G', 'T'];
 
@@ -188,7 +197,7 @@ class Text {
      * @param $str
      * @return string
      */
-    public static function ucfirst($str): string
+    public static function ucfirst(string $str): string
     {
         $str = mb_strtolower($str);
         $fc = mb_strtoupper(mb_substr($str, 0, 1));
@@ -204,7 +213,7 @@ class Text {
      *
      * @category String Functions
      */
-    public static function ltrimSubstr($mainstr, $substr): string
+    public static function ltrimSubstr(string $mainstr, string $substr): string
     {
         if (strncasecmp($mainstr, $substr, strlen($substr)) === 0) {
             return substr($mainstr, strlen($substr));
@@ -220,7 +229,7 @@ class Text {
      * @return string Returns the trimmed string or {@link $mainstr} if {@link $substr} was not found.
      * @category String Functions
      */
-    public static function rtrimSubstr($mainstr, $substr): string
+    public static function rtrimSubstr(string $mainstr, string $substr): string
     {
         if (strcasecmp(substr($mainstr, -strlen($substr)), $substr) === 0) {
             return substr($mainstr, 0, -strlen($substr));
@@ -238,7 +247,7 @@ class Text {
      * @return bool Whether or not `$string` begins with `$with`.
      * @category String Functions
      */
-    public static function strBegins($haystack, $needle): bool
+    public static function strBegins(string $haystack, string $needle): bool
     {
         return strncasecmp($haystack, $needle, strlen($needle)) === 0;
     }
@@ -253,7 +262,7 @@ class Text {
      * @return bool Whether or not `$string` ends with `$with`.
      * @category String Functions
      */
-    public static function strEnds($haystack, $needle): bool
+    public static function strEnds(string $haystack, string $needle): bool
     {
         return strcasecmp(substr($haystack, -strlen($needle)), $needle) === 0;
     }
@@ -264,7 +273,7 @@ class Text {
      * @param string $ip The ip string to look at.
      * @return string|null The ipv4 address or null if {@link $ip} is empty.
      */
-    public static function ipv4($ip): ?string
+    public static function ipv4(string $ip): ?string
     {
         if (!$ip) {
             return null;
@@ -287,16 +296,38 @@ class Text {
 
     /**
      * @param $code
-     * @param string $default
+     * @param string|null $default
      * @return string
      */
-    public static function translate($code, $default = null): string
+    public static function translate(string $code, string $default = null): string
     {
         if (class_exists('\\Garden\\Translate')) {
             \Garden\Translate::get($code, $default);
         }
 
         return $default;
+    }
+
+    /**
+     * Convert a string like "test_foo_bar" into the camel case (like "testFooBar")
+     *
+     * @param string $string String to convert
+     * @return string
+     */
+    public static function convertToCamelCase(string $string): string
+    {
+        return ucfirst(str_ireplace(self::$from, self::$to, (string)$string));
+    }
+
+    /**
+     * Convert a string like "testFooBar" into the underline style (like "test_foo_bar")
+     *
+     * @param string $string String to convert
+     * @return string
+     */
+    public static function convertFromCamelCase(string $string): string
+    {
+        return str_replace(self::$to, self::$from, lcfirst((string)$string));
     }
 
 }
