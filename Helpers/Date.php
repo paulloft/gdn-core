@@ -22,11 +22,20 @@ class Date extends DateTime
     public const FORMAT_TIME_SEC = 'H:i:s';
 
     /**
+     * Date constructor.
+     * @param string $time
+     * @param DateTimeZone|null $timezone
+     */
+    public function __construct(string $time = 'now', DateTimeZone $timezone = null)
+    {
+        parent::__construct($time, $timezone);
+    }
+
+    /**
      * Create new Datetime object from string
      * @param string|DateTime $date
      * @param DateTimeZone $timezone
      * @return $this
-     * @throws Exception
      */
     public static function create(string $date = 'now', DateTimeZone $timezone = null): self
     {
@@ -56,17 +65,6 @@ class Date extends DateTime
     }
 
     /**
-     * Date constructor.
-     * @param string $time
-     * @param DateTimeZone|null $timezone
-     * @throws Exception
-     */
-    public function __construct(string $time = 'now', DateTimeZone $timezone = null)
-    {
-        parent::__construct($time, $timezone);
-    }
-
-    /**
      * To string conversion
      * @return string
      */
@@ -83,6 +81,16 @@ class Date extends DateTime
     public function addSeconds(int $seconds): self
     {
         return $this->addInterval("PT{$seconds}S");
+    }
+
+    /**
+     * @param string $intevalSpec
+     * @return Date
+     * @throws Exception
+     */
+    public function addInterval(string $intevalSpec): self
+    {
+        return $this->add(new DateInterval($intevalSpec));
     }
 
     /**
@@ -146,16 +154,6 @@ class Date extends DateTime
     }
 
     /**
-     * @param string $intevalSpec
-     * @return Date
-     * @throws Exception
-     */
-    public function addInterval(string $intevalSpec): self
-    {
-        return $this->add(new DateInterval($intevalSpec));
-    }
-
-    /**
      * Subtracts seconds to current datetime
      * @param int $seconds
      * @return Date
@@ -163,6 +161,16 @@ class Date extends DateTime
     public function subSeconds(int $seconds): self
     {
         return $this->subInterval("PT{$seconds}S");
+    }
+
+    /**
+     * @param string $intevalSpec
+     * @return Date
+     * @throws Exception
+     */
+    public function subInterval(string $intevalSpec): self
+    {
+        return $this->sub(new DateInterval($intevalSpec));
     }
 
     /**
@@ -223,16 +231,6 @@ class Date extends DateTime
     public function subYears(int $years): self
     {
         return $this->subInterval("P{$years}Y");
-    }
-
-    /**
-     * @param string $intevalSpec
-     * @return Date
-     * @throws Exception
-     */
-    public function subInterval(string $intevalSpec): self
-    {
-        return $this->sub(new DateInterval($intevalSpec));
     }
 
     /**

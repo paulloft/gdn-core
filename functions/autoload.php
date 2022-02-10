@@ -6,7 +6,7 @@ define('GDN_SRC', dirname(__DIR__));
 if (!function_exists('p')) {
     function p(...$args) {
         foreach ($args as $a) {
-            \Dumphper\Dumphper::dump($a);
+            \Utils\Dumphper::dump($a);
         }
     }
 }

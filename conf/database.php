@@ -6,7 +6,7 @@ return [
     'database' => '',
     'username' => '',
     'password' => '',
-    'charset' => 'utf8',
+    'charset' => 'utf8mb4',
     'tablePrefix' => '',
     'identifier' => '`',
     'storageEngine' => 'innodb',

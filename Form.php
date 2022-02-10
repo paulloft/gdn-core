@@ -14,7 +14,8 @@ use function in_array;
 use function is_array;
 use function is_object;
 
-class Form {
+class Form
+{
     /**
      * @var string form method
      */
@@ -46,7 +47,7 @@ class Form {
     private $inputs;
     private $errors = [];
 
-    const KEY_LIFE_TIME = 43200; //12 hours
+    const KEY_LIFE_TIME = 43200; // 12 hours
 
     /**
      * Form constructor.
@@ -72,7 +73,7 @@ class Form {
      * set form model
      * @param Model $model table model
      */
-    public function setModel($model)
+    public function setModel(Model $model)
     {
         $this->model = $model;
     }
@@ -115,7 +116,7 @@ class Form {
      * @param string $field
      * @param mixed $default
      */
-    public function getDataField($field, $default = null)
+    public function getDataField(string $field, ?string $default = null)
     {
         return $this->data[$field] ?? $default;
     }
@@ -135,7 +136,7 @@ class Form {
      * @param string $field
      * @param string $value
      */
-    public function setFormValue($field, $value)
+    public function setFormValue(string $field, string $value)
     {
         $this->getFormValues();
         $this->formValues[$field] = trim($value);
@@ -180,23 +181,19 @@ class Form {
      * @param string $default default value if field not exists
      * @return mixed
      */
-    public function getFormValue($name, $default = '')
+    public function getFormValue(string $name, string $default = '')
     {
         return Arr::path($this->getFormValues(), $name, $default);
     }
-
-    private $magicQuotes;
 
     /**
      * return form values
      * @param bool $force
      * @return array|mixed
      */
-    public function getFormValues($force = false)
+    public function getFormValues(bool $force = false)
     {
         if ($force || !is_array($this->formValues)) {
-            $this->magicQuotes = get_magic_quotes_gpc();
-
             $this->formValues = [];
             $var = '_' . strtoupper($this->method);
             $formData = Arr::get($GLOBALS, $var, []);
@@ -213,7 +210,7 @@ class Form {
      * @param string $default default value if field not exists
      * @return mixed
      */
-    public function getValue($name, $default = '')
+    public function getValue(string $name, string $default = '')
     {
         if ($this->submitted()) {
             return $this->getFormValue($name, $default);
@@ -224,9 +221,9 @@ class Form {
 
     /**
      * return form values or if form submitted return post data
-     * @return array|mixed
+     * @return array
      */
-    public function getValues()
+    public function getValues(): array
     {
         if ($this->submitted()) {
             return $this->getFormValues();
@@ -239,7 +236,7 @@ class Form {
      * unset form field value
      * @param string $name field value
      */
-    public function unsetFormValue($name)
+    public function unsetFormValue(string $name)
     {
         $this->getFormValues();
         unset($this->formValues[$name]);
@@ -271,7 +268,7 @@ class Form {
      * Add custom error in validiation results
      * @param string $error
      */
-    public function addError($error)
+    public function addError(string $error)
     {
         $this->errors[] = $error;
     }
@@ -281,7 +278,7 @@ class Form {
      * @param bool $text if true return errors in text else in html
      * @return bool|string
      */
-    public function errors($text = false)
+    public function errors(bool $text = false)
     {
         $errors = $this->validation()->errors();
         if (empty($errors) && empty($this->errors)) {
@@ -292,7 +289,7 @@ class Form {
         foreach ($errors as $field => $fieldErrors) {
             foreach ((array)$fieldErrors as $error) {
                 if (is_array($error)) {
-                    list($errField, $error) = $error;
+                    [$errField, $error] = $error;
                 } else {
                     $errField = Translate::get(($this->model ? $this->model->getTable() : 'form') . '.' . $field, $field);
                 }
@@ -354,7 +351,7 @@ class Form {
      * @param array $post
      * @return string md5 hash
      */
-    public function generateSecureKey($data): string
+    public function generateSecureKey(array $data): string
     {
         $keys = array_keys($data);
         $key = md5(implode(';', $keys) . Config::get('main.hashsalt'));
@@ -381,7 +378,7 @@ class Form {
      * @param string $secureKey
      * @return array
      */
-    public function getSecureFields($secureKey = null): array
+    public function getSecureFields(string $secureKey = null): array
     {
         if ($secureKey === null) {
             $secureKey = $this->getSecureKey();
@@ -456,7 +453,7 @@ class Form {
      * @param array $attributes input attributes
      * @return string
      */
-    public function input($name, $type = 'text', array $attributes = []): string
+    public function input(string $name, string $type = 'text', array $attributes = []): string
     {
         if ($type !== 'radio' && $type !== 'checkbox' && $type !== 'hidden') {
             Arr::touch($attributes, 'class', $this->inputClass);
@@ -489,7 +486,7 @@ class Form {
      * @param array $attributes textarea attributes
      * @return string
      */
-    public function textarea($name, array $attributes = []): string
+    public function textarea(string $name, array $attributes = []): string
     {
         Arr::touch($attributes, 'class', $this->inputClass);
         Arr::touch($attributes, 'rows', '5');
@@ -514,7 +511,7 @@ class Form {
      * @param array $attributes checkbox attributes
      * @return string
      */
-    public function checkbox($name, array $attributes = []): string
+    public function checkbox(string $name, array $attributes = []): string
     {
         Arr::touch($attributes, 'value', 1);
         $defaultValue = Arr::extract($attributes, 'defaultValue');
@@ -531,7 +528,7 @@ class Form {
      * @param array $attributes radio attributes
      * @return string
      */
-    public function radio($name, array $attributes = []): string
+    public function radio(string $name, array $attributes = []): string
     {
         return $this->input($name, 'radio', $attributes);
     }
@@ -543,7 +540,7 @@ class Form {
      * @param array $attributes
      * @return string
      */
-    public function select($name, array $options = [], array $attributes = []): string
+    public function select(string $name, array $options = [], array $attributes = []): string
     {
         Arr::touch($attributes, 'class', $this->inputClass);
         $attributes['name'] = $name;
@@ -583,7 +580,7 @@ class Form {
      * @param mixed $value
      * @param bool $forceValue if true value will not changed after form submitted
      */
-    public function addHidden($name, $value = null, $forceValue = false)
+    public function addHidden(string $name, ?string $value = null, bool $forceValue = false)
     {
         if ($forceValue === false && $this->submitted()) {
             $value = $this->getFormValue($name, $value);
@@ -596,9 +593,14 @@ class Form {
         $this->hiddenInputs[$name] = $value;
     }
 
-    protected function _value($name, $value = null): string
+    /**
+     * @param string $name
+     * @param string|null $value
+     * @return string
+     */
+    protected function _value(string $name, ?string $value = null): string
     {
-        return Text::safe($value ?? $this->getValue($name));
+        return Text::safe($value ?? $this->getValue($name) ?? '');
     }
 
     /**
@@ -622,7 +624,7 @@ class Form {
      * @param array $post
      * @return array fixed $post data
      */
-    protected function fixPostData($post): array
+    protected function fixPostData(array $post): array
     {
         if ($this->model instanceof Model) {
             $structure = $this->validation()->getStructure();
@@ -653,7 +655,7 @@ class Form {
      * @param array $formData
      * @return array $formData
      */
-    protected function clearFormData($formData, $protected = false): array
+    protected function clearFormData(array $formData, bool $protected = false): array
     {
         unset($formData['secureKey'], $formData['form-submitted']);
 
@@ -668,9 +670,6 @@ class Form {
                 $formData[$name] = $this->clearFormData($value);
             } else {
                 $value = trim($value);
-                if ($this->magicQuotes) {
-                    $value = stripcslashes($value);
-                }
                 $formData[$name] = $value;
             }
         }
@@ -678,12 +677,20 @@ class Form {
         return $formData;
     }
 
-    protected function correctName($name)
+    /**
+     * @param string $name
+     * @return array|string|string[]
+     */
+    protected function correctName(string $name)
     {
         return str_replace(['[]', '[', ']'], ['', '.', ''], $name);
     }
 
-    protected function addInput($name)
+    /**
+     * @param string $name
+     * @return void
+     */
+    protected function addInput(string $name)
     {
         $pos = strpos($name, '.');
         $arrName = $pos ? substr($name, 0, $pos) : $name;

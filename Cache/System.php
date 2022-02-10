@@ -68,7 +68,7 @@ class System extends Cache
     public function deleteAll(): bool
     {
         $dir = scandir(GDN_CACHE, SCANDIR_SORT_NONE);
-        $regexp = '/' . $this->getFile('([\w-_]+)') . '/';
+        $regexp = '/' . $this->getFile('([\w-\_]+)') . '/';
         foreach ($dir as $filename) {
             if (preg_match($regexp, $filename)) {
                 $file = GDN_CACHE . '/' . $filename;

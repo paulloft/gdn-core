@@ -4,9 +4,24 @@ namespace Garden;
 
 use Garden\Helpers\Arr;
 
-class Translate {
+class Translate
+{
+    public const DATE_FORMATS = ['D', 'l', 'F', 'M'];
+
     public static $translations = [];
     public static $defaultExtension = 'php';
+
+    /**
+     * A version of {@link sprintf()} That translates the string format.
+     *
+     * @param string $code The format translation code.
+     * @param mixed ...$args The arguments to pass to {@link sprintf()}.
+     * @return string The translated string.
+     */
+    public static function getSprintf($code, ...$args): string
+    {
+        return vsprintf(self::get($code), $args);
+    }
 
     /**
      * Return translated code
@@ -30,18 +45,6 @@ class Translate {
         }
 
         return $code;
-    }
-
-    /**
-     * A version of {@link sprintf()} That translates the string format.
-     *
-     * @param string $code The format translation code.
-     * @param mixed ...$args The arguments to pass to {@link sprintf()}.
-     * @return string The translated string.
-     */
-    public static function getSprintf($code, ...$args): string
-    {
-        return vsprintf(self::get($code), $args);
     }
 
     /**
@@ -98,5 +101,24 @@ class Translate {
                 self::$translations = array_replace($translations, self::$translations);
             }
         }
+    }
+
+    /**
+     * @param \DateTime $dateTime
+     * @param string $format
+     * @return string
+     */
+    public static function date(\DateTime $dateTime, string $format): string
+    {
+        return preg_replace_callback('/\w/', static function($matches) use ($dateTime) {
+            $format = reset($matches);
+            $result = $dateTime->format($format);
+
+            if (in_array($format, static::DATE_FORMATS)) {
+                $result = static::get($result);
+            }
+
+            return $result;
+        }, $format);
     }
 }

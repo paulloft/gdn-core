@@ -75,7 +75,7 @@ class Model {
 
         $instance = $class_name === self::class && $table ? $table : $class_name;
 
-        if (!self::$instances[$instance]) {
+        if (!isset(self::$instances[$instance])) {
             self::$instances[$instance] = new $class_name($table, $primaryKey);
         }
 

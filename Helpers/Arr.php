@@ -314,6 +314,31 @@ class Arr {
     }
 
     /**
+     * Set a value on an array by path.
+     *
+     * @param array $array Array to update
+     * @param string $path Path
+     * @param mixed $value Value to set
+     * @param string $delimiter Path delimiter
+     * @see Arr::path()
+     */
+    public static function setPath(array &$array, string $path, $value, string $delimiter = '.')
+    {
+        $keys = explode($delimiter, $path);
+
+        while (count($keys) > 1) {
+            $path = array_shift($keys) ?? '';
+            if (!isset($array[$path]) || !is_array($array[$path])) {
+                $array[$path] = [];
+            }
+            $array = &$array[$path];
+        }
+        $array[array_shift($keys)] = $value;
+
+        return $array;
+    }
+
+    /**
      * Filter array with allowed keys
      * @param array $array
      * @param array $keys
