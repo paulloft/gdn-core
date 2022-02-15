@@ -11,17 +11,22 @@ abstract class Cache implements Interfaces\Cache
     public static $clear = false;
 
     private static $lazyData = [];
+
+    /**
+     * @var Interfaces\Cache[]
+     */
     private static $instances = [];
+
     private static $clearFile = GDN_CACHE . '/.clear_cache';
 
     /**
      * Get singletone cache class
      *
-     * @param string $driver driver name
+     * @param string|null $driver driver name
      * @param array $options initial driver options
      * @return self
      */
-    public static function instance($driver = null, array $options = null): self
+    public static function instance(string $driver = null, array $options = []): self
     {
         self::flush();
 

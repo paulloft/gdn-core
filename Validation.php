@@ -131,10 +131,10 @@ class Validation
      * @param array $data
      * @return bool
      */
-    public function validate($data = false): bool
+    public function validate(array $data = []): bool
     {
         if (!$this->validated) {
-            if ($data) {
+            if (!empty($data)) {
                 $this->setData($data);
             }
 
@@ -304,7 +304,7 @@ class Validation
             return $params;
         }
 
-        if (Text::strBegins($params, ':')) {
+        if (is_string($params) && Text::strBegins($params, ':')) {
             $key = Text::ltrimSubstr($params, ':');
             return $data[$key] ?? null;
         }
