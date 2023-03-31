@@ -94,7 +94,7 @@ class Event {
             $result = static::fireArray($eventName, $eventArgs);
         } else {
             // The callback was not overridden so just call the passed callback.
-            $result = call_user_func_array($callback, $args);
+            $result = call_user_func_array($callback, array_values($args));
         }
 
         // Fire after events.

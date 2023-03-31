@@ -36,7 +36,7 @@
 			"Garden\\": "./src"
 		},
 		"files": [
-			"functions/autoload.php"
+			"./src/functions/autoload.php"
 		]
 	}
 }

@@ -7,10 +7,10 @@
 
 namespace Garden\Route;
 
-use Garden\Exception;
-use Garden\Request;
 use Garden\Addons;
 use Garden\Event;
+use Garden\Exception;
+use Garden\Request;
 use Garden\Response;
 use Garden\Route;
 use ReflectionException;
@@ -27,7 +27,8 @@ use function is_callable;
  * - GET /controller -> index
  * - METHOD /controller/action -> methodAction
  */
-class Resource extends Route {
+class Resource extends Route
+{
     protected $controllerPattern = '%sController';
 
     /**
@@ -39,7 +40,7 @@ class Resource extends Route {
         Request::METHOD_POST => 'index',
         Request::METHOD_OPTIONS => 'options_index',
         Request::METHOD_DELETE => 'delete_index',
-        Request::METHOD_PUT => 'put_index'
+        Request::METHOD_PUT => 'put_index',
     ];
 
     /**
@@ -82,7 +83,7 @@ class Resource extends Route {
         }
 
         try {
-            list($this->arguments, $sysArgs, $printArgs) = $this->getArgs($request);
+            [$this->arguments, $sysArgs, $printArgs] = $this->getArgs($request);
             $this->controller = $this->getClassName($printArgs);
         } catch (Exception\Pass $ex) {
             return false;
@@ -97,12 +98,35 @@ class Resource extends Route {
         }
 
         if ($action) {
-            $this->action = $this->actionExists($this->controller, $action, $method);
+            $this->action = $this->getActionName($this->controller, $action, $method);
         } else {
-            $this->action = $this->actionExists($this->controller, self::$defaultActons[$method]);
+            $this->action = $this->getActionName($this->controller, self::$defaultActons[$method]);
         }
 
-        return $this->action && is_callable([$this->controller, $this->action]);
+        if ($this->action === null) {
+            return false;
+        }
+
+        return $this->isValid();
+    }
+
+    /**
+     * @return bool
+     * @throws
+     */
+    protected function isValid(): bool
+    {
+        if ($this->action === null) {
+            return false;
+        }
+
+        try {
+            $reflectionMethod = new ReflectionMethod($this->controller, $this->action);
+        } catch (ReflectionException $exception) {
+            return false;
+        }
+
+        return $reflectionMethod->isPublic();
     }
 
     /**
@@ -120,7 +144,7 @@ class Resource extends Route {
 
         $nameSpacing = explode('\\', ltrim($this->controller, '\\'));
 
-        list($type, $addon) = $nameSpacing;
+        [$type, $addon] = $nameSpacing;
 
         if ($type === 'Addons') {
             $request->setEnvKey('addon', $addon);
@@ -201,7 +225,7 @@ class Resource extends Route {
         $basename = vsprintf($this->controllerPattern, $args);
 
         if (class_exists('\Garden\Addons', false)) {
-            list($classname) = Addons::classMap($basename);
+            [$classname] = Addons::classMap($basename);
 
             if ($classname) {
                 return $classname;
@@ -258,13 +282,13 @@ class Resource extends Route {
      * @param string $controller The controller object that the method should be on.
      * @param string $action The name of the action.
      * @param string $method The http method.
-     * @return string Returns the name of the action method or an empty string if it doesn't exist.
+     * @return string|null Returns the name of the action method or an empty string if it doesn't exist.
      */
-    protected function actionExists($controller, $action, $method = ''): string
+    protected function getActionName(string $controller, string $action, string $method = ''): ?string
     {
         // Short circuit on a badly named action.
         if (!preg_match('`[_a-zA-Z][_a-zA-Z0-9]{0,30}`i', $action)) {
-            return '';
+            return null;
         }
 
         if ($method) {
@@ -279,7 +303,7 @@ class Resource extends Route {
             return $action;
         }
 
-        return '';
+        return null;
     }
 
     /**

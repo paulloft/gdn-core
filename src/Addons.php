@@ -420,7 +420,7 @@ class Addons {
             }
 
             if ($namespaceFound) {
-                if (is_array($token) && in_array($token[0], [T_STRING, T_NS_SEPARATOR], true)) {
+                if (is_array($token) && in_array($token[0], [T_STRING, T_NS_SEPARATOR, T_NAME_QUALIFIED], true)) {
                     $namespace .= $token[1];
                 } elseif ($token === ';') {
                     $namespaceFound = false;

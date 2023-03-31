@@ -9,8 +9,8 @@ namespace Garden;
 
 use Garden\Helpers\Arr;
 use Garden\Helpers\Text;
-use JsonSerializable;
 use InvalidArgumentException;
+use JsonSerializable;
 use function in_array;
 use function is_array;
 use function strlen;
@@ -18,7 +18,8 @@ use function strlen;
 /**
  * A class that contains the information in an http request.
  */
-class Request implements JsonSerializable {
+class Request implements JsonSerializable
+{
 
     /// Constants ///
     const METHOD_HEAD = 'HEAD';
@@ -66,14 +67,14 @@ class Request implements JsonSerializable {
         'REMOTE_ADDR' => '127.0.0.1',
         'URL_SCHEME' => 'http',
         'INPUT' => [],
-        'COOKIE' => []
+        'COOKIE' => [],
     ];
 
     protected static $knownExtensions = [
         '.html' => 'text/html',
         '.json' => 'application/json',
         '.txt' => 'text/plain',
-        '.xml' => 'application/xml'
+        '.xml' => 'application/xml',
     ];
 
     /**
@@ -94,7 +95,7 @@ class Request implements JsonSerializable {
         'PHP_AUTH_USER',
         'PHP_AUTH_PW',
         'PHP_AUTH_DIGEST',
-        'AUTH_TYPE'
+        'AUTH_TYPE',
     ];
 
     /// Methods ///
@@ -223,7 +224,7 @@ class Request implements JsonSerializable {
         }
 
         // Strip the extension from the path.
-        list($path, $ext) = static::splitPathExt($path);
+        [$path, $ext] = static::splitPathExt($path);
         $env['PATH_INFO'] = '/' . ltrim($path, '/');
         $env['EXT'] = $ext;
 
@@ -232,7 +233,7 @@ class Request implements JsonSerializable {
 
         // SERVER_NAME.
         $host = Arr::select($_SERVER, ['HTTP_X_FORWARDED_HOST', 'HTTP_HOST', 'SERVER_NAME']);
-        list($host) = explode(':', $host, 2);
+        [$host] = explode(':', $host, 2);
         $env['SERVER_NAME'] = $host;
 
         // HTTP_* headers.
@@ -247,7 +248,7 @@ class Request implements JsonSerializable {
 
         $scheme = Arr::select($_SERVER, [
             'HTTP_X_ORIGINALLY_FORWARDED_PROTO', // varnish modifies the scheme
-            'HTTP_X_FORWARDED_PROTO' // load balancer-originated (and terminated) ssl
+            'HTTP_X_FORWARDED_PROTO', // load balancer-originated (and terminated) ssl
         ], $scheme);
         $env['URL_SCHEME'] = $scheme;
 
@@ -1123,7 +1124,7 @@ class Request implements JsonSerializable {
      * @return mixed data which can be serialized by <b>json_encode</b>,
      * which is a value of any type other than a resource.
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->env;
     }
@@ -1150,6 +1151,7 @@ class Request implements JsonSerializable {
 
     /**
      * Set current render type
+     *
      * @param $type string
      */
     public function setRenderType($type)

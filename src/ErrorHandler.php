@@ -4,7 +4,8 @@ namespace Garden;
 
 use Garden\Exception\Error;
 
-class ErrorHandler {
+class ErrorHandler
+{
 
     /**
      * init error handler
@@ -21,7 +22,8 @@ class ErrorHandler {
 
     private static function kuria()
     {
-        $handler = new \Kuria\Error\ErrorHandler(Config::get('main.debug', true));
+        $handler = new \Kuria\Error\ErrorHandler();
+        $handler->setDebug(Config::get('main.debug', true));
         $handler->register();
 
         if (Config::get('main.logs', true)) {
