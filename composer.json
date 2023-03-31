@@ -29,11 +29,11 @@
 		"ext-pdo_mysql": "*",
 		"ext-Reflection": "*",
 		"lib-pcre": "*",
-		"kuria/error": "^0.2.0"
+		"kuria/error": "^4.2.1"
 	},
 	"autoload": {
 		"psr-4": {
-			"Garden\\": ""
+			"Garden\\": "./src"
 		},
 		"files": [
 			"functions/autoload.php"

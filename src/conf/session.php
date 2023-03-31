@@ -5,5 +5,5 @@ return [
         'prefix' => 'gdn_',
         'path' => '/',
         'domain' => '',
-    ]
+    ],
 ];

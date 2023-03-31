@@ -3,21 +3,21 @@ return [
     'driver' => 'dirty',
     'file' => [
         'defaultLifetime' => 3600,
-        'cacheDir' => 'cache'
+        'cacheDir' => 'cache',
     ],
     'memcache' => [
         'defaultLifetime' => 3600,
         'host' => 'localhost',
         'port' => '11211',
         'persistent' => false,
-        'keyPrefix' => 'gdn_'
+        'keyPrefix' => 'gdn_',
     ],
     'memcached' => [
         'defaultLifetime' => 3600,
         'host' => 'localhost',
         'port' => '11211',
         'persistent' => false,
-        'keyPrefix' => 'gdn_'
+        'keyPrefix' => 'gdn_',
     ],
     'redis' => [
         'defaultLifetime' => 3600,
@@ -26,6 +26,6 @@ return [
         'keyPrefix' => 'gdn_',
         'timeout' => 0,
         'reserved' => null,
-        'retry_interval' => 0
+        'retry_interval' => 0,
     ],
 ];
